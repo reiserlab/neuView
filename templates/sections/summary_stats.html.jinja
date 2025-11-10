@@ -3,7 +3,7 @@
 {# -- Summary statistics - Full width -- #}
 <section id="summary-stats">
     <div class="row">
-        <div class="col-xs-12 col-sm-6 col-md-3">
+        <div class="col-xs-12 col-sm-6 col-md-4">
             <div class="stat-card">
                 <div class="stat-number">{{ complete_summary.total_count }}</div>
                 <div class="stat-label">Total Neurons</div>
@@ -17,7 +17,8 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-xs-12 col-sm-6 col-md-3">
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
             <div class="stat-card">
                 {% if soma_side == 'all' or soma_side == 'combined' %}
                     {# -- C page: Show hemisphere breakdown -- #}
@@ -51,83 +52,40 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-xs-12 col-sm-6 col-md-3">
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
             <div class="stat-card">
                 {% if soma_side == 'all' or soma_side == 'combined' %}
-                    {# -- C page: Show average across all neurons with per-side breakdown -- #}
-                    {% set avg_synapses = complete_summary.avg_post_synapses + complete_summary.avg_pre_synapses %}
-                    <div class="stat-number">{{ avg_synapses | format_synapse_count | safe }}</div>
-                    <div class="stat-label">Mean Synapses</div>
-                    {% set left_count = complete_summary.left_count if complete_summary.left_count is defined else complete_summary.get('left_count', 0) %}
-                    {% set right_count = complete_summary.right_count if complete_summary.right_count is defined else complete_summary.get('right_count', 0) %}
-                    {% set middle_count = complete_summary.middle_count if complete_summary.middle_count is defined else complete_summary.get('middle_count', 0) %}
-                    {% if left_count > 0 or right_count > 0 or middle_count > 0 %}
+                    {# -- C page: Show hemisphere breakdown -- #}
+                    {% set total_connections = connectivity.total_upstream + connectivity.total_downstream %}
+                    <div class="stat-number">{{ total_connections | format_synapse_count | safe }}</div>
+                    <div class="stat-label">Total Connections</div>
+                    {% set upstream_connections = connectivity.total_upstream %}
+                    {% set downstream_connections = connectivity.total_downstream %}
                     <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
-                        {% if right_count > 0 %}
-                            {% set right_pre = complete_summary.right_pre_synapses if complete_summary.right_pre_synapses is defined else complete_summary.get('right_pre_synapses', 0) %}
-                            {% set right_post = complete_summary.right_post_synapses if complete_summary.right_post_synapses is defined else complete_summary.get('right_post_synapses', 0) %}
-                            {% set right_avg = ((right_pre + right_post) / right_count) | round(1) %}
-                            Right: {{ right_avg | format_synapse_count | safe }}
-                        {% endif %}
-                        {% if left_count > 0 %}
-                            {% set left_pre = complete_summary.left_pre_synapses if complete_summary.left_pre_synapses is defined else complete_summary.get('left_pre_synapses', 0) %}
-                            {% set left_post = complete_summary.left_post_synapses if complete_summary.left_post_synapses is defined else complete_summary.get('left_post_synapses', 0) %}
-                            {% set left_avg = ((left_pre + left_post) / left_count) | round(1) %}
-                            {% if right_count > 0 %} | {% endif %}Left: {{ left_avg | format_synapse_count | safe }}
-                        {% endif %}
-                        {% if middle_count > 0 %}
-                            {% set middle_pre = complete_summary.middle_pre_synapses if complete_summary.middle_pre_synapses is defined else complete_summary.get('middle_pre_synapses', 0) %}
-                            {% set middle_post = complete_summary.middle_post_synapses if complete_summary.middle_post_synapses is defined else complete_summary.get('middle_post_synapses', 0) %}
-                            {% set middle_avg = ((middle_pre + middle_post) / middle_count) | round(1) %}
-                            {% if left_count > 0 or right_count > 0 %} | {% endif %}Middle: {{ middle_avg | format_synapse_count | safe }}
-                        {% endif %}
-                        {% if right_count > 0 and left_count > 0 %}
-                        <br><span title="Log Ratio negative numbers mean more left synapses, positive numbers more right synapses">
+                        Upstream: {{ upstream_connections | format_synapse_count | safe }} | Downstream: {{ downstream_connections | format_synapse_count | safe }}
+                        <br><span title="Log Ratio negative numbers mean more upstream connections, positive numbers more downstream connections">
                             log ratio
-                        </span>: {{ "%.2f"|format(log_ratio(complete_summary.left_mean_synapses, complete_summary.right_mean_synapses)) }}
-                        {% endif %}
+                        </span>: {{ "%.2f"|format(log_ratio(downstream_connections, upstream_connections)) }}
                     </div>
-                    {% endif %}
                 {% else %}
-                    {# -- R/M/L pages: Show side-specific average synapses per neuron -- #}
-                    {% if soma_side == 'left' %}
-                        {% set side_neuron_count = complete_summary.left_count if complete_summary.left_count is defined else complete_summary.get('left_count', 0) %}
-                        {% set side_pre_synapses = complete_summary.left_pre_synapses if complete_summary.left_pre_synapses is defined else complete_summary.get('left_pre_synapses', 0) %}
-                        {% set side_post_synapses = complete_summary.left_post_synapses if complete_summary.left_post_synapses is defined else complete_summary.get('left_post_synapses', 0) %}
-                    {% elif soma_side == 'right' %}
-                        {% set side_neuron_count = complete_summary.right_count if complete_summary.right_count is defined else complete_summary.get('right_count', 0) %}
-                        {% set side_pre_synapses = complete_summary.right_pre_synapses if complete_summary.right_pre_synapses is defined else complete_summary.get('right_pre_synapses', 0) %}
-                        {% set side_post_synapses = complete_summary.right_post_synapses if complete_summary.right_post_synapses is defined else complete_summary.get('right_post_synapses', 0) %}
-                    {% elif soma_side == 'middle' %}
-                        {% set side_neuron_count = complete_summary.middle_count if complete_summary.middle_count is defined else complete_summary.get('middle_count', 0) %}
-                        {% set side_pre_synapses = complete_summary.middle_pre_synapses if complete_summary.middle_pre_synapses is defined else complete_summary.get('middle_pre_synapses', 0) %}
-                        {% set side_post_synapses = complete_summary.middle_post_synapses if complete_summary.middle_post_synapses is defined else complete_summary.get('middle_post_synapses', 0) %}
-                    {% endif %}
-
-                    {% if side_neuron_count > 0 %}
-                        {% set side_avg_pre = (side_pre_synapses / side_neuron_count) | round(2) %}
-                        {% set side_avg_post = (side_post_synapses / side_neuron_count) | round(2) %}
-                        {% set side_avg_total = side_avg_pre + side_avg_post %}
-                    {% else %}
-                        {% set side_avg_pre = 0 %}
-                        {% set side_avg_post = 0 %}
-                        {% set side_avg_total = 0 %}
-                    {% endif %}
-
-                    <div class="stat-number">{{ side_avg_total | format_synapse_count | safe}}</div>
-                    <div class="stat-label">Mean Synapses</div>
-                    {% if side_avg_pre > 0 or side_avg_post > 0 %}
+                    {#-- R/M/L pages: Show side-specific synapse totals with Post/Pre breakdown -- #}
+                    {% set total_connections = connectivity.total_upstream + connectivity.total_downstream %}
+                    <div class="stat-number">{{ total_connections | format_synapse_count | safe }}</div>
+                    <div class="stat-label">Total Connections</div>
+                    {% set upstream_connections = connectivity.total_upstream %}
+                    {% set downstream_connections = connectivity.total_downstream %}
                     <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
-                        Post: {{ side_avg_post | format_synapse_count | safe }} | Pre: {{ side_avg_pre | format_synapse_count | safe }}
-                    <br><span title="Log Ratio negative numbers mean more input (post-synapses), positive numbers more output (pre-synapses)">
-                        log ratio
-                    </span>: {{ "%.2f"|format(log_ratio(summary.total_pre_synapses, summary.total_post_synapses)) }}
+                        Upstream: {{ upstream_connections | format_synapse_count | safe }} | Downstream: {{ downstream_connections | format_synapse_count | safe }}
+                        <br><span title="Log Ratio negative numbers mean more upstream connections, positive numbers more downstream connections">
+                            log ratio
+                        </span>: {{ "%.2f"|format(log_ratio(downstream_connections, upstream_connections)) }}
                     </div>
-                    {% endif %}
                 {% endif %}
             </div>
         </div>
-        <div class="col-xs-12 col-sm-6 col-md-3">
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
             <div class="stat-card">
                 {% if soma_side == 'all' or soma_side == 'combined' %}
                     {# -- C page: Show hemisphere breakdown for neurotransmitters -- #}
@@ -218,6 +176,108 @@
                 {% endif %}
             </div>
         </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                {% if soma_side == 'all' or soma_side == 'combined' %}
+                    {# -- C page: Show average across all neurons with per-side breakdown -- #}
+                    {% set avg_synapses = complete_summary.avg_post_synapses + complete_summary.avg_pre_synapses %}
+                    <div class="stat-number">{{ avg_synapses | format_synapse_count | safe }}</div>
+                    <div class="stat-label">Mean Synapses</div>
+                    {% set left_count = complete_summary.left_count if complete_summary.left_count is defined else complete_summary.get('left_count', 0) %}
+                    {% set right_count = complete_summary.right_count if complete_summary.right_count is defined else complete_summary.get('right_count', 0) %}
+                    {% set middle_count = complete_summary.middle_count if complete_summary.middle_count is defined else complete_summary.get('middle_count', 0) %}
+                    {% if left_count > 0 or right_count > 0 or middle_count > 0 %}
+                    <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                        {% if right_count > 0 %}
+                            {% set right_pre = complete_summary.right_pre_synapses if complete_summary.right_pre_synapses is defined else complete_summary.get('right_pre_synapses', 0) %}
+                            {% set right_post = complete_summary.right_post_synapses if complete_summary.right_post_synapses is defined else complete_summary.get('right_post_synapses', 0) %}
+                            {% set right_avg = ((right_pre + right_post) / right_count) | round(1) %}
+                            Right: {{ right_avg | format_synapse_count | safe }}
+                        {% endif %}
+                        {% if left_count > 0 %}
+                            {% set left_pre = complete_summary.left_pre_synapses if complete_summary.left_pre_synapses is defined else complete_summary.get('left_pre_synapses', 0) %}
+                            {% set left_post = complete_summary.left_post_synapses if complete_summary.left_post_synapses is defined else complete_summary.get('left_post_synapses', 0) %}
+                            {% set left_avg = ((left_pre + left_post) / left_count) | round(1) %}
+                            {% if right_count > 0 %} | {% endif %}Left: {{ left_avg | format_synapse_count | safe }}
+                        {% endif %}
+                        {% if middle_count > 0 %}
+                            {% set middle_pre = complete_summary.middle_pre_synapses if complete_summary.middle_pre_synapses is defined else complete_summary.get('middle_pre_synapses', 0) %}
+                            {% set middle_post = complete_summary.middle_post_synapses if complete_summary.middle_post_synapses is defined else complete_summary.get('middle_post_synapses', 0) %}
+                            {% set middle_avg = ((middle_pre + middle_post) / middle_count) | round(1) %}
+                            {% if left_count > 0 or right_count > 0 %} | {% endif %}Middle: {{ middle_avg | format_synapse_count | safe }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {# -- R/M/L pages: Show side-specific average synapses per neuron -- #}
+                    {% if soma_side == 'left' %}
+                        {% set side_neuron_count = complete_summary.left_count if complete_summary.left_count is defined else complete_summary.get('left_count', 0) %}
+                        {% set side_pre_synapses = complete_summary.left_pre_synapses if complete_summary.left_pre_synapses is defined else complete_summary.get('left_pre_synapses', 0) %}
+                        {% set side_post_synapses = complete_summary.left_post_synapses if complete_summary.left_post_synapses is defined else complete_summary.get('left_post_synapses', 0) %}
+                    {% elif soma_side == 'right' %}
+                        {% set side_neuron_count = complete_summary.right_count if complete_summary.right_count is defined else complete_summary.get('right_count', 0) %}
+                        {% set side_pre_synapses = complete_summary.right_pre_synapses if complete_summary.right_pre_synapses is defined else complete_summary.get('right_pre_synapses', 0) %}
+                        {% set side_post_synapses = complete_summary.right_post_synapses if complete_summary.right_post_synapses is defined else complete_summary.get('right_post_synapses', 0) %}
+                    {% elif soma_side == 'middle' %}
+                        {% set side_neuron_count = complete_summary.middle_count if complete_summary.middle_count is defined else complete_summary.get('middle_count', 0) %}
+                        {% set side_pre_synapses = complete_summary.middle_pre_synapses if complete_summary.middle_pre_synapses is defined else complete_summary.get('middle_pre_synapses', 0) %}
+                        {% set side_post_synapses = complete_summary.middle_post_synapses if complete_summary.middle_post_synapses is defined else complete_summary.get('middle_post_synapses', 0) %}
+                    {% endif %}
+
+                    {% if side_neuron_count > 0 %}
+                        {% set side_avg_pre = (side_pre_synapses / side_neuron_count) | round(2) %}
+                        {% set side_avg_post = (side_post_synapses / side_neuron_count) | round(2) %}
+                        {% set side_avg_total = side_avg_pre + side_avg_post %}
+                    {% else %}
+                        {% set side_avg_pre = 0 %}
+                        {% set side_avg_post = 0 %}
+                        {% set side_avg_total = 0 %}
+                    {% endif %}
+
+                    <div class="stat-number">{{ side_avg_total | format_synapse_count | safe}}</div>
+                    <div class="stat-label">Mean Synapses</div>
+                    {% if side_avg_pre > 0 or side_avg_post > 0 %}
+                    <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                        Post: {{ side_avg_post | format_synapse_count | safe }} | Pre: {{ side_avg_pre | format_synapse_count | safe }}
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                {% if soma_side == 'all' or soma_side == 'combined' %}
+                    {# -- C page: Show average across all neurons with per-side breakdown -- #}
+                    {% set avg_conn = connectivity.avg_connections %}
+                    <div class="stat-number">{{ avg_conn | format_synapse_count | safe }}</div>
+                    <div class="stat-label">Mean Connections</div>
+                    {% set avg_up_conn = connectivity.avg_upstream if connectivity.avg_upstream is defined else connectivity.get('avg_upstream', 0) %}
+                    {% set avg_down_conn = connectivity.avg_downstream if connectivity.avg_downstream is defined else connectivity.get('avg_downstream', 0) %}
+                    {% if avg_up_conn > 0 or avg_down_conn > 0%}
+                    <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                        Upstream: {{ avg_up_conn | format_synapse_count | safe }}
+                        | Downstream: {{ avg_down_conn | format_synapse_count | safe }}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {# -- R/M/L pages: Show side-specific average synapses per neuron -- #}
+                    {% set avg_conn = connectivity.avg_connections %}
+                    <div class="stat-number">{{ avg_conn | format_synapse_count | safe }}</div>
+                    <div class="stat-label">Mean Connections</div>
+                    {% set avg_up_conn = connectivity.avg_upstream if connectivity.avg_upstream is defined else connectivity.get('avg_upstream', 0) %}
+                    {% set avg_down_conn = connectivity.avg_downstream if connectivity.avg_downstream is defined else connectivity.get('avg_downstream', 0) %}
+                    {% if avg_up_conn > 0 or avg_down_conn > 0%}
+                    <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                        Upstream: {{ avg_up_conn | format_synapse_count | safe }}
+                        | Downstream: {{ avg_down_conn | format_synapse_count | safe }}
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
 </section>
