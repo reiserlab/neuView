@@ -104,7 +104,8 @@ class RenderingRequest:
     max_val: float
     thresholds: Dict
     title: str
-    subtitle: str
+    subtitle1: str
+    subtitle2: str
     metric_type: str
     soma_side: SomaSide
     output_format: str = "svg"
@@ -202,7 +203,8 @@ def create_rendering_request(
     max_val: float,
     thresholds: Dict,
     title: str,
-    subtitle: str,
+    subtitle1: str,
+    subtitle2: str,
     metric_type: str,
     soma_side: SomaSide,
     **kwargs,
@@ -216,7 +218,8 @@ def create_rendering_request(
         max_val: Maximum value for scaling
         thresholds: Threshold values dictionary
         title: Chart title
-        subtitle: Chart subtitle
+        subtitle1: Chart subtitle1
+        subtitle2: Chart subtitle2
         metric_type: Type of metric being displayed
         soma_side: Side of soma (SomaSide enum)
         **kwargs: Additional optional parameters (including min_max_data)
@@ -234,7 +237,8 @@ def create_rendering_request(
         max_val=max_val,
         thresholds=thresholds,
         title=title,
-        subtitle=subtitle,
+        subtitle1=subtitle1,
+        subtitle2=subtitle2,
         metric_type=metric_type,
         soma_side=soma_side,
         **kwargs,
