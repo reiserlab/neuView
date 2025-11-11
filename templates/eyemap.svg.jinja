@@ -297,7 +297,15 @@ function updateLayer(layer, regionId) {
         font-family="Arial, sans-serif"
         font-size="10"
         fill="#CCCCCC"
-    >{{ subtitle }}</text>
+    >{{ subtitle2 }}</text>
+  <text
+        x="5"
+        y="41"
+        text-anchor="start"
+        font-family="Arial, sans-serif"
+        font-size="10"
+        fill="#CCCCCC"
+    >{{ subtitle1 }}</text>
 
 {#-- Hexagon Path Definition --#}
 {% set hex_path = "M" + hex_points|join(" L") + " Z" %}

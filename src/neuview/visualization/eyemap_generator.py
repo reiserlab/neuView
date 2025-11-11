@@ -423,7 +423,7 @@ class EyemapGenerator:
 
                 # Set up visualization metadata
                 if request.metric_type == METRIC_SYNAPSE_DENSITY:
-                    title = f"{request.region_name} Synapses (All Columns)"
+                    title = "Synapses (All Columns)"
                     # Handle both string and SomaSide enum inputs
                     if hasattr(request.soma_side, "value"):
                         soma_display = (
@@ -437,9 +437,10 @@ class EyemapGenerator:
                             if request.soma_side
                             else ""
                         )
-                    subtitle = f"{request.neuron_type} ({soma_display})"
+                    subtitle1 = f"{request.region_name} ({soma_display})"
+                    subtitle2 = f"{request.neuron_type} ({soma_display})"
                 else:  # cell_count
-                    title = f"{request.region_name} Cell Count (All Columns)"
+                    title = "Cell Count (All Columns)"
                     # Handle both string and SomaSide enum inputs
                     if hasattr(request.soma_side, "value"):
                         soma_display = (
@@ -453,9 +454,10 @@ class EyemapGenerator:
                             if request.soma_side
                             else ""
                         )
-                    subtitle = f"{request.neuron_type} ({soma_display})"
+                    subtitle1 = f"{request.region_name} ({soma_display})"
+                    subtitle2 = f"{request.neuron_type} ({soma_display})"
 
-                grid_metadata = {"title": title, "subtitle": subtitle}
+                grid_metadata = {"title": title, "subtitle1": subtitle1, "subtitle2": subtitle2}
 
                 # Create processing configuration
                 processing_config = safe_operation(
@@ -687,7 +689,8 @@ class EyemapGenerator:
                     max_val=value_range["max_value"],
                     thresholds=request.thresholds or {},
                     title=grid_metadata["title"],
-                    subtitle=grid_metadata["subtitle"],
+                    subtitle1=grid_metadata["subtitle1"],
+                    subtitle2=grid_metadata["subtitle2"],
                     metric_type=request.metric_type,
                     soma_side=request.soma_side or SomaSide.RIGHT,
                     min_max_data=request.min_max_data,
@@ -729,7 +732,8 @@ class EyemapGenerator:
                 # Update rendering manager configuration with rendering parameters
                 updated_config = self.rendering_manager.config.copy(
                     title=rendering_request.title,
-                    subtitle=rendering_request.subtitle,
+                    subtitle1=rendering_request.subtitle1,
+                    subtitle2=rendering_request.subtitle2,
                     metric_type=rendering_request.metric_type,
                     soma_side=soma_side_enum,
                     thresholds=rendering_request.thresholds,
@@ -766,7 +770,7 @@ class EyemapGenerator:
                     layout_config=layout_config,
                     legend_config=legend_config,
                     save_to_file=rendering_request.save_to_file,
-                    filename=f"{rendering_request.title}_{rendering_request.subtitle}"
+                    filename=f"{rendering_request.title}_{rendering_request.subtitle1}_{rendering_request.subtitle2}"
                     if rendering_request.save_to_file
                     else None,
                 )

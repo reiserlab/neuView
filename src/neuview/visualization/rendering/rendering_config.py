@@ -54,7 +54,8 @@ class RenderingConfig:
 
     # Content configuration
     title: str = ""
-    subtitle: str = ""
+    subtitle1: str = ""
+    subtitle2: str = ""
     metric_type: str = ""
     soma_side: Optional[SomaSide] = None
     neuron_type: Optional[str] = None
