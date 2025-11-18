@@ -5,15 +5,16 @@ This module provides SVG-specific rendering functionality using Jinja2 templates
 to generate interactive SVG visualizations with tooltips and legends.
 """
 
-from typing import List, Dict, Any, Optional
-from pathlib import Path
 import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from jinja2 import Environment, FileSystemLoader, Template
 
-from .base_renderer import BaseRenderer
-from .rendering_config import RenderingConfig, LayoutConfig, LegendConfig, OutputFormat
-from .layout_calculator import LayoutCalculator
 from ...utils import get_templates_dir
+from .base_renderer import BaseRenderer
+from .layout_calculator import LayoutCalculator
+from .rendering_config import LayoutConfig, LegendConfig, OutputFormat, RenderingConfig
 
 logger = logging.getLogger(__name__)
 
@@ -237,9 +238,9 @@ class SVGRenderer(BaseRenderer):
         template_vars = {
             "width": layout_config.width,
             "height": layout_config.height,
-            "title": self.config.title,
-            "subtitle1": self.config.subtitle1,
-            "subtitle2": self.config.subtitle2,
+            "plot_desc": self.config.plot_desc,
+            "neuron_desc": self.config.neuron_desc,
+            "region_desc": self.config.region_desc,
             "hexagons": hexagons,
             "hex_points": layout_config.hex_points.split(),
             "min_x": layout_config.min_x,

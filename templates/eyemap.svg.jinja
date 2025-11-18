@@ -281,7 +281,7 @@ function updateLayer(layer, regionId) {
         stroke="none"
     />
 
-{#-- Title, Subtitle, and Layer Scrollbar --#}
+{#-- Plot Name, Region Name, Neuron Name, and Layer Scrollbar --#}
 <text
         x="5"
         y="15"
@@ -289,7 +289,7 @@ function updateLayer(layer, regionId) {
         font-family="Arial, sans-serif"
         font-size="12"
         fill="#CCCCCC"
-    >{{ title }}</text>
+    >{{ plot_desc }}</text>
 <text
         x="5"
         y="28"
@@ -297,7 +297,7 @@ function updateLayer(layer, regionId) {
         font-family="Arial, sans-serif"
         font-size="10"
         fill="#CCCCCC"
-    >{{ subtitle2 }}</text>
+    >{{ region_desc }}</text>
   <text
         x="5"
         y="41"
@@ -305,7 +305,7 @@ function updateLayer(layer, regionId) {
         font-family="Arial, sans-serif"
         font-size="10"
         fill="#CCCCCC"
-    >{{ subtitle1 }}</text>
+    >{{ neuron_desc }}</text>
 
 {#-- Hexagon Path Definition --#}
 {% set hex_path = "M" + hex_points|join(" L") + " Z" %}

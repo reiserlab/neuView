@@ -5,13 +5,13 @@ This module defines the configuration structures used by the rendering system
 to control output format, layout parameters, and rendering behavior.
 """
 
-from enum import Enum
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, Optional
 
-from ..data_processing.data_structures import SomaSide
 from ...utils import get_templates_dir
+from ..data_processing.data_structures import SomaSide
 
 
 class OutputFormat(Enum):
@@ -53,9 +53,9 @@ class RenderingConfig:
     png_scale: float = 1.0
 
     # Content configuration
-    title: str = ""
-    subtitle1: str = ""
-    subtitle2: str = ""
+    plot_desc: str = ""
+    neuron_desc: str = ""
+    region_desc: str = ""
     metric_type: str = ""
     soma_side: Optional[SomaSide] = None
     neuron_type: Optional[str] = None

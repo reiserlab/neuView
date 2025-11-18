@@ -655,9 +655,9 @@ class LayerAnalysisService:
             elif region == "central brain":
                 containers["central_brain"]["data"]["pre"]["central brain"] = pre
                 containers["central_brain"]["data"]["post"]["central brain"] = post
-                containers["central_brain"]["data"]["neuron_count"][
-                    "central brain"
-                ] = neuron_count
+                containers["central_brain"]["data"]["neuron_count"]["central brain"] = (
+                    neuron_count
+                )
             elif region == "ME" and layer_num > 0:
                 col_name = f"ME {layer_num}"
                 if col_name in containers["me"]["data"]["pre"]:
