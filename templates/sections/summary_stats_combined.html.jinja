@@ -60,7 +60,7 @@
                 {% if complete_summary.nt_analysis and complete_summary.nt_analysis | length > 0 %}
                     {% set most_common_nt = complete_summary.nt_analysis[0] %}
                     <div class="stat-number">{{ most_common_nt.nt_type | abbreviate_neurotransmitter | safe }}
-                        {% if most_common_nt.mean_confidence %} <abbr style="font-size:14px; color:#666;" title="{{ (most_common_nt.mean_confidence*100) | format_percentage }} Confidence">({{ (most_common_nt.mean_confidence*100) | format_percentage }} CL)</abbr>{% endif %}
+                        {% if most_common_nt.mean_confidence %} <abbr style="font-size:14px; color:#666;" title="{{ (most_common_nt.mean_confidence*100) | format_percentage }} Confidence"> ({{ (most_common_nt.mean_confidence * 100) | format_percentage }} CL)</abbr>{% endif %}
                     </div>
                     <div class="stat-label">Neurotransmitter</div>
 
