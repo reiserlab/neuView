@@ -7,11 +7,12 @@ variables, and assembling context dictionaries.
 """
 
 import logging
-import pandas as pd
 from datetime import datetime
-from typing import Dict, Any, Optional
-from ..utils import get_git_version
+from typing import Any, Dict, Optional
 
+import pandas as pd
+
+from ..utils import get_git_version
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,11 @@ class TemplateContextService:
             )
         )
 
+        # Prepare summary statistics for display
+        summary_stats = self.prepare_summary_statistics(
+            summary, complete_summary, processed_connectivity, soma_side
+        )
+
         # Prepare base context
         context = {
             "config": self.config,
@@ -115,6 +121,7 @@ class TemplateContextService:
             "processed_synonyms": metadata["processed_synonyms"],
             "processed_flywire_types": metadata["processed_flywire_types"],
             "is_neuron_page": True,
+            "summary_stats": summary_stats,
         }
 
         # Add analysis results if provided
@@ -304,3 +311,201 @@ class TemplateContextService:
                 return False
 
         return True
+
+    def prepare_summary_statistics(
+        self,
+        summary: Dict[str, Any],
+        complete_summary: Dict[str, Any],
+        connectivity: Dict[str, Any],
+        soma_side: str,
+    ) -> Dict[str, Any]:
+        """
+        Prepare all summary statistics for template rendering.
+
+        This method moves calculation logic out of templates and into the service layer,
+        making templates cleaner and logic more testable.
+
+        Args:
+            summary: Side-specific summary data
+            complete_summary: Complete summary data (all sides)
+            connectivity: Connectivity data
+            soma_side: The soma side ('left', 'right', 'middle', 'combined')
+
+        Returns:
+            Dictionary with all calculated statistics ready for template use
+        """
+        if soma_side == "combined":
+            return self._prepare_combined_summary_stats(complete_summary, connectivity)
+        elif soma_side in ["left", "right", "middle"]:
+            return self._prepare_side_summary_stats(
+                summary, complete_summary, connectivity, soma_side
+            )
+        else:
+            logger.warning(f"Unknown soma_side: {soma_side}")
+            return {}
+
+    def _prepare_side_summary_stats(
+        self,
+        summary: Dict[str, Any],
+        complete_summary: Dict[str, Any],
+        connectivity: Dict[str, Any],
+        soma_side: str,
+    ) -> Dict[str, Any]:
+        """
+        Prepare summary statistics for individual side pages (L/R/M).
+
+        Args:
+            summary: Side-specific summary data
+            complete_summary: Complete summary data
+            connectivity: Connectivity data
+            soma_side: The soma side ('left', 'right', 'middle')
+
+        Returns:
+            Dictionary with side-specific calculated statistics
+        """
+        # Map soma_side to summary field prefixes
+        side_prefix_map = {"left": "left", "right": "right", "middle": "middle"}
+
+        prefix = side_prefix_map.get(soma_side)
+        if not prefix:
+            return {}
+
+        # Extract side-specific values from complete_summary
+        side_neuron_count = complete_summary.get(f"{prefix}_count", 0)
+        side_pre_synapses = complete_summary.get(f"{prefix}_pre_synapses", 0)
+        side_post_synapses = complete_summary.get(f"{prefix}_post_synapses", 0)
+
+        # Calculate side-specific synapse statistics
+        total_synapses = summary.get("total_post_synapses", 0) + summary.get(
+            "total_pre_synapses", 0
+        )
+
+        # Calculate averages per neuron
+        if side_neuron_count > 0:
+            side_avg_pre = side_pre_synapses / side_neuron_count
+            side_avg_post = side_post_synapses / side_neuron_count
+            side_avg_total = side_avg_pre + side_avg_post
+        else:
+            side_avg_pre = 0
+            side_avg_post = 0
+            side_avg_total = 0
+
+        # Calculate connection statistics
+        total_connections = connectivity.get("total_upstream", 0) + connectivity.get(
+            "total_downstream", 0
+        )
+        upstream_connections = connectivity.get("total_upstream", 0)
+        downstream_connections = connectivity.get("total_downstream", 0)
+        avg_connections = connectivity.get("avg_connections", 0)
+        avg_upstream = connectivity.get("avg_upstream", 0)
+        avg_downstream = connectivity.get("avg_downstream", 0)
+
+        return {
+            # Side-specific neuron counts
+            "side_neuron_count": side_neuron_count,
+            "side_pre_synapses": side_pre_synapses,
+            "side_post_synapses": side_post_synapses,
+            # Side-specific averages
+            "side_avg_pre": side_avg_pre,
+            "side_avg_post": side_avg_post,
+            "side_avg_total": side_avg_total,
+            # Synapse totals
+            "total_synapses": total_synapses,
+            "total_post_synapses": summary.get("total_post_synapses", 0),
+            "total_pre_synapses": summary.get("total_pre_synapses", 0),
+            # Connection statistics
+            "total_connections": total_connections,
+            "upstream_connections": upstream_connections,
+            "downstream_connections": downstream_connections,
+            "avg_connections": avg_connections,
+            "avg_upstream": avg_upstream,
+            "avg_downstream": avg_downstream,
+        }
+
+    def _prepare_combined_summary_stats(
+        self, complete_summary: Dict[str, Any], connectivity: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Prepare summary statistics for combined pages (C).
+
+        Args:
+            complete_summary: Complete summary data
+            connectivity: Connectivity data
+
+        Returns:
+            Dictionary with combined calculated statistics
+        """
+        # Extract counts with fallback for missing keys
+        left_count = complete_summary.get("left_count", 0)
+        right_count = complete_summary.get("right_count", 0)
+        middle_count = complete_summary.get("middle_count", 0)
+
+        # Calculate total synapses
+        total_synapses = complete_summary.get(
+            "total_post_synapses", 0
+        ) + complete_summary.get("total_pre_synapses", 0)
+
+        # Calculate hemisphere synapse breakdowns
+        right_pre_synapses = complete_summary.get("right_pre_synapses", 0)
+        right_post_synapses = complete_summary.get("right_post_synapses", 0)
+        right_synapses = right_pre_synapses + right_post_synapses
+
+        left_pre_synapses = complete_summary.get("left_pre_synapses", 0)
+        left_post_synapses = complete_summary.get("left_post_synapses", 0)
+        left_synapses = left_pre_synapses + left_post_synapses
+
+        middle_pre_synapses = complete_summary.get("middle_pre_synapses", 0)
+        middle_post_synapses = complete_summary.get("middle_post_synapses", 0)
+        middle_synapses = middle_pre_synapses + middle_post_synapses
+
+        # Calculate averages per neuron for each side
+        right_avg = (right_synapses / right_count) if right_count > 0 else 0
+        left_avg = (left_synapses / left_count) if left_count > 0 else 0
+        middle_avg = (middle_synapses / middle_count) if middle_count > 0 else 0
+
+        # Overall average
+        avg_synapses = complete_summary.get(
+            "avg_post_synapses", 0
+        ) + complete_summary.get("avg_pre_synapses", 0)
+
+        # Calculate connection statistics
+        total_connections = connectivity.get("total_upstream", 0) + connectivity.get(
+            "total_downstream", 0
+        )
+        upstream_connections = connectivity.get("total_upstream", 0)
+        downstream_connections = connectivity.get("total_downstream", 0)
+        avg_connections = connectivity.get("avg_connections", 0)
+        avg_upstream = connectivity.get("avg_upstream", 0)
+        avg_downstream = connectivity.get("avg_downstream", 0)
+
+        return {
+            # Neuron counts by side
+            "left_count": left_count,
+            "right_count": right_count,
+            "middle_count": middle_count,
+            # Total synapses
+            "total_synapses": total_synapses,
+            # Hemisphere synapse totals
+            "right_synapses": right_synapses,
+            "left_synapses": left_synapses,
+            "middle_synapses": middle_synapses,
+            # Individual hemisphere components
+            "right_pre_synapses": right_pre_synapses,
+            "right_post_synapses": right_post_synapses,
+            "left_pre_synapses": left_pre_synapses,
+            "left_post_synapses": left_post_synapses,
+            "middle_pre_synapses": middle_pre_synapses,
+            "middle_post_synapses": middle_post_synapses,
+            # Averages per neuron by side
+            "right_avg": right_avg,
+            "left_avg": left_avg,
+            "middle_avg": middle_avg,
+            "avg_synapses": avg_synapses,
+            # Connection statistics
+            "total_connections": total_connections,
+            "upstream_connections": upstream_connections,
+            "downstream_connections": downstream_connections,
+            "avg_connections": avg_connections,
+            "avg_upstream": avg_upstream,
+            "avg_downstream": avg_downstream,
+        }
