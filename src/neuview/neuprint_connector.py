@@ -1172,9 +1172,9 @@ class NeuPrintConnector:
                             type_soma_data[key]["neurotransmitters"][
                                 neurotransmitter
                             ] = 0
-                        type_soma_data[key]["neurotransmitters"][
-                            neurotransmitter
-                        ] += int(record["weight"])
+                        type_soma_data[key]["neurotransmitters"][neurotransmitter] += (
+                            int(record["weight"])
+                        )
 
                 # Convert to partner list with most common neurotransmitter
                 total_upstream_weight = sum(
@@ -1315,9 +1315,9 @@ class NeuPrintConnector:
                             type_soma_data[key]["neurotransmitters"][
                                 neurotransmitter
                             ] = 0
-                        type_soma_data[key]["neurotransmitters"][
-                            neurotransmitter
-                        ] += int(record["weight"])
+                        type_soma_data[key]["neurotransmitters"][neurotransmitter] += (
+                            int(record["weight"])
+                        )
 
                 # Convert to partner list with most common neurotransmitter
                 total_downstream_weight = sum(

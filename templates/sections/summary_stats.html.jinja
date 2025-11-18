@@ -138,7 +138,6 @@
                             {%- endif -%}
                         </div>
                         <div class="stat-label">Neurotransmitter</div>
-
                         {% if summary.nt_analysis | length > 1 %}
                             {# Show other neurotransmitters #}
                             <div style="font-size: 0.8em; margin-top: 8px; color:#666;">
@@ -192,20 +191,26 @@
                         {% if right_count > 0 %}
                             {% set right_pre = complete_summary.right_pre_synapses if complete_summary.right_pre_synapses is defined else complete_summary.get('right_pre_synapses', 0) %}
                             {% set right_post = complete_summary.right_post_synapses if complete_summary.right_post_synapses is defined else complete_summary.get('right_post_synapses', 0) %}
-                            {% set right_avg = ((right_pre + right_post) / right_count) | round(1) %}
+                            {% set right_avg = ((right_pre + right_post) / right_count) %}
                             Right: {{ right_avg | format_synapse_count | safe }}
                         {% endif %}
                         {% if left_count > 0 %}
                             {% set left_pre = complete_summary.left_pre_synapses if complete_summary.left_pre_synapses is defined else complete_summary.get('left_pre_synapses', 0) %}
                             {% set left_post = complete_summary.left_post_synapses if complete_summary.left_post_synapses is defined else complete_summary.get('left_post_synapses', 0) %}
-                            {% set left_avg = ((left_pre + left_post) / left_count) | round(1) %}
+                            {% set left_avg = ((left_pre + left_post) / left_count) %}
                             {% if right_count > 0 %} | {% endif %}Left: {{ left_avg | format_synapse_count | safe }}
                         {% endif %}
                         {% if middle_count > 0 %}
                             {% set middle_pre = complete_summary.middle_pre_synapses if complete_summary.middle_pre_synapses is defined else complete_summary.get('middle_pre_synapses', 0) %}
                             {% set middle_post = complete_summary.middle_post_synapses if complete_summary.middle_post_synapses is defined else complete_summary.get('middle_post_synapses', 0) %}
-                            {% set middle_avg = ((middle_pre + middle_post) / middle_count) | round(1) %}
+                            {% set middle_avg = ((middle_pre + middle_post) / middle_count) %}
                             {% if left_count > 0 or right_count > 0 %} | {% endif %}Middle: {{ middle_avg | format_synapse_count | safe }}
+                        {% endif %}
+                        {% if right_count > 0 and left_count > 0 %}
+                            <br>
+                            <span title="Log Ratio negative numbers mean more right synapses, positive numbers more left synapses">
+                                log ratio
+                            </span>: {{ "%.2f"|format(log_ratio(left_avg, right_avg)) }}
                         {% endif %}
                     </div>
                     {% endif %}
@@ -226,8 +231,8 @@
                     {% endif %}
 
                     {% if side_neuron_count > 0 %}
-                        {% set side_avg_pre = (side_pre_synapses / side_neuron_count) | round(2) %}
-                        {% set side_avg_post = (side_post_synapses / side_neuron_count) | round(2) %}
+                        {% set side_avg_pre = (side_pre_synapses / side_neuron_count) %}
+                        {% set side_avg_post = (side_post_synapses / side_neuron_count) %}
                         {% set side_avg_total = side_avg_pre + side_avg_post %}
                     {% else %}
                         {% set side_avg_pre = 0 %}
@@ -240,6 +245,12 @@
                     {% if side_avg_pre > 0 or side_avg_post > 0 %}
                     <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
                         Post: {{ side_avg_post | format_synapse_count | safe }} | Pre: {{ side_avg_pre | format_synapse_count | safe }}
+                        {% if side_avg_pre > 0 and side_avg_post > 0 %}
+                            <br>
+                            <span title="Log Ratio negative numbers mean more input (post-synapses), positive numbers more output (pre-synapses)">
+                                log ratio
+                            </span>: {{ "%.2f"|format(log_ratio(side_avg_pre, side_avg_post)) }}
+                        {% endif %}
                     </div>
                     {% endif %}
                 {% endif %}
@@ -259,6 +270,12 @@
                     <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
                         Upstream: {{ avg_up_conn | format_synapse_count | safe }}
                         | Downstream: {{ avg_down_conn | format_synapse_count | safe }}
+                        {% if avg_up_conn > 0 and avg_down_conn > 0%}
+                            <br>
+                            <span title="Log Ratio negative numbers mean more upstream connections, positive numbers more downstream connections">
+                                log ratio
+                            </span>: {{ "%.2f"|format(log_ratio(avg_down_conn, avg_up_conn)) }}
+                        {% endif %}
                     </div>
                     {% endif %}
                 {% else %}
@@ -272,6 +289,12 @@
                     <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
                         Upstream: {{ avg_up_conn | format_synapse_count | safe }}
                         | Downstream: {{ avg_down_conn | format_synapse_count | safe }}
+                        {% if avg_up_conn > 0 and avg_down_conn > 0%}
+                            <br>
+                            <span title="Log Ratio negative numbers mean more upstream connections, positive numbers more downstream connections">
+                                log ratio
+                            </span>: {{ "%.2f"|format(log_ratio(avg_down_conn, avg_up_conn)) }}
+                        {% endif %}
                     </div>
                     {% endif %}
                 {% endif %}
