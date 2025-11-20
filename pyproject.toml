@@ -118,9 +118,6 @@ task = "subset-medium-no-index"
 [[tool.pixi.tasks.subset-medium.depends-on]]
 task = "create-list"
 
-[[tool.pixi.tasks.subset-medium.depends-on]]
-task = "create-scatter"
-
 [tool.pixi.tasks.subset-small-no-index]
 [[tool.pixi.tasks.subset-small-no-index.depends-on]]
 task = "clean-output"
@@ -141,9 +138,6 @@ task = "subset-small-no-index"
 
 [[tool.pixi.tasks.subset-small.depends-on]]
 task = "create-list"
-
-[[tool.pixi.tasks.subset-small.depends-on]]
-task = "create-scatter"
 
 [tool.pixi.tasks.increment-version]
 cmd = "python scripts/increment_version.py"

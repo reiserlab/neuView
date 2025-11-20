@@ -77,10 +77,6 @@ class ScatterplotService:
 
             for region in ["ME", "LO", "LOP"]:
                 points = self._extract_points(plot_data, side=side, region=region)
-                if not points:
-                    raise SystemExit(
-                        f"No points found: ensure values exist for types within {side} {region}."
-                    )
 
                 ctx = self._prepare(
                     self.scatter_config, points, side=side, region=region
