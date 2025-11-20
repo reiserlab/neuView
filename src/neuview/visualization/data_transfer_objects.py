@@ -6,7 +6,8 @@ and reduce method signature complexity in the hexagon grid generator.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Set
+from typing import Dict, List, Optional, Set
+
 from .data_processing.data_structures import ColumnData, SomaSide
 
 
@@ -103,8 +104,9 @@ class RenderingRequest:
     min_val: float
     max_val: float
     thresholds: Dict
-    title: str
-    subtitle: str
+    plot_desc: str
+    neuron_desc: str
+    region_desc: str
     metric_type: str
     soma_side: SomaSide
     output_format: str = "svg"
@@ -201,8 +203,9 @@ def create_rendering_request(
     min_val: float,
     max_val: float,
     thresholds: Dict,
-    title: str,
-    subtitle: str,
+    plot_desc: str,
+    neuron_desc: str,
+    region_desc: str,
     metric_type: str,
     soma_side: SomaSide,
     **kwargs,
@@ -215,8 +218,9 @@ def create_rendering_request(
         min_val: Minimum value for scaling
         max_val: Maximum value for scaling
         thresholds: Threshold values dictionary
-        title: Chart title
-        subtitle: Chart subtitle
+        plot_desc: Type description, e.g. Synapses or Cell count, as shown in the figure
+        neuron_desc: Neuron name description as shown in the figure
+        region_desc: Region name description as shown in the figure
         metric_type: Type of metric being displayed
         soma_side: Side of soma (SomaSide enum)
         **kwargs: Additional optional parameters (including min_max_data)
@@ -233,8 +237,9 @@ def create_rendering_request(
         min_val=min_val,
         max_val=max_val,
         thresholds=thresholds,
-        title=title,
-        subtitle=subtitle,
+        plot_desc=plot_desc,
+        neuron_desc=neuron_desc,
+        region_desc=region_desc,
         metric_type=metric_type,
         soma_side=soma_side,
         **kwargs,

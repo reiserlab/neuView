@@ -7,51 +7,49 @@ and PNG output formats using Cairo for enhanced visualization capabilities.
 
 import logging
 import time
-from typing import List, Dict, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
-from .constants import (
-    METRIC_SYNAPSE_DENSITY,
-    METRIC_CELL_COUNT,
-    TOOLTIP_SYNAPSE_LABEL,
-    TOOLTIP_CELL_LABEL,
-)
+from .color import ColorMapper, ColorPalette
 from .config_manager import EyemapConfiguration
-from .color import ColorPalette, ColorMapper
+from .constants import (
+    METRIC_CELL_COUNT,
+    METRIC_SYNAPSE_DENSITY,
+    TOOLTIP_CELL_LABEL,
+    TOOLTIP_SYNAPSE_LABEL,
+)
 from .coordinate_system import EyemapCoordinateSystem
 from .data_processing import DataProcessor
 from .data_processing.data_structures import (
-    MetricType,
-    SomaSide,
-    ProcessingConfig,
     ColumnStatus,
+    MetricType,
+    ProcessingConfig,
+    SomaSide,
 )
-from .rendering import RenderingManager
 from .data_transfer_objects import (
     GridGenerationRequest,
-    SingleRegionGridRequest,
     GridGenerationResult,
+    SingleRegionGridRequest,
     create_rendering_request,
 )
-from .region_grid_processor import RegionGridProcessorFactory
-from .file_output_manager import FileOutputManagerFactory
+from .dependency_injection import EyemapServiceContainer, get_default_container
 from .exceptions import (
-    EyemapError,
-    ValidationError,
     DataProcessingError,
-    RenderingError,
     ErrorContext,
+    EyemapError,
+    RenderingError,
+    ValidationError,
     safe_operation,
 )
-from .validation import EyemapRequestValidator, EyemapRuntimeValidator
-from .dependency_injection import EyemapServiceContainer, get_default_container
-
+from .file_output_manager import FileOutputManagerFactory
 from .performance import (
+    MemoryOptimizer,
     PerformanceOptimizerFactory,
     get_performance_monitor,
     performance_timer,
 )
-
-from .performance import MemoryOptimizer
+from .region_grid_processor import RegionGridProcessorFactory
+from .rendering import RenderingManager
+from .validation import EyemapRequestValidator, EyemapRuntimeValidator
 
 logger = logging.getLogger(__name__)
 
@@ -423,7 +421,7 @@ class EyemapGenerator:
 
                 # Set up visualization metadata
                 if request.metric_type == METRIC_SYNAPSE_DENSITY:
-                    title = f"{request.region_name} Synapses (All Columns)"
+                    plot_desc = "Synapses (All Columns)"
                     # Handle both string and SomaSide enum inputs
                     if hasattr(request.soma_side, "value"):
                         soma_display = (
@@ -437,9 +435,10 @@ class EyemapGenerator:
                             if request.soma_side
                             else ""
                         )
-                    subtitle = f"{request.neuron_type} ({soma_display})"
+                    neuron_desc = f"{request.region_name} ({soma_display})"
+                    region_desc = f"{request.neuron_type} ({soma_display})"
                 else:  # cell_count
-                    title = f"{request.region_name} Cell Count (All Columns)"
+                    plot_desc = "Cell Count (All Columns)"
                     # Handle both string and SomaSide enum inputs
                     if hasattr(request.soma_side, "value"):
                         soma_display = (
@@ -453,9 +452,14 @@ class EyemapGenerator:
                             if request.soma_side
                             else ""
                         )
-                    subtitle = f"{request.neuron_type} ({soma_display})"
+                    neuron_desc = f"{request.region_name} ({soma_display})"
+                    region_desc = f"{request.neuron_type} ({soma_display})"
 
-                grid_metadata = {"title": title, "subtitle": subtitle}
+                grid_metadata = {
+                    "plot_desc": plot_desc,
+                    "neuron_desc": neuron_desc,
+                    "region_desc": region_desc,
+                }
 
                 # Create processing configuration
                 processing_config = safe_operation(
@@ -686,8 +690,9 @@ class EyemapGenerator:
                     min_val=value_range["min_value"],
                     max_val=value_range["max_value"],
                     thresholds=request.thresholds or {},
-                    title=grid_metadata["title"],
-                    subtitle=grid_metadata["subtitle"],
+                    plot_desc=grid_metadata["plot_desc"],
+                    neuron_desc=grid_metadata["neuron_desc"],
+                    region_desc=grid_metadata["region_desc"],
                     metric_type=request.metric_type,
                     soma_side=request.soma_side or SomaSide.RIGHT,
                     min_max_data=request.min_max_data,
@@ -728,8 +733,9 @@ class EyemapGenerator:
 
                 # Update rendering manager configuration with rendering parameters
                 updated_config = self.rendering_manager.config.copy(
-                    title=rendering_request.title,
-                    subtitle=rendering_request.subtitle,
+                    plot_desc=rendering_request.plot_desc,
+                    neuron_desc=rendering_request.neuron_desc,
+                    region_desc=rendering_request.region_desc,
                     metric_type=rendering_request.metric_type,
                     soma_side=soma_side_enum,
                     thresholds=rendering_request.thresholds,
@@ -766,7 +772,7 @@ class EyemapGenerator:
                     layout_config=layout_config,
                     legend_config=legend_config,
                     save_to_file=rendering_request.save_to_file,
-                    filename=f"{rendering_request.title}_{rendering_request.subtitle}"
+                    filename=f"{rendering_request.plot_desc}_{rendering_request.neuron_desc}_{rendering_request.region_desc}"
                     if rendering_request.save_to_file
                     else None,
                 )
