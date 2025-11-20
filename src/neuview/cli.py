@@ -10,6 +10,7 @@ import click
 import sys
 from typing import Optional
 import logging
+from pathlib import Path
 
 from .commands import (
     GeneratePageCommand,
@@ -17,6 +18,7 @@ from .commands import (
     FillQueueCommand,
     PopCommand,
     CreateListCommand,
+    CreateScatterCommand,
 )
 from .services import ServiceContainer
 from .services.neuron_discovery_service import InspectNeuronTypeCommand
@@ -373,6 +375,31 @@ def create_list(ctx, output_dir: Optional[str], minify: bool):
             sys.exit(1)
 
     asyncio.run(run_create_list())
+
+
+@main.command("create-scatter")
+@click.pass_context
+def create_scatter(ctx):
+    """Generate three SVG scatterplots of spatial metrics for optic lobe types."""
+    services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
+
+    async def run_create_scatter():
+
+        await services.scatter_service.create_scatterplots()
+
+        # Print the three scatterplot files that should have been created
+        scfg = services.scatter_service.scatter_config
+        scatter_dir = Path(scfg.scatter_dir)
+        fname = scfg.scatter_fname
+
+        for region in ("ME", "LO", "LOP"):
+            file_path = scatter_dir / f"{region}_{fname}"
+            if file_path.exists():
+                click.echo(f"✅ Created: {file_path}")
+            else:
+                click.echo(f"⚠️ Expected but not found: {file_path}", err=True)
+
+    asyncio.run(run_create_scatter())
 
 
 if __name__ == "__main__":

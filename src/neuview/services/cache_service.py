@@ -171,6 +171,9 @@ class CacheService:
 
                         # Filter ROIs by threshold and clean names (same logic as IndexService)
                         threshold = self.threshold_service.get_roi_filtering_threshold()
+                        threshold_high = self.threshold_service.get_roi_filtering_threshold(
+                            profile_name="roi_filtering_strict"
+                            )
                         cleaned_roi_summary = []
                         seen_names = set()
 
@@ -189,8 +192,7 @@ class CacheService:
                                 )
                                 if clean_name not in seen_names:
                                     seen_names.add(clean_name)
-                                    cleaned_roi_summary.append(
-                                        {
+                                    entry = {
                                             "name": clean_name,
                                             "pre_percentage": roi["pre_percentage"],
                                             "post_percentage": roi["post_percentage"],
@@ -198,7 +200,14 @@ class CacheService:
                                             "pre_synapses": roi["pre"],
                                             "post_synapses": roi["post"],
                                         }
-                                    )
+                                    if clean_name in ["ME", "LO", "LOP"]:
+                                        if (roi["pre_percentage"] >= threshold_high and (roi["pre"]+roi["post"])>50
+                                            or roi["post_percentage"] >= threshold_high and (roi["pre"]+roi["post"])>50):
+                                            include_in_scatter = 1
+                                        else:
+                                            include_in_scatter = 0
+                                        entry["incl_scatter"] = include_in_scatter
+                                    cleaned_roi_summary.append(entry)
 
                         roi_summary = cleaned_roi_summary
 
@@ -228,8 +237,9 @@ class CacheService:
 
                         parent_rois = sorted(list(parent_rois_set))
 
-                        # Calculate spatial metrics for columns if column ROIs are present
-                        # Currently these are calculated from both L and R instances
+                        # Calculate spatial metrics for columns if column ROIs are present.
+                        # These metrics are calculated using synapses within the ROI from
+                        # both L and R instances.
                         for side in ["L", "R"]:
                             for region in ["ME", "LO", "LOP"]:
                                 str_pattern = f"{region}_{side}_col_"

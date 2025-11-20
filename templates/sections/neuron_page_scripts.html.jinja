@@ -2,7 +2,7 @@
 {% include "sections/global_scripts.html.jinja" %}
 
 {# -- Load external static JavaScript functions -- #}
-<script src="{{ '../' if is_neuron_page else '' }}static/js/neuron-page.js"></script>
+<script src="{{ '../' if is_neuron_page else '' }}static/js/neuron-page.js" defer></script>
 
 <script>
 $(document).ready(function() {
@@ -209,6 +209,12 @@ $(document).ready(function() {
 
     {#- Initialize all tooltip functionality -#}
     initializeAllTooltips();
+
+    window.addEventListener('load', function () {
+        const needle = String({{ neuron_data.type | tojson }} || '').trim();
+        highlightNeuronAllPlots(needle);
+    });
+    
 });
 
 document.addEventListener('DOMContentLoaded', () => {

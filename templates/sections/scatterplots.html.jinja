@@ -1,0 +1,16 @@
+<!-- Scatterplots Row -->
+<div class="row">
+    {% for region in ['ME','LO','LOP'] %}
+    <div class="col-md-4 col-sm-6 col-xs-12">
+      <div class="scatterplot-container">
+
+        {% set svg_path = '../../output/scatter/' ~ region ~ '_scatter.svg' %}
+
+        <object data="{{ svg_path }}#highlight={{ neuron_data.type | urlencode }}" type="image/svg+xml" class="grid-image">
+          <img src="{{ svg_path }}" alt="Scatterplot of spatial metrics for {{ region }}" />
+        </object>
+
+      </div>
+    </div>
+    {% endfor %}
+</div>
