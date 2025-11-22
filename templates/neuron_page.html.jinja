@@ -11,7 +11,11 @@
 
 {% block content %}
 
-    {% include "sections/summary_stats.html.jinja" %}
+    {% if soma_side == 'all' or soma_side == 'combined' %}
+        {% include "sections/summary_stats_combined.html.jinja" %}
+    {% else %}
+        {% include "sections/summary_stats_side.html.jinja" %}
+    {% endif %}
 
     {# {% include "sections/analysis_details.html.jinja" %} #}
 
