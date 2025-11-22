@@ -40,10 +40,10 @@
                 <div class="stat-number">{{ summary_stats.total_connections | format_synapse_count | safe }}</div>
                 <div class="stat-label">Connections</div>
                 <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
-                    Upstream: {{ summary_stats.upstream_connections | format_synapse_count | safe }} | Downstream: {{ summary_stats.downstream_connections | format_synapse_count | safe }}
-                    <br><span title="Log Ratio negative numbers mean more upstream connections, positive numbers more downstream connections">
+                    Right: {{ connectivity.total_right | format_synapse_count | safe }} | Left: {{ connectivity.total_left | format_synapse_count | safe }}
+                    <br><span title="log Ratio, negative numbers lean right, positive left">
                         log ratio
-                    </span>: {{ "%.2f"|format(log_ratio(summary_stats.downstream_connections, summary_stats.upstream_connections)) }}
+                    </span>: {{ "%.2f"|format(log_ratio(connectivity.total_left, connectivity.total_right)) }}
                 </div>
             </div>
         </div>
