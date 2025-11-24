@@ -464,6 +464,7 @@ class CNSAdapter(DatasetAdapter):
         )
         return int(up_total), int(down_total)
 
+
 class HemibrainAdapter(DatasetAdapter):
     """Adapter for Hemibrain dataset."""
 
@@ -529,7 +530,6 @@ class HemibrainAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
-    
     def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
         """Get connection counts from Hemibrain dataset."""
         up_total = (
@@ -543,6 +543,7 @@ class HemibrainAdapter(DatasetAdapter):
             else 0
         )
         return int(up_total), int(down_total)
+
 
 class OpticLobeAdapter(DatasetAdapter):
     """Adapter for Optic Lobe dataset."""
@@ -621,7 +622,7 @@ class OpticLobeAdapter(DatasetAdapter):
             else 0
         )
         return int(pre_total), int(post_total)
-    
+
     def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
         """Get connection counts from Optic Lobe dataset."""
         up_total = (
@@ -772,7 +773,7 @@ class FafbAdapter(DatasetAdapter):
             else 0
         )
         return int(pre_total), int(post_total)
-    
+
     def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
         """Get connection counts from FAFB dataset."""
         up_total = (

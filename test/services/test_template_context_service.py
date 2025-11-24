@@ -5,7 +5,7 @@ Tests the preparation of template context data, specifically focusing on
 the summary statistics calculation methods that were moved from templates.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
