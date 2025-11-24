@@ -212,8 +212,15 @@ class TestPrepareSideSpecificStats:
             summary, complete_summary, connectivity, "invalid"
         )
 
-        # Should return empty dict for invalid side
-        assert result == {}
+        # Should return statistics with zero values for invalid side
+        assert result["side_neuron_count"] == 0
+        assert result["side_pre_synapses"] == 0
+        assert result["side_post_synapses"] == 0
+        assert result["side_avg_pre"] == 0.0
+        assert result["side_avg_post"] == 0.0
+        assert result["side_avg_total"] == 0.0
+        assert result["total_synapses"] == 0
+        assert result["total_connections"] == 0
 
 
 class TestPrepareCombinedStats:
