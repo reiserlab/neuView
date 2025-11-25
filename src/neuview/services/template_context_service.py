@@ -478,6 +478,12 @@ class TemplateContextService:
         avg_upstream = connectivity.get("avg_upstream", 0)
         avg_downstream = connectivity.get("avg_downstream", 0)
 
+        # Calculate hemisphere-specific connection statistics
+        total_left = connectivity.get("total_left", 0)
+        total_right = connectivity.get("total_right", 0)
+        left_avg_connections = (total_left / left_count) if left_count > 0 else 0
+        right_avg_connections = (total_right / right_count) if right_count > 0 else 0
+
         return {
             # Neuron counts by side
             "left_count": left_count,
@@ -508,4 +514,7 @@ class TemplateContextService:
             "avg_connections": avg_connections,
             "avg_upstream": avg_upstream,
             "avg_downstream": avg_downstream,
+            # Hemisphere-specific connection averages
+            "left_avg_connections": left_avg_connections,
+            "right_avg_connections": right_avg_connections,
         }

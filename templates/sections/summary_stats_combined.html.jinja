@@ -125,15 +125,19 @@
                 {# -- C page: Show average across all neurons with per-side breakdown -- #}
                 <div class="stat-number">{{ summary_stats.avg_connections | format_synapse_count | safe }}</div>
                 <div class="stat-label">Connections per Neuron</div>
-                {% if summary_stats.avg_upstream > 0 or summary_stats.avg_downstream > 0%}
+                {% if summary_stats.left_count > 0 or summary_stats.right_count > 0 %}
                 <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
-                    Upstream: {{ summary_stats.avg_upstream | format_synapse_count | safe }}
-                    | Downstream: {{ summary_stats.avg_downstream | format_synapse_count | safe }}
-                    {% if summary_stats.avg_upstream > 0 and summary_stats.avg_downstream > 0%}
+                    {% if summary_stats.right_count > 0 %}
+                        Right: {{ summary_stats.right_avg_connections | format_synapse_count | safe }}
+                    {% endif %}
+                    {% if summary_stats.left_count > 0 %}
+                        {% if summary_stats.right_count > 0 %} | {% endif %}Left: {{ summary_stats.left_avg_connections | format_synapse_count | safe }}
+                    {% endif %}
+                    {% if summary_stats.right_count > 0 and summary_stats.left_count > 0 %}
                         <br>
-                        <span title="Log Ratio negative numbers mean more upstream connections, positive numbers more downstream connections">
+                        <span title="Log Ratio negative numbers mean more right connections, positive numbers more left connections">
                             log ratio
-                        </span>: {{ "%.2f"|format(log_ratio(summary_stats.avg_downstream, summary_stats.avg_upstream)) }}
+                        </span>: {{ "%.2f"|format(log_ratio(summary_stats.left_avg_connections, summary_stats.right_avg_connections)) }}
                     {% endif %}
                 </div>
                 {% endif %}
