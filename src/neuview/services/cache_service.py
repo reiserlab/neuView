@@ -171,9 +171,6 @@ class CacheService:
 
                         # Filter ROIs by threshold and clean names (same logic as IndexService)
                         threshold = self.threshold_service.get_roi_filtering_threshold()
-                        threshold_high = self.threshold_service.get_roi_filtering_threshold(
-                            profile_name="roi_filtering_strict"
-                            )
                         cleaned_roi_summary = []
                         seen_names = set()
 
@@ -200,13 +197,6 @@ class CacheService:
                                             "pre_synapses": roi["pre"],
                                             "post_synapses": roi["post"],
                                         }
-                                    if clean_name in ["ME", "LO", "LOP"]:
-                                        if (roi["pre_percentage"] >= threshold_high and (roi["pre"]+roi["post"])>50
-                                            or roi["post_percentage"] >= threshold_high and (roi["pre"]+roi["post"])>50):
-                                            include_in_scatter = 1
-                                        else:
-                                            include_in_scatter = 0
-                                        entry["incl_scatter"] = include_in_scatter
                                     cleaned_roi_summary.append(entry)
 
                         roi_summary = cleaned_roi_summary

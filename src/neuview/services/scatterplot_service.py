@@ -169,34 +169,9 @@ class ScatterplotService:
                 ):
                     sm = cache_data.spatial_metrics
 
-                # ---- roi_summary source (for incl_scatter) ----
-                roi_source = {}
-                if hasattr(cache_data, "roi_summary") and cache_data.roi_summary:
-                    rs = cache_data.roi_summary
-                    if isinstance(rs, dict):
-                        roi_source = rs
-                    elif isinstance(rs, list):
-                        # turn [{'name': 'ME', ...}, ...] into {'ME': {...}, ...} if applicable
-                        tmp = {}
-                        for item in rs:
-                            if isinstance(item, dict) and "name" in item:
-                                nm = item["name"]
-                                tmp[nm] = item
-                        roi_source = tmp
-
-                # ---- write incl_scatter into each side/region dict ----
-                # If you only want it under "both", change sides_to_update = ("both",)
+                # ---- set incl_scatter ----
                 sides_to_update = ("both", "L", "R")
                 for region in ("ME", "LO", "LOP"):
-                    incl_val = None
-                    if isinstance(roi_source, dict) and region in roi_source:
-                        region_src = roi_source[region]
-                        if (
-                            isinstance(region_src, dict)
-                            and "incl_scatter" in region_src
-                        ):
-                            incl_val = region_src["incl_scatter"]
-
                     for side_key in sides_to_update:
                         if isinstance(sm, dict):
                             if side_key not in sm or sm[side_key] is None:
@@ -206,9 +181,11 @@ class ScatterplotService:
                                 side_dict[region] = {}
                             region_dict = side_dict[region]
                             if isinstance(region_dict, dict):
-                                region_dict["incl_scatter"] = incl_val
+                                if region_dict["cols_innervated"]>0:
+                                    region_dict["incl_scatter"] = 1
+                                else:
+                                    region_dict["incl_scatter"] = None
 
-                # finally attach sm
                 entry["spatial_metrics"] = sm
 
                 logger.debug(f"Used cached data for {neuron_name}")
