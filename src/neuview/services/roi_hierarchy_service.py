@@ -4,10 +4,10 @@ ROI Hierarchy Service
 Handles ROI hierarchy caching, parent lookup logic, and ROI data management.
 """
 
-import logging
-from pathlib import Path
 import json
+import logging
 import time
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,7 @@ class ROIHierarchyService:
 
             if not self._roi_hierarchy_cache:
                 # Cache miss - fetch from database
-                logger.warning(
-                    "ROI hierarchy not found in cache, fetching from database"
-                )
+                logger.info("ROI hierarchy not found in cache, fetching from database")
                 try:
                     # Use connector's cached ROI hierarchy method
                     self._roi_hierarchy_cache = connector._get_roi_hierarchy()

@@ -9,8 +9,9 @@ layer analysis including central brain, AME, and LA regions.
 
 import logging
 import re
+from typing import Any, Dict, List, Optional, Tuple
+
 import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class LayerAnalysisService:
         Args:
             roi_counts_df: DataFrame with ROI count data
             neurons_df: DataFrame with neuron data
-            soma_side: Side of soma (left/right)
+            soma_side: Side of soma ('left', 'right', 'middle', or 'combined')
             neuron_type: Name of the neuron type
             connector: Database connector for additional queries
 
@@ -143,13 +144,14 @@ class LayerAnalysisService:
         """Filter ROI data to include only ROIs from the ipsilateral optic lobe
         side to the soma side. Use the ipsilateral side to ensure that the layer
          table data matches the hexagonal eyemap plots."""
-        if soma_side == "combined":
+        if soma_side in ["combined", "middle"]:
+            # For combined and middle soma sides, include all layer ROIs
             layer_rois_filtered = layer_rois
         else:
             side_key = {"left": "_L_", "right": "_R_"}
             if soma_side not in side_key:
                 raise ValueError(
-                    f"Unsupported soma_side: {soma_side!r} (use 'left', 'right', or 'combined')"
+                    f"Unsupported soma_side: {soma_side!r} (use 'left', 'right', 'middle', or 'combined')"
                 )
             pattern = side_key[soma_side]
             mask = (
