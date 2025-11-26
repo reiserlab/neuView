@@ -190,13 +190,13 @@ class CacheService:
                                 if clean_name not in seen_names:
                                     seen_names.add(clean_name)
                                     entry = {
-                                            "name": clean_name,
-                                            "pre_percentage": roi["pre_percentage"],
-                                            "post_percentage": roi["post_percentage"],
-                                            "total_synapses": roi["pre"] + roi["post"],
-                                            "pre_synapses": roi["pre"],
-                                            "post_synapses": roi["post"],
-                                        }
+                                        "name": clean_name,
+                                        "pre_percentage": roi["pre_percentage"],
+                                        "post_percentage": roi["post_percentage"],
+                                        "total_synapses": roi["pre"] + roi["post"],
+                                        "pre_synapses": roi["pre"],
+                                        "post_synapses": roi["post"],
+                                    }
                                     cleaned_roi_summary.append(entry)
 
                         roi_summary = cleaned_roi_summary

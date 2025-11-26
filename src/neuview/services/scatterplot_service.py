@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 from math import ceil, floor, log10, isfinite
 from ..result import Err
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader
 from ..config import Config
 from ..utils import get_templates_dir
 
@@ -24,7 +24,6 @@ class ScatterplotService:
     """Service for creating scatterplots with markers for all available neuron types."""
 
     def __init__(self):
-
         self.config = Config.load("config.yaml")
         self.scatter_config = ScatterConfig()
 
@@ -112,7 +111,6 @@ class ScatterplotService:
         names = neuron_types.keys() if isinstance(neuron_types, dict) else neuron_types
 
         for neuron_name in names:
-
             cache_data = (
                 cached_data_lazy.get(neuron_name)
                 if cached_data_lazy is not None
@@ -181,7 +179,7 @@ class ScatterplotService:
                                 side_dict[region] = {}
                             region_dict = side_dict[region]
                             if isinstance(region_dict, dict):
-                                if region_dict["cols_innervated"]>0:
+                                if region_dict["cols_innervated"] > 0:
                                     region_dict["incl_scatter"] = 1
                                 else:
                                     region_dict["incl_scatter"] = None
@@ -218,7 +216,6 @@ class ScatterplotService:
         """
         pts = []
         for rec in plot_data:
-
             incl = (
                 rec.get("spatial_metrics", {})
                 .get(side, {})
@@ -329,8 +326,9 @@ class ScatterplotService:
         crng = (cmax - cmin) if isfinite(cmax - cmin) and (cmax - cmin) > 0 else 1.0
 
         # Inner drawing range to create a visible gap to axes
-        inner_x0, inner_x1 = config.axis_gap_px, max(
-            config.axis_gap_px, config.plot_w - config.axis_gap_px
+        inner_x0, inner_x1 = (
+            config.axis_gap_px,
+            max(config.axis_gap_px, config.plot_w - config.axis_gap_px),
         )
         inner_y0, inner_y1 = (
             config.plot_h - config.axis_gap_px,

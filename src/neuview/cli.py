@@ -18,7 +18,6 @@ from .commands import (
     FillQueueCommand,
     PopCommand,
     CreateListCommand,
-    CreateScatterCommand,
 )
 from .services import ServiceContainer
 from .services.neuron_discovery_service import InspectNeuronTypeCommand
@@ -384,7 +383,6 @@ def create_scatter(ctx):
     services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
 
     async def run_create_scatter():
-
         await services.scatter_service.create_scatterplots()
 
         # Print the three scatterplot files that should have been created
