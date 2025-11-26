@@ -7,10 +7,11 @@ providing them as structured data for template rendering.
 
 import json
 import logging
-import requests
-from typing import Dict, List, Tuple, Any, Optional
-from pathlib import Path
 import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,11 @@ class ROIDataService:
             response.raise_for_status()
 
             data = response.json()
+
+            # Validate that we have actual data before caching
+            if not data or (isinstance(data, dict) and not any(data.values())):
+                logger.warning(f"Received empty data from {url}, not caching")
+                raise ValueError("Empty data received from GCS endpoint")
 
             # Cache the result
             try:
