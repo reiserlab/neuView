@@ -79,6 +79,14 @@ class ROIDataService:
                         return data
                 except (json.JSONDecodeError, IOError) as e:
                     logger.warning(f"Failed to load cache file {cache_filename}: {e}")
+                    # Delete corrupted cache file to force refetch
+                    try:
+                        cache_file.unlink()
+                        logger.debug(f"Deleted corrupted cache file: {cache_filename}")
+                    except OSError as unlink_error:
+                        logger.warning(
+                            f"Failed to delete corrupted cache file {cache_filename}: {unlink_error}"
+                        )
 
         # Fetch from GCS
         logger.info(f"Fetching ROI data from: {url}")
@@ -115,8 +123,20 @@ class ROIDataService:
                             f"Using stale cache for {cache_filename} due to fetch failure"
                         )
                         return data
-                except (json.JSONDecodeError, IOError):
-                    pass
+                except (json.JSONDecodeError, IOError) as fallback_error:
+                    logger.warning(
+                        f"Stale cache file is also corrupted for {cache_filename}: {fallback_error}"
+                    )
+                    # Delete corrupted cache file
+                    try:
+                        cache_file.unlink()
+                        logger.debug(
+                            f"Deleted corrupted stale cache file: {cache_filename}"
+                        )
+                    except OSError as unlink_error:
+                        logger.warning(
+                            f"Failed to delete corrupted stale cache file {cache_filename}: {unlink_error}"
+                        )
 
             raise
 
