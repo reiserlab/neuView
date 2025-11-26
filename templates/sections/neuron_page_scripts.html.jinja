@@ -117,7 +117,7 @@ $(document).ready(function() {
         "buttons": [{
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
-                filename: 'roi_innervation_{{ neuron_data.type }}',
+                filename: 'upstream_partners_input_{{ neuron_data.type }}',
                 title: 'Upstream Partner Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
                 attr: {title: 'Download currently visible upstream partner data as CSV'}
@@ -169,7 +169,7 @@ $(document).ready(function() {
         "buttons": [{
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
-                filename: 'roi_innervation_{{ neuron_data.type }}',
+                filename: 'downstream_partners_output_{{ neuron_data.type }}',
                 title: 'Downstream Partner Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
                 attr: {title: 'Download currently visible downstream partner data as CSV'}
