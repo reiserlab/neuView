@@ -5,11 +5,11 @@ Generates various index and helper pages including JavaScript search files,
 README documentation, help pages, and landing pages.
 """
 
-import logging
 import json
-from pathlib import Path
+import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -23,43 +23,73 @@ class IndexGeneratorService:
     async def generate_neuron_search_js(
         self, output_dir: Path, neuron_data: List[Dict[str, Any]], generation_time
     ) -> Optional[str]:
-        """Generate the neuron-search.js file with embedded neuron types data."""
+        """
+        Generate neuron search files: neuron-search.js, neurons.json, and neurons.js fallback.
+
+        Returns:
+            Path to the generated neuron-search.js file, or None if generation failed
+        """
         # Prepare neuron types data for JavaScript
         neuron_types_for_js = []
 
         for neuron in neuron_data:
+            # Helper function to remove "types/" prefix from URLs
+            def strip_types_prefix(url):
+                if url and url.startswith("types/"):
+                    return url[6:]  # Remove "types/" prefix
+                return url
+
             # Create an entry with the neuron name and available URLs
             neuron_entry = {
                 "name": neuron["name"],
                 "urls": {},
-                "synonyms": neuron.get("synonyms", ""),
-                "flywire_types": neuron.get("flywire_types", ""),
             }
 
-            # Add available URLs for this neuron type
+            # Add available URLs for this neuron type (without "types/" prefix)
             if neuron.get("combined_url") or neuron.get("both_url"):
-                combined_url = neuron.get("combined_url")
-                neuron_entry["urls"]["combined"] = combined_url
+                combined_url = neuron.get("combined_url") or neuron.get("both_url")
+                neuron_entry["urls"]["combined"] = strip_types_prefix(combined_url)
             if neuron["left_url"]:
-                neuron_entry["urls"]["left"] = neuron["left_url"]
+                neuron_entry["urls"]["left"] = strip_types_prefix(neuron["left_url"])
             if neuron["right_url"]:
-                neuron_entry["urls"]["right"] = neuron["right_url"]
+                neuron_entry["urls"]["right"] = strip_types_prefix(neuron["right_url"])
             if neuron["middle_url"]:
-                neuron_entry["urls"]["middle"] = neuron["middle_url"]
-
-            # Set primary URL (prefer 'combined' if available, otherwise first available)
-            if neuron.get("combined_url") or neuron.get("both_url"):
-                neuron_entry["primary_url"] = neuron.get("combined_url") or neuron.get(
-                    "both_url"
+                neuron_entry["urls"]["middle"] = strip_types_prefix(
+                    neuron["middle_url"]
                 )
-            elif neuron["left_url"]:
-                neuron_entry["primary_url"] = neuron["left_url"]
-            elif neuron["right_url"]:
-                neuron_entry["primary_url"] = neuron["right_url"]
-            elif neuron["middle_url"]:
-                neuron_entry["primary_url"] = neuron["middle_url"]
-            else:
-                neuron_entry["primary_url"] = f"{neuron['name']}.html"  # fallback
+
+            # Build types dictionary with flywire and synonyms
+            types_dict = {}
+
+            # Add FlyWire types
+            if neuron.get("flywire_types"):
+                flywire_value = neuron.get("flywire_types")
+                # Split by comma if multiple values
+                if isinstance(flywire_value, str):
+                    flywire_list = [
+                        t.strip() for t in flywire_value.split(",") if t.strip()
+                    ]
+                    if flywire_list:
+                        types_dict["flywire"] = flywire_list
+                elif isinstance(flywire_value, list):
+                    types_dict["flywire"] = flywire_value
+
+            # Add synonyms
+            if neuron.get("synonyms"):
+                synonyms_value = neuron.get("synonyms")
+                # Parse synonyms (format: "Author Year: name; Author Year: name")
+                if isinstance(synonyms_value, str):
+                    synonym_list = [
+                        s.strip() for s in synonyms_value.split(";") if s.strip()
+                    ]
+                    if synonym_list:
+                        types_dict["synonyms"] = synonym_list
+                elif isinstance(synonyms_value, list):
+                    types_dict["synonyms"] = synonyms_value
+
+            # Only add types field if it has content
+            if types_dict:
+                neuron_entry["types"] = types_dict
 
             neuron_types_for_js.append(neuron_entry)
 
@@ -69,30 +99,88 @@ class IndexGeneratorService:
         # Extract just the names for the simple search functionality
         neuron_names = [neuron["name"] for neuron in neuron_types_for_js]
 
-        # Prepare template data
-        js_template_data = {
-            "neuron_types_json": json.dumps(neuron_names, indent=2),
-            "neuron_types_data_json": json.dumps(neuron_types_for_js, indent=2),
-            "generation_timestamp": generation_time.strftime("%Y-%m-%d %H:%M:%S")
+        # Prepare timestamp
+        timestamp = (
+            generation_time.strftime("%Y-%m-%d %H:%M:%S")
             if generation_time
-            else datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "neuron_types": neuron_types_for_js,
+            else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        # Prepare data structure for JSON and JS fallback
+        data_structure = {
+            "names": neuron_names,
+            "neurons": neuron_types_for_js,
+            "metadata": {
+                "generated": timestamp,
+                "total_types": len(neuron_names),
+                "version": "2.0",
+            },
         }
 
-        # Load and render the neuron-search.js template
-        js_template = self.page_generator.env.get_template(
-            "static/js/neuron-search.js.template.jinja"
-        )
-        js_content = js_template.render(js_template_data)
+        # Ensure data directory exists
+        data_dir = output_dir / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Ensure static/js directory exists
-        js_dir = output_dir / "static" / "js"
-        js_dir.mkdir(parents=True, exist_ok=True)
+        # 1. Generate neurons.json (for external services & web servers)
+        try:
+            json_path = data_dir / "neurons.json"
+            json_path.write_text(
+                json.dumps(data_structure, separators=(",", ":"), ensure_ascii=False),
+                encoding="utf-8",
+            )
+            logger.info(f"Generated neurons.json at {json_path}")
+        except Exception as e:
+            logger.error(f"Failed to generate neurons.json: {e}")
 
-        # Write the neuron-search.js file
-        js_path = js_dir / "neuron-search.js"
-        js_path.write_text(js_content, encoding="utf-8")
-        return str(js_path)
+        # 2. Generate neurons.js (fallback for CORS-restricted environments)
+        try:
+            js_fallback_template = self.page_generator.env.get_template(
+                "data/neurons.js.template.jinja"
+            )
+            js_fallback_content = js_fallback_template.render(
+                {
+                    "neuron_data": data_structure,
+                    "neuron_data_json": json.dumps(
+                        data_structure, indent=2, ensure_ascii=False
+                    ),
+                    "generation_timestamp": timestamp,
+                }
+            )
+
+            js_fallback_path = data_dir / "neurons.js"
+            js_fallback_path.write_text(js_fallback_content, encoding="utf-8")
+            logger.info(f"Generated neurons.js fallback at {js_fallback_path}")
+        except Exception as e:
+            logger.error(f"Failed to generate neurons.js: {e}")
+
+        # 3. Generate neuron-search.js (search logic only, no embedded data)
+        try:
+            # Prepare template data
+            js_template_data = {
+                "neuron_types_json": json.dumps(neuron_names, indent=2),
+                "neuron_types_data_json": json.dumps(neuron_types_for_js, indent=2),
+                "generation_timestamp": timestamp,
+                "neuron_types": neuron_types_for_js,
+            }
+
+            # Load and render the neuron-search.js template
+            js_template = self.page_generator.env.get_template(
+                "static/js/neuron-search.js.template.jinja"
+            )
+            js_content = js_template.render(js_template_data)
+
+            # Ensure static/js directory exists
+            js_dir = output_dir / "static" / "js"
+            js_dir.mkdir(parents=True, exist_ok=True)
+
+            # Write the neuron-search.js file
+            js_path = js_dir / "neuron-search.js"
+            js_path.write_text(js_content, encoding="utf-8")
+            logger.info(f"Generated neuron-search.js at {js_path}")
+            return str(js_path)
+        except Exception as e:
+            logger.error(f"Failed to generate neuron-search.js: {e}")
+            return None
 
     async def generate_readme(
         self, output_dir: Path, template_data: Dict[str, Any]
