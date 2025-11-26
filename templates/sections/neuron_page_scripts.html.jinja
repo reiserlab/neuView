@@ -4,6 +4,9 @@
 {# -- Load external static JavaScript functions -- #}
 <script src="{{ '../' if is_neuron_page else '' }}static/js/neuron-page.js" defer></script>
 
+{# -- Iframe communication bridge for cross-origin parent-child communication -- #}
+<script src="{{ '../' if is_neuron_page else '' }}static/js/iframe-bridge.js"></script>
+
 <script>
 $(document).ready(function() {
     {# Pass neuroglancer data to JavaScript #}
