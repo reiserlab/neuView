@@ -1,0 +1,225 @@
+<svg
+  width="{{ width }}"
+  height="{{ height }}"
+  viewBox="0 0 {{ width }} {{ height }}"
+  xmlns="http://www.w3.org/2000/svg"
+>
+<defs>
+  <style>
+    .axis-line { stroke:#444; stroke-width:1; shape-rendering:crispEdges; }
+    .tick-mark { stroke:#444; stroke-width:1; shape-rendering:crispEdges; }
+    .tick-label { fill:#444; font-size:14px; font-family:Helvetica, Arial, sans-serif; }
+    .title { fill:#777; font-size:26px; font-family:Arial, sans-serif; }
+    .subtitle { fill:#777; font-size:11px; font-family:Arial, sans-serif; }
+    .axis-label { fill:#333; font-size:16px; font-family:Helvetica, Arial, sans-serif; }
+    .dot { cursor:pointer; opacity:0.9; transition:opacity 0.15s; }
+    .dot:hover { opacity:1; }
+    .tooltip-box { pointer-events:none; transition:opacity 0.15s; }
+    .tooltip-bg { fill:#ebebeb;; rx:3; ry:3; }
+    .tooltip-text { fill:#000; font-size:12px; font-family:Helvetica, Arial, sans-serif; }
+    .legend-label { fill:#555; font-size:14px; font-family:Helvetica, Arial, sans-serif; }
+    .legend-title { fill:#555; font-size:14px; font-family:Helvetica, Arial, sans-serif; }
+    .guide { stroke: #bcbcbc; fill: none; }
+  </style>
+</defs>
+
+<script type="text/ecmascript">
+//<![CDATA[
+
+function showTip(evt) {
+  const svg = evt.currentTarget.ownerSVGElement;
+  const tip = svg.getElementById("tooltip");
+  const g = evt.currentTarget;
+  g.parentNode.appendChild(g)
+  const c = g.querySelector("circle");
+
+  const baseR = parseFloat(c.getAttribute("data-base-r") || "4");
+  c.setAttribute("r", String(baseR * 3));
+
+  const baseSW = parseFloat(
+    c.getAttribute("data-base-sw") ||
+    (getComputedStyle(c).strokeWidth || "0.5")
+  );
+  c.setAttribute("stroke-width", String(baseSW * 3));
+
+  const text = c.getAttribute("data-title") || "";
+  if (!text) return;
+
+  const lines = text.split("\n").filter(s => s.trim().length);
+  const tg = svg.getElementById("tooltip-text-group");
+  while (tg.firstChild) tg.removeChild(tg.firstChild);
+
+  const pad = 6, lh = 14;
+  let maxW = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", pad);
+    t.setAttribute("y", pad + lh + i * lh);
+    t.setAttribute("class", "tooltip-text");
+    t.textContent = lines[i];
+    tg.appendChild(t);
+    const approx = lines[i].length * 6.5;
+    if (approx > maxW) maxW = approx;
+  }
+
+  const rect = svg.getElementById("tooltip-bg");
+  const boxW = 350;
+  const boxH = lines.length * lh + pad * 2;
+  rect.setAttribute("width", boxW);
+  rect.setAttribute("height", boxH);
+
+  const bounds = svg.getBoundingClientRect();
+  let x = evt.clientX - bounds.left + 10;
+  let y = evt.clientY - bounds.top  - boxH - 10;
+  if (x + boxW > {{ width }}) x = {{ width }} - boxW - 5;
+  if (y < 0) y = evt.clientY - bounds.top + 10;
+  if (x < 0) x = 5;
+
+  tip.setAttribute("transform", "translate(" + x + "," + y + ")");
+  tip.setAttribute("opacity", "1");
+
+  const tEl = g.querySelector("title");
+  if (tEl) tEl.textContent = "";
+}
+
+function hideTip(evt) {
+  const svg = evt.currentTarget.ownerSVGElement;
+  const tip = svg.getElementById("tooltip");
+  tip.setAttribute("opacity", "0");
+
+  const g = evt.currentTarget;
+  const c = g.querySelector("circle");
+  const baseR = parseFloat(c.getAttribute("data-base-r") || "4");
+  const baseSW = parseFloat(
+    c.getAttribute("data-base-sw") ||
+    (getComputedStyle(c).strokeWidth || "0.5")
+  );
+
+  c.setAttribute("r", String(baseR));
+  c.setAttribute("stroke-width", String(baseSW)); 
+
+  const text = c.getAttribute("data-title") || "";
+  const tEl = g.querySelector("title");
+  if (tEl) tEl.textContent = text;
+}
+
+function highlightByName(name) {
+  var needle = String(name || '').trim().toLowerCase();
+  if (!needle) return false;
+
+  var markers = Array.prototype.slice.call(document.querySelectorAll('g.marker'));
+  for (var i = 0; i < markers.length; i++) {
+    var g = markers[i];
+    var c = g.querySelector('circle');
+    if (!c) continue;
+
+    var dataTitle = (c.getAttribute('data-title') || '');
+    var haystack  = (dataTitle).trim().toLowerCase();
+    if (!haystack || haystack.indexOf(needle) === -1) continue;
+
+    // Synthesize a minimal event-like object for your existing showTip
+    var rect = c.getBoundingClientRect();
+    showTip({
+      currentTarget: g,
+      clientX: rect.left + rect.width  / 2,
+      clientY: rect.top  + rect.height / 2
+    });
+    return true; // highlight first match
+  }
+  return false;
+}
+
+function getHighlightParam() {
+  // Support either #highlight=Mi18 or ?highlight=Mi18
+  var hash = location.hash ? location.hash.slice(1) : '';
+  var search = location.search ? location.search.slice(1) : '';
+  var params = new URLSearchParams(hash || search);
+  return params.get('highlight');
+}
+
+// Auto-run when this SVG document is ready
+function initDefaultHighlight() {
+  var target = getHighlightParam();
+  if (target) highlightByName(target);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDefaultHighlight);
+} else {
+  initDefaultHighlight();
+}
+//]]>
+</script>
+
+<!-- Plot area -->
+<g id="scatter"
+   transform="translate({{ margin_left }}, {{ margin_top }})">
+
+  <!-- axis baselines (kept) -->
+  <line class="axis-line" x1="0" y1="{{ plot_h }}" x2="{{ plot_w }}" y2="{{ plot_h }}" />
+  <line class="axis-line" x1="0" y1="0" x2="0" y2="{{ plot_h }}" />
+
+  <!-- ticks (X) — outward -->
+  {% for tick in xtick_data %}
+  <line class="tick-mark" x1="{{ tick.px }}" y1="{{ plot_h }}" x2="{{ tick.px }}" y2="{{ plot_h + 6 }}" />
+  <text class="tick-label" x="{{ tick.px }}" y="{{ plot_h + 18 }}" text-anchor="middle">
+    {{ tick.t }}
+  </text>
+  {% endfor %}
+
+  <!-- ticks (Y) — outward -->
+  {% for tick in ytick_data %}
+  <line class="tick-mark" x1="0" y1="{{ tick.py }}" x2="-6" y2="{{ tick.py }}" />
+  <text class="tick-label" x="-8" y="{{ tick.py + 4 }}" text-anchor="end">
+    {{ tick.t }}
+  </text>
+  {% endfor %}
+
+  <!-- light grey guide lines (under points) -->
+  {% for g in guide_lines %}
+  <line class="guide" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}" stroke-width="{{ g.w }}" />
+  {% endfor %}
+
+  <!-- markers -->
+  {% for p in points %}
+  <g class="marker" transform="translate({{ p.sx }}, {{ p.sy }})" onmouseover="showTip(event)" onmouseout="hideTip(event)">
+    <circle r="{{ p.r }}" data-base-r="{{ p.r }}" class="dot" data-title="{{ p.tooltip | e }}" fill="{{ p.color }}" stroke="#000" stroke-width="{{ p.line_width }}" data-base-sw="{{ p.line_width }}" data-type="{{ p.type }}">
+      <title>{{ p.tooltip }}</title>
+    </circle>
+  </g>
+  {% endfor %}
+</g>
+
+<!-- Axis labels -->
+<text class="axis-label" text-anchor="middle" x="{{ margin_left + plot_w/2 }}" y="{{ margin_top + plot_h + 40 }}">{{ xlabel }}</text>
+<text class="axis-label" text-anchor="middle" transform="translate(20, {{ margin_top + plot_h/2 }}) rotate(-90)">{{ ylabel }}</text>
+
+<text class="title" text-anchor="end" dominant-baseline="hanging"
+      x="{{ plot_w + 70 }}" y="{{ 60 }}">
+  {{ title }}
+</text>
+
+<!-- Legend -->
+  <g transform="translate({{ margin_left + plot_w + 12 }}, {{ margin_top }})">
+    <defs>
+      <linearGradient id="covGradV" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="rgb(180,0,0)" />
+        <stop offset="100%" stop-color="rgb(255,255,255)" />
+      </linearGradient>
+    </defs>
+    <text class="legend-title" text-anchor="middle"
+          transform="translate(30, {{ plot_h/2 }}) rotate(-90)">
+      {{legend_label}}
+    </text>
+    <rect x="0" y="0" width="{{ legend_w }}" height="{{ plot_h }}" fill="url(#covGradV)" stroke="#ccc" stroke-width="0.5" />
+    <!-- max at top, min at bottom -->
+    <text class="legend-label" x="16" y="10" text-anchor="start">>{{ '%.0f' % cmax }}</text>
+    <text class="legend-label" x="16" y="{{ plot_h - 2 }}" text-anchor="start">{{ '%.0f' % cmin }}</text>
+  </g>
+
+<!-- tooltip (top layer) -->
+<g id="tooltip" class="tooltip-box" opacity="0">
+  <rect id="tooltip-bg" class="tooltip-bg" />
+  <g id="tooltip-text-group"></g>
+</g>
+</svg>

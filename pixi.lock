@@ -3914,7 +3914,7 @@ packages:
 - pypi: ./
   name: neuview
   version: 2.7.8
-  sha256: bfc0280b3ec67e8c4a06c8b2a299b16500a8ea1a0daa451ff21cc9de46b1d1ae
+  sha256: c9de8e60d4ca6476925f68d4177e281dc711227c62f9386175a91acce56ee5f5
   requires_dist:
   - click>=8.0.0
   - jinja2>=3.0.0
