@@ -7,12 +7,11 @@ database re-queries.
 """
 
 import json
-import time
-from pathlib import Path
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, asdict
 import logging
-
+import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +49,16 @@ class NeuronTypeCacheData:
     soma_neuromere: Optional[str] = None
     truman_hl: Optional[str] = None
     spatial_metrics: Optional[Dict[str, Dict[str, Dict[str, float]]]] = None
+    # Side-specific synapse counts
+    side_synapse_stats: Optional[Dict[str, Dict[str, int]]] = None
+    # Side-specific connection counts
+    side_connection_stats: Optional[Dict[str, Dict[str, int]]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        import numpy as np
         from typing import Any
+
+        import numpy as np
 
         def convert_numpy_types(obj: Any) -> Any:
             """Convert numpy types to native Python types for JSON serialization."""

@@ -5,23 +5,24 @@ This service handles all caching operations for neuron data, including
 saving neuron type data and ROI hierarchy to persistent cache.
 """
 
-import json
 import hashlib
-import time
+import json
 import logging
+import time
 from pathlib import Path
-from typing import Optional, Tuple, Dict
+from typing import Dict, Optional, Tuple
+
 import pandas as pd
 
+from ..commands import GeneratePageCommand
 from ..models import (
+    BodyId,
+    Neuron,
     NeuronCollection,
     NeuronTypeName,
-    Neuron,
-    BodyId,
-    SynapseCount,
     SomaSide,
+    SynapseCount,
 )
-from ..commands import GeneratePageCommand
 
 logger = logging.getLogger(__name__)
 
@@ -292,6 +293,46 @@ class CacheService:
                 "avg_total": avg_pre + avg_post,
             }
 
+            # Extract side-specific synapse stats
+            side_synapse_stats = {
+                "left": {
+                    "pre": summary_data.get("left_pre_synapses", 0),
+                    "post": summary_data.get("left_post_synapses", 0),
+                    "total": summary_data.get("left_total_synapses", 0),
+                },
+                "right": {
+                    "pre": summary_data.get("right_pre_synapses", 0),
+                    "post": summary_data.get("right_post_synapses", 0),
+                    "total": summary_data.get("right_total_synapses", 0),
+                },
+                "middle": {
+                    "pre": summary_data.get("middle_pre_synapses", 0),
+                    "post": summary_data.get("middle_post_synapses", 0),
+                    "total": summary_data.get("middle_pre_synapses", 0)
+                    + summary_data.get("middle_post_synapses", 0),
+                },
+            }
+
+            # Extract side-specific connection stats
+            side_connection_stats = {
+                "left": {
+                    "upstream": summary_data.get("left_upstream_connections", 0),
+                    "downstream": summary_data.get("left_downstream_connections", 0),
+                    "total": summary_data.get("left_total_connections", 0),
+                },
+                "right": {
+                    "upstream": summary_data.get("right_upstream_connections", 0),
+                    "downstream": summary_data.get("right_downstream_connections", 0),
+                    "total": summary_data.get("right_total_connections", 0),
+                },
+                "middle": {
+                    "upstream": summary_data.get("middle_upstream_connections", 0),
+                    "downstream": summary_data.get("middle_downstream_connections", 0),
+                    "total": summary_data.get("middle_upstream_connections", 0)
+                    + summary_data.get("middle_downstream_connections", 0),
+                },
+            }
+
             # Extract available soma sides
             soma_sides_available = []
             if soma_side_counts["left"] > 0:
@@ -337,6 +378,8 @@ class CacheService:
                 soma_neuromere=summary_data.get("somaNeuromere"),
                 truman_hl=summary_data.get("trumanHl"),
                 spatial_metrics=spatial_metrics,
+                side_synapse_stats=side_synapse_stats,
+                side_connection_stats=side_connection_stats,
             )
 
             # Save to cache
