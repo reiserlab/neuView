@@ -135,7 +135,7 @@ class IndexGeneratorService:
         # 2. Generate neurons.js (fallback for CORS-restricted environments)
         try:
             js_fallback_template = self.page_generator.env.get_template(
-                "data/neurons.js.template.jinja"
+                "data/neurons.js.jinja"
             )
             js_fallback_content = js_fallback_template.render(
                 {
@@ -165,7 +165,7 @@ class IndexGeneratorService:
 
             # Load and render the neuron-search.js template
             js_template = self.page_generator.env.get_template(
-                "static/js/neuron-search.js.template.jinja"
+                "static/js/neuron-search.js.jinja"
             )
             js_content = js_template.render(js_template_data)
 
@@ -188,9 +188,7 @@ class IndexGeneratorService:
         """Generate README.md documentation for the generated website."""
         try:
             # Load the README template
-            readme_template = self.page_generator.env.get_template(
-                "README_template.md.jinja"
-            )
+            readme_template = self.page_generator.env.get_template("README.md.jinja")
             readme_content = readme_template.render(template_data)
 
             # Write the README.md file

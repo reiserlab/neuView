@@ -5,11 +5,12 @@ This service manages the generation of neuron-search.js files with embedded
 neuron type data for client-side search functionality.
 """
 
-from pathlib import Path
 import json
 import logging
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from jinja2 import Environment
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ class NeuronSearchService:
             neuron_types = self._get_neuron_types()
 
             # Load the template
-            template_path = "static/js/neuron-search.js.template.jinja"
+            template_path = "static/js/neuron-search.js.jinja"
 
             if not self._template_exists(template_path):
                 logger.warning(f"Neuron search template not found: {template_path}")
@@ -263,7 +264,7 @@ class NeuronSearchService:
                 context.update(template_vars)
 
             # Load and render template
-            template_path = "static/js/neuron-search.js.template.jinja"
+            template_path = "static/js/neuron-search.js.jinja"
 
             if not self._template_exists(template_path):
                 logger.error(f"Template not found: {template_path}")
