@@ -368,10 +368,7 @@ Advanced filters activated by clicking colored tags within neuron type cards:
 - Check for browser console errors
 - Try refreshing the page
 
-**Performance Considerations**:
-- Large datasets (>1000 neuron types) may experience slower filter response
-- Consider using basic filters first to reduce the working set
-- Text search is debounced to prevent excessive filtering during typing
+
 
 ##### Best Practices
 
@@ -613,7 +610,6 @@ If `output/.log/missing_citations.log` doesn't exist:
 Citation logs automatically rotate when they reach 1MB:
 - Up to 5 backup files are kept (`.log.1`, `.log.2`, etc.)
 - Check for repeated missing citations that should be added to `citations.csv`
-- Old backup files can be safely deleted if disk space is needed
 
 ### Common Issues
 
@@ -790,7 +786,7 @@ For detailed command options and examples, see the developer guide.
 
 1. **Use Caching**: Cache provides up to 97.9% speed improvement on subsequent runs
 2. **Process in Batches**: Use queue system for multiple neuron types
-3. **Clean Cache Periodically**: Remove old cache files with `rm -rf output/.cache/` when needed
+3. **Clean Cache Periodically**: Remove cache files with `rm -rf output/.cache/` when needed
 4. **Monitor Progress**: Use verbose mode for long-running operations
 5. **Optimize Configuration**: Adjust cache settings based on available memory
 

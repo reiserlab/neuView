@@ -543,16 +543,7 @@ All caches are organized under the output directory to maintain consistency. Sta
 
 **Container Integration Pattern**: Register cache-aware services with output directory injection. See `roi_data_service_factory()` in `PageGenerationContainer` for reference implementation.
 
-#### Migration Considerations
 
-When updating cache locations:
-
-1. **Automatic Migration**: Cache files regenerate automatically from sources
-2. **No Data Loss**: Old cache files can be safely removed
-3. **Backward Compatibility**: Fallback paths maintain functionality
-4. **Clean Transition**: Remove old cache files after verification
-
-**Migration Pattern**: Services support automatic migration from previous cache locations. The ROI Data Service demonstrates output directory adoption with automatic cleanup.
 
 ## Development Patterns
 
@@ -1692,28 +1683,11 @@ Combined pages showed separate ROI entries:
 
 ### Dynamic ROI Data System
 
-The Dynamic ROI Data System replaces hardcoded ROI arrays in Neuroglancer templates with live data fetched from Google Cloud Storage, ensuring ROI information is always up-to-date.
+The Dynamic ROI Data System fetches live ROI data from Google Cloud Storage, ensuring ROI information is always up-to-date.
 
-#### Problem Statement
+#### Architecture
 
-Previously, the `neuroglancer-url-generator.js.jinja` template contained hardcoded arrays:
-
-```javascript
-// Hardcoded ROI data (maintenance burden)
-const ROI_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ...];
-const ALL_ROIS = ["AL(L)", "AL(R)", "AME(L)", "AME(R)", ...];
-const VNC_IDS = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, ...];
-const VNC_NAMES = ["CV-posterior", "LegNp(T1)(L)", ...];
-```
-
-This approach had significant drawbacks:
-- **Manual Maintenance**: Required manual updates when ROI data changed
-- **Data Inconsistency**: Risk of hardcoded data becoming stale
-- **Version Mismatch**: Potential conflicts between different dataset versions
-
-#### Solution Architecture
-
-The system now uses a `ROIDataService` that:
+The system uses a `ROIDataService` that:
 
 1. **Fetches Live Data**: Retrieves ROI segment properties from GCS endpoints
 2. **Caches Locally**: Stores data in `output/.cache/roi_data/` for performance
@@ -1814,54 +1788,15 @@ for key, value in roi_data.items():
     self.env.globals[key] = value
 ```
 
-#### Jinja Template Processing Fix
+#### ROI ID Collision Handling
 
-A critical bug was resolved where Jinja placeholders weren't being processed correctly.
+The system handles ROI ID collisions between brain and VNC datasets.
 
-**Problem**: The entire JavaScript template was wrapped in `{% raw %}` tags, preventing Jinja expression processing:
-
-```javascript
-// Template variables (processed)
-const NEUROGLANCER_BASE_URL = "{{ neuroglancer_base_url }}";
-
-{% raw %}
-// Everything here is literal text - Jinja expressions NOT processed
-const ROI_IDS = {{ roi_ids|tojson }};  // ❌ Not processed!
-{% endraw %}
-```
-
-**Solution**: Moved ROI data declarations outside the `{% raw %}` block:
-
-```javascript
-// Template variables (processed by Jinja)
-const NEUROGLANCER_BASE_URL = "{{ neuroglancer_base_url }}";
-const ROI_IDS = {{ roi_ids|tojson }};
-const ALL_ROIS = {{ all_rois|tojson }};
-
-{% raw %}
-// Static JavaScript code (not processed by Jinja)
-// ... rest of JavaScript
-{% endraw %}
-```
-
-#### ROI ID Collision Fix
-
-A sophisticated fix was implemented to resolve ROI ID collisions between brain and VNC datasets.
-
-**Problem**: ROI segment IDs overlap between datasets:
+ROI segment IDs can overlap between datasets:
 - ID 7: "AOTU(L)" in brain dataset, "LegNp(T2)(L)" in VNC dataset
-- Clicking brain ROI checkboxes incorrectly toggled VNC layers
+- Without context tracking, clicking brain ROI checkboxes could toggle VNC layers
 
-**Root Cause**: Layer assignment logic used only ID values without dataset context:
-
-```javascript
-// Problematic code
-if (VNC_IDS.includes(parseInt(roiId))) {
-    // Always assigned to VNC layer, even for brain ROIs with same ID
-}
-```
-
-**Solution**: Introduced context tracking with `selectedRoiContexts` map:
+**Implementation**: The system uses context tracking with `selectedRoiContexts` map:
 
 ```javascript
 // Context-aware ROI management
@@ -2238,7 +2173,7 @@ This enables DEBUG level logging which provides:
 - Performance timing information for some operations
 - Citation tracking and missing citation warnings
 
-**Note:** The environment variables `NEUVIEW_DEBUG` and `NEUVIEW_PROFILE` are documented but not currently implemented. Use the `--verbose` flag instead.
+
 
 ### Logging Architecture
 
