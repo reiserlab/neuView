@@ -14,16 +14,16 @@
     .axis-label { fill:#333; font-size:16px; font-family:Helvetica, Arial, sans-serif; }
     .dot { cursor:pointer; opacity:0.9; transition:opacity 0.15s; }
     .dot:hover { opacity:1; }
-    .tooltip-box { pointer-events:none; transition:opacity 0.15s; }
-    .tooltip-bg { fill:#ebebeb;; rx:3; ry:3; }
-    .tooltip-text { fill:#000; font-size:12px; font-family:Helvetica, Arial, sans-serif; }
+    .tooltip-box { pointer-events: none; transition: opacity 0.2s; z-index: 9999; }
+    .tooltip-rect { fill:rgba(0, 0, 0, 0.8); rx:3; ry:3; }
+    .tooltip-text { fill: white; font-family: Helvetica, Arial, 'Liberation Sans', 'Nimbus Sans', 'DejaVu Sans', sans-serif; font-size: 14px; }
     .legend-label { fill:#555; font-size:14px; font-family:Helvetica, Arial, sans-serif; }
     .legend-title { fill:#555; font-size:14px; font-family:Helvetica, Arial, sans-serif; }
     .guide { stroke: #bcbcbc; fill: none; }
   </style>
 </defs>
 
-<script type="text/ecmascript">
+<script>
 //<![CDATA[
 
 function showTip(evt) {
@@ -45,16 +45,17 @@ function showTip(evt) {
   const text = c.getAttribute("data-title") || "";
   if (!text) return;
 
-  const lines = text.split("\n").filter(s => s.trim().length);
+  const lines = text.split("\\n").filter(s => s.trim().length);
   const tg = svg.getElementById("tooltip-text-group");
   while (tg.firstChild) tg.removeChild(tg.firstChild);
 
   const pad = 6, lh = 14;
   let maxW = 0;
+
   for (let i = 0; i < lines.length; i++) {
     const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
     t.setAttribute("x", pad);
-    t.setAttribute("y", pad + lh + i * lh);
+    t.setAttribute("y", pad + lh + (i * lh));
     t.setAttribute("class", "tooltip-text");
     t.textContent = lines[i];
     tg.appendChild(t);
@@ -62,8 +63,8 @@ function showTip(evt) {
     if (approx > maxW) maxW = approx;
   }
 
-  const rect = svg.getElementById("tooltip-bg");
-  const boxW = 350;
+  const rect = svg.getElementById("tooltip-rect");
+  const boxW = Math.max(maxW + pad * 2, 100);
   const boxH = lines.length * lh + pad * 2;
   rect.setAttribute("width", boxW);
   rect.setAttribute("height", boxH);
@@ -184,7 +185,6 @@ if (document.readyState === 'loading') {
   {% for p in points %}
   <g class="marker" transform="translate({{ p.sx }}, {{ p.sy }})" onmouseover="showTip(event)" onmouseout="hideTip(event)">
     <circle r="{{ p.r }}" data-base-r="{{ p.r }}" class="dot" data-title="{{ p.tooltip | e }}" fill="{{ p.color }}" stroke="#000" stroke-width="{{ p.line_width }}" data-base-sw="{{ p.line_width }}" data-type="{{ p.type }}">
-      <title>{{ p.tooltip }}</title>
     </circle>
   </g>
   {% endfor %}
@@ -219,7 +219,7 @@ if (document.readyState === 'loading') {
 
 <!-- tooltip (top layer) -->
 <g id="tooltip" class="tooltip-box" opacity="0">
-  <rect id="tooltip-bg" class="tooltip-bg" />
+  <rect id="tooltip-rect" class="tooltip-rect" />
   <g id="tooltip-text-group"></g>
 </g>
 </svg>

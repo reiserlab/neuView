@@ -78,7 +78,7 @@ class ScatterplotService:
                 points = self._extract_points(plot_data, side=side, region=region)
 
                 ctx = self._prepare(
-                    self.scatter_config, points, side=side, region=region
+                    self.scatter_config, points, region=region
                 )
 
                 template_dir = get_templates_dir()
@@ -227,7 +227,7 @@ class ScatterplotService:
             # Pass threshold for syn % and syn #.
             if incl == 1:
                 name = rec.get("name", "unknown")
-                x = rec.get("total_count")
+                x = int(rec.get("total_count")/2) # Halve cell count to estimate neuron count per eye.
                 y = (
                     rec.get("spatial_metrics", {})
                     .get(side, {})
@@ -284,7 +284,6 @@ class ScatterplotService:
         self,
         config,
         points,
-        side=None,
         region=None,
     ):
         """Compute pixel positions for an SVG scatter plot (color by coverage)."""
@@ -295,29 +294,10 @@ class ScatterplotService:
         ymin = min(p["y"] for p in points)
         ymax = max(p["y"] for p in points)
 
-        # expand bounds slightly so dots don't sit on the frame (keep >0)
-        pad_x = xmin * 0.05
-        pad_y = ymin * 0.08
-        xmin = max(1e-12, xmin - pad_x)
-        ymin = max(1e-12, ymin - pad_y)
-        xmax *= 1.05
-        ymax *= 1.08
-
-        lxmin, lxmax = log10(xmin), log10(xmax)
-        lymin, lymax = log10(ymin), log10(ymax)
-        dx = lxmax - lxmin
-        dy = lymax - lymin
-
-        if dx > dy:
-            # expand Y range to match X span (around geometric center)
-            cy = (lymin + lymax) / 2.0
-            lymin, lymax = cy - dx / 2.0, cy + dx / 2.0
-            ymin, ymax = 10**lymin, 10**lymax
-        elif dy > dx:
-            # expand X range to match Y span (around geometric center)
-            cx = (lxmin + lxmax) / 2.0
-            lxmin, lxmax = cx - dy / 2.0, cx + dy / 2.0
-            xmin, xmax = 10**lxmin, 10**lxmax
+        xmin = 1
+        ymin = 1 
+        xmax = 1000
+        ymax = 1000
 
         # coverage color scaling with 98th percentile clipping
         coverages = [p["coverage"] for p in points]
@@ -352,9 +332,9 @@ class ScatterplotService:
             p["line_width"] = config.marker_line_width
             p["type"] = f"{p['name']}"
             p["tooltip"] = (
-                f"{p['name']} - {region}({side}):\n"
-                f" {int(p['x'])} cells:\n"
-                f" cell_size: {p['y']:.2f}\n"
+                f"{p['name']}\\n"
+                f" {int(p["x"])} cells\\n"
+                f" cell size: {p['y']:.2f}\\n"
                 f" coverage: {p['coverage']:.2f}"
             )
 
@@ -395,15 +375,15 @@ class ScatterplotService:
                 }
             )
 
-        # Precompute pixel tick positions for Jinja (avoid math inside template)
-        def log_pos_x(t):
-            return self._scale_log10(t, xmin, xmax, inner_x0, inner_x1)
+        xtick_data = [
+            {"t": t, "px": sx(t)}
+            for t in config.xticks
+        ]
 
-        def log_pos_y(t):
-            return self._scale_log10(t, ymin, ymax, inner_y0, inner_y1)
-
-        xtick_data = [{"t": t, "px": log_pos_x(t)} for t in config.xticks]
-        ytick_data = [{"t": t, "py": log_pos_y(t)} for t in config.yticks]
+        ytick_data = [
+            {"t": t, "py": sy(t)}
+            for t in config.yticks
+        ]
 
         ctx = self._prepare_template_variables(
             points, guide_lines, config, region, xtick_data, ytick_data, cmin, cmax
@@ -446,14 +426,6 @@ class ScatterplotService:
         }
 
         return template_vars
-
-    def _log_ticks(self, vmin, vmax):
-        """Ticks for a log10 axis between (vmin, vmax), inclusive."""
-        if vmin <= 0 or vmax <= 0 or vmin >= vmax:
-            return []
-        lo = floor(log10(vmin))
-        hi = ceil(log10(vmax))
-        return [10**e for e in range(lo, hi + 1)]
 
     def _scale_log10(self, v, vmin, vmax, a, b):
         """Log10 scaling to pixels."""

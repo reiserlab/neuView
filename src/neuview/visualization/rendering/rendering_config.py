@@ -203,9 +203,9 @@ class ScatterConfig:
 
     # Content configuration
     title: str = ""
-    xlabel: str = "Population size (no. cells per type)"
-    ylabel: str = "Cell size (no. columns per cell)"
-    legend_label: str = "Coverage factor (cells per column)"
+    xlabel: str = "Population size (cells per type per eye)"
+    ylabel: str = "Cell size (median columns per cell)"
+    legend_label: str = "Coverage factor (mean cells per column)"
 
     # Data configuration
     min_max_data: Optional[Dict[str, Any]] = None
