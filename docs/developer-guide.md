@@ -645,7 +645,7 @@ End-to-end tests that verify component interactions and real-world scenarios.
 - Integration tests: `pixi run integration-test` (comprehensive testing)
 - All tests: `pixi run test` (complete test suite)
 - Coverage reports: `pixi run test-coverage`
-- Verbose output: Add `-verbose` suffix to any test command
+- Verbose output: Add `--verbose` suffix to any test command
 
 **Selective execution supports targeting specific files, classes, or methods using pytest syntax.**
 
@@ -656,7 +656,6 @@ End-to-end tests that verify component interactions and real-world scenarios.
 - `test_male_cns_integration.py` - Integration tests for end-to-end scenarios
 - `services/` - Service-specific test modules
 - `visualization/` - Visualization component tests
-- `fixtures/` - Test data and fixture files
 
 ### Naming Conventions
 
@@ -682,30 +681,6 @@ End-to-end tests that verify component interactions and real-world scenarios.
 - Integration tests use secure token injection for NeuPrint access
 - Parallel execution for efficient CI pipeline
 
-### Test Data and Fixtures
-
-#### Unit Test Data
-- Hardcoded test values for predictable behavior
-- Use of mock objects for external dependencies
-- Parameterized tests for multiple similar scenarios
-
-#### Integration Test Data
-- Temporary configuration files created during test execution
-- Real project configuration files when available
-- Cleanup of temporary resources after tests
-
-### Dataset Alias Testing
-
-**Dataset Alias Testing**: Special focus on testing dataset alias functionality with comprehensive test cases for versioned aliases. See `test_male_cns_versioned_alias_resolution()` and `test_end_to_end_male_cns_workflow()` in test files for reference implementations.
-
-### Debugging Failed Tests
-
-#### Unit Test Failures
-Run specific failing tests with verbose output using pytest selection syntax. Check test markers to understand test categorization.
-
-#### Integration Test Failures
-Verify environment setup, token configuration, and run tests with verbose debugging and traceback options to diagnose integration test issues.
-
 ### Adding New Tests
 
 When adding new features:
@@ -716,13 +691,55 @@ When adding new features:
 4. **Follow naming conventions**
 5. **Ensure proper cleanup** of resources in integration tests
 
-### Test Data Factory
+### Test Fixtures
 
-**TestDataFactory** (`test/fixtures/test_data_factory.py`):
-- Centralized test data creation for consistent testing
-- Key methods: `create_neuron_data()`, `create_connectivity_data()`
-- Provides standardized test data structures for neuron and connectivity testing
-- Parameterizable factory methods for different test scenarios
+neuView uses inline pytest fixtures defined within individual test files rather than a centralized factory pattern.
+
+**Fixture Pattern** (defined in test files):
+- Unit tests: Use `@pytest.fixture` with `unittest.mock.Mock` objects
+- Integration tests: Use temporary config files and real database connections
+- Test-specific fixtures: Defined inline for clarity and simplicity
+
+**Example Fixture** (`test/services/test_neuron_selection_service.py`):
+```python
+@pytest.fixture
+def selection_service():
+    """Create NeuronSelectionService instance."""
+    mock_config = Mock()
+    return NeuronSelectionService(mock_config)
+
+@pytest.fixture
+def mock_connector():
+    """Create mock connector for testing."""
+    connector = Mock()
+    connector.dataset_adapter = Mock()
+    connector.dataset_adapter.dataset_info = Mock()
+    return connector
+```
+
+**Example Mock Data** (`test/services/test_soma_detection_service.py`):
+```python
+@pytest.fixture
+def mock_query_result_bilateral():
+    """Mock DataFrame result for bilateral neuron type."""
+    mock_result = MagicMock()
+    mock_result.empty = False
+    mock_result.iloc = [
+        {"leftCount": 10, "rightCount": 8, "middleCount": 0, "totalCount": 18}
+    ]
+    return mock_result
+```
+
+**Test Data Strategies:**
+- **Unit tests**: Use `unittest.mock.Mock` and `MagicMock` for fast, isolated testing
+- **Integration tests**: Connect to real NeuPrint database or use temporary config files
+- **Config objects**: Use `Config.create_minimal_for_testing()` for test configurations
+
+**Benefits:**
+- Simple and maintainable (no central dependency)
+- Test data visible next to tests that use it
+- Easy to modify fixtures for specific test needs
+- Minimal boilerplate and coupling between test files
 
 ### Script Management
 
@@ -2034,15 +2051,6 @@ The filtering implementation can be tested with:
 - Visual feedback verification through DOM element counting
 - Console logging for debugging filter behavior
 
-#### Future Enhancements
-
-Planned improvements:
-1. **Filter Combinations**: Allow synonym AND Flywire filters simultaneously
-2. **Filter Persistence**: Save filter state in URL parameters
-3. **Advanced Search**: Boolean operators for complex queries
-4. **Performance**: Virtual scrolling for large datasets
-
-
 #### CV Calculation
 
 **CV Implementation** (`src/neuview/services/partner_analysis_service.py`):
@@ -2083,45 +2091,6 @@ Planned improvements:
 - `test_cv_combination()` - Validates weighted average calculation for L/R entry combinations
 - Comprehensive test cases covering edge cases and statistical accuracy
 - Assertion-based validation for CV calculation correctness
-
-### Neuroglancer Integration Fixes
-
-#### Problem
-Neuroglancer JavaScript errors due to placeholder mismatches:
-
-**Problem**: Neuroglancer JavaScript errors due to placeholder type mismatches with expected array format.
-
-#### Solution
-**Template Variable Correction** (`src/neuview/services/neuroglancer_js_service.py`):
-- Correct placeholder types in template generation
-- Empty array initialization instead of string placeholders
-- Proper JSON array format for Neuroglancer compatibility
-
-#### Flexible Dataset Layer Detection
-
-**Multi-Dataset Layer Detection** (`templates/static/js/neuroglancer-url-generator.js.jinja`):
-- Enhanced layer detection logic for multiple dataset types
-- Flexible segmentation layer identification by type and properties
-- Support for both CNS ("cns-seg") and FAFB ("flywire-fafb:v783b") layer names
-
-### HTML Tooltip System Implementation
-
-Rich tooltips for enhanced user experience:
-
-#### Basic Structure
-
-**HTML Tooltip Structure** (`templates/sections/tooltips.html.jinja`):
-- Rich HTML content containers with formatted text, lists, and styling
-- Tooltip content wrapper with trigger elements
-- Flexible content structure supporting headings, paragraphs, and lists
-
-#### JavaScript Implementation
-
-**Tooltip JavaScript** (`templates/static/js/tooltip-system.js`):
-- `initializeHtmlTooltips()` - Sets up event listeners for tooltip elements
-- `positionTooltip()` - Dynamic positioning with screen boundary detection
-- Mouseenter/mouseleave event handling for show/hide behavior
-- Automatic positioning adjustment to prevent off-screen display
 
 ## Troubleshooting
 

@@ -52,7 +52,7 @@ Get up and running with neuView in minutes:
 **Option 1: Environment File (Recommended with pixi)**
 **Authentication Methods**:
 1. **Environment file**: Run `pixi run setup-env`, then edit `.env` with your token
-2. **Environment variable**: `export NEUPRINT_APPLICATION_CREDENTIALS="your-token-here"`
+2. **Environment variable**: `export NEUPRINT_TOKEN="your-token-here"`
 
 **Getting Your Token**:
 1. Visit [neuprint.janelia.org](https://neuprint.janelia.org/account)
@@ -213,7 +213,7 @@ Get detailed information about processing:
 
 **Verbose Mode Commands**:
 - Enable verbose output: `pixi run neuview --verbose generate -n Dm4`
-- Enable debug mode: Set `NEUVIEW_DEBUG=1` then run neuview commands
+- Enable debug mode: Use the `--verbose` flag for detailed logging
 
 ## Generated Website Features
 
@@ -619,7 +619,7 @@ Citation logs automatically rotate when they reach 1MB:
 
 **Authentication Problems**
 **Connection Troubleshooting Commands**:
-- Verify token: `echo $NEUPRINT_APPLICATION_CREDENTIALS`
+- Verify token: `echo $NEUPRINT_TOKEN`
 - Test connection: `pixi run neuview test-connection`
 - Verbose connection test: `pixi run neuview --verbose test-connection`
 
@@ -633,7 +633,7 @@ Citation logs automatically rotate when they reach 1MB:
 **Performance Issue Commands**:
 - Check output directory for cached files: `ls -la output/.cache/`
 - Clear corrupted cache: `rm -rf output/.cache/`
-- Enable performance monitoring: Set `NEUVIEW_PROFILE=1`
+- Enable performance monitoring: Use `--verbose` flag for detailed operation logs
 
 **Missing Output**
 **Missing Output Troubleshooting**:
@@ -670,7 +670,7 @@ For FAFB datasets:
 
 Enable detailed troubleshooting:
 
-**Debug Mode Setup**: Set `NEUVIEW_DEBUG=1` and `NEUVIEW_PROFILE=1`, then run `pixi run neuview --verbose generate -n Dm4`
+**Debug Mode Setup**: Run `pixi run neuview --verbose generate -n Dm4`
 
 This provides:
 - Detailed operation logging
@@ -749,7 +749,42 @@ html:
 
 ### Command Reference
 
-Available commands include `generate` for creating neuron type pages, `create-list` for generating index pages, `fill-queue` for creating queue entries, `pop` for processing queue files, `inspect` for examining neuron types, and `test-connection` for verifying NeuPrint access. All commands are run with the `pixi run neuview` prefix.
+neuView provides a comprehensive command-line interface. All commands are run with the `pixi run neuview` prefix.
+
+#### Available Commands
+
+**`generate`** - Generate HTML pages for neuron types
+- Options: `--neuron-type`, `--output-dir`, `--image-format`, `--embed/--no-embed`, `--minify/--no-minify`
+- Example: `pixi run neuview generate --neuron-type Tm3`
+
+**`inspect`** - Inspect detailed information about a specific neuron type
+- Shows: neuron counts, soma sides, synapse statistics, bilateral ratio
+- Example: `pixi run neuview inspect Dm4`
+
+**`test-connection`** - Test connection to NeuPrint server
+- Options: `--detailed`, `--timeout`
+- Example: `pixi run neuview test-connection --detailed`
+
+**`fill-queue`** - Create YAML queue files for batch processing
+- Options: `--neuron-type`, `--all`, `--output-dir`, `--image-format`, `--embed/--no-embed`
+- Example: `pixi run neuview fill-queue --all`
+
+**`pop`** - Process a single queue file
+- Options: `--output-dir`, `--minify/--no-minify`
+- Example: `pixi run neuview pop`
+
+**`create-list`** - Generate index page with all neuron types
+- Options: `--output-dir`, `--minify/--no-minify`
+- Example: `pixi run neuview create-list`
+
+#### Global Options
+
+- `-c, --config` - Path to configuration file
+- `-v, --verbose` - Enable verbose output and DEBUG logging
+- `--version` - Show version and exit
+- `--help` - Show help message
+
+For detailed command options and examples, see the developer guide.
 
 ### Performance Tips
 
@@ -774,13 +809,12 @@ When using neuView-generated data in publications:
 
 ### Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NEUPRINT_APPLICATION_CREDENTIALS` | NeuPrint API token | `your-token-string` |
-| `NEUVIEW_CONFIG_PATH` | Custom config file path | `/path/to/config.yaml` |
-| `NEUVIEW_CACHE_DIR` | Cache directory override | `/tmp/neuview_cache` |
-| `NEUVIEW_DEBUG` | Enable debug logging | `1` or `true` |
-| `NEUVIEW_PROFILE` | Enable performance profiling | `1` or `true` |
+**Currently Implemented:**
+
+- **`NEUPRINT_TOKEN`** - NeuPrint API token (required)
+  - Example: `your-token-string`
+  - Set in `.env` file or as environment variable
+  - Required for all database operations
 
 ### Keyboard Shortcuts
 
