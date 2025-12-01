@@ -337,7 +337,41 @@ Templates are organized hierarchically with inheritance and includes.
 
 ### Template Context
 
-Templates receive context dictionaries with data:
+### Summary Statistics Preparation
+
+**Statistics Calculation** (`src/neuview/services/template_context_service.py`):
+
+The TemplateContextService handles all summary statistics calculations before template rendering, keeping business logic separated from template presentation logic. This service prepares pre-calculated statistics that templates can directly use without performing complex calculations.
+
+**Key Methods:**
+- `prepare_summary_statistics` - Main entry point that routes based on soma side (left, right, middle, or combined)
+- `_prepare_side_summary_stats` - Calculates statistics for individual hemisphere pages (left, right, middle)
+- `_prepare_combined_summary_stats` - Calculates statistics for combined pages showing all hemispheres
+
+**Side-Specific Statistics (left, right, middle pages):**
+
+For individual hemisphere pages, the service calculates and provides neuron counts, synapse counts (pre and post), averages per neuron, and connection statistics specific to that hemisphere. This includes total synapses, upstream and downstream connections, and per-neuron averages for both synapses and connections.
+
+**Combined Statistics (combined pages):**
+
+For combined pages, the service calculates statistics across all hemispheres, including neuron counts for left, right, and middle sides, hemisphere-specific synapse totals, per-hemisphere average synapses per neuron, and overall connection statistics. This allows templates to display comparative information across hemispheres.
+
+**Template Usage:**
+
+All calculations are pre-computed and available via the summary_stats context variable in templates. Templates can directly reference these pre-calculated values without performing any arithmetic or conditional logic, keeping templates focused on presentation.
+
+**Benefits:**
+- Templates focus on presentation, not calculation
+- All calculations are unit tested in Python code
+- Better error handling for edge cases like division by zero or missing data
+- Easier to maintain and modify calculation logic in one centralized location
+- Consistent with other data processing services like ConnectivityCombinationService and ROICombinationService
+
+**Adding New Calculations:**
+
+To extend the system with new calculated statistics, add the calculation logic to either the side-specific or combined statistics method, include the new value in the returned dictionary, write a unit test to verify the calculation, and reference the new value in templates through the summary_stats context variable.
+
+### Connectivity Table Template Processing
 
 ```python
 context = {

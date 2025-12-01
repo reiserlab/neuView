@@ -6,19 +6,20 @@ data from NeuPrint servers, including neuron data, connectivity information,
 and summary statistics.
 """
 
-import pandas as pd
-import re
 import json
-from typing import Dict, List, Any, Optional
-from neuprint import Client, fetch_neurons, NeuronCriteria
+import logging
 import os
 import random
+import re
 import time
-import logging
+from typing import Any, Dict, List, Optional
 
+import pandas as pd
+from neuprint import Client, NeuronCriteria, fetch_neurons
+
+from .cache import NeuronTypeCacheManager
 from .config import Config, DiscoveryConfig
 from .dataset_adapters import get_dataset_adapter
-from .cache import NeuronTypeCacheManager
 
 # Set up logger for performance monitoring
 logger = logging.getLogger(__name__)
@@ -274,6 +275,13 @@ class NeuPrintConnector:
                     "connectivity": {
                         "upstream": [],
                         "downstream": [],
+                        "total_upstream": [],
+                        "total_downstream": [],
+                        "total_left": [],
+                        "total_right": [],
+                        "avg_upstream": [],
+                        "avg_downstream": [],
+                        "avg_connections": [],
                         "regional_connections": {},
                         "note": "No neurons found for this type",
                     },
@@ -309,7 +317,12 @@ class NeuPrintConnector:
                 neurons_df["bodyId"].tolist() if "bodyId" in neurons_df.columns else []
             )
             connectivity = self._get_cached_connectivity_summary(
-                body_ids, roi_df, neuron_type, soma_side
+                body_ids,
+                roi_df,
+                neuron_type,
+                soma_side,
+                complete_summary,
+                raw_neurons_df,
             )
 
             return {
@@ -488,16 +501,23 @@ class NeuPrintConnector:
 
             # Extract values with None checking
             meta_data = {
-                "lastDatabaseEdit": result.iloc[0]["lastDatabaseEdit"]
-                if "lastDatabaseEdit" in result.columns
-                and result.iloc[0]["lastDatabaseEdit"] is not None
-                else "Unknown",
-                "dataset": result.iloc[0]["dataset"]
-                if "dataset" in result.columns and result.iloc[0]["dataset"] is not None
-                else self.config.neuprint.dataset,
-                "uuid": result.iloc[0]["uuid"]
-                if "uuid" in result.columns and result.iloc[0]["uuid"] is not None
-                else "Unknown",
+                "lastDatabaseEdit": (
+                    result.iloc[0]["lastDatabaseEdit"]
+                    if "lastDatabaseEdit" in result.columns
+                    and result.iloc[0]["lastDatabaseEdit"] is not None
+                    else "Unknown"
+                ),
+                "dataset": (
+                    result.iloc[0]["dataset"]
+                    if "dataset" in result.columns
+                    and result.iloc[0]["dataset"] is not None
+                    else self.config.neuprint.dataset
+                ),
+                "uuid": (
+                    result.iloc[0]["uuid"]
+                    if "uuid" in result.columns and result.iloc[0]["uuid"] is not None
+                    else "Unknown"
+                ),
             }
 
             logger.debug(f"Meta data retrieved: {meta_data}")
@@ -707,6 +727,17 @@ class NeuPrintConnector:
                     else 0
                 )
 
+        # Note: Side-specific connection weights will be calculated in
+        # _get_cached_connectivity_summary using actual synapse weights from queries,
+        # not from the upstream/downstream columns which represent partner counts.
+        # These placeholders are kept for backward compatibility with cache structure.
+        left_upstream_connections = 0
+        left_downstream_connections = 0
+        right_upstream_connections = 0
+        right_downstream_connections = 0
+        middle_upstream_connections = 0
+        middle_downstream_connections = 0
+
         # Extract neurotransmitter and class data from first row (should be consistent across type)
         consensus_nt = None
         celltype_predicted_nt = None
@@ -848,6 +879,10 @@ class NeuPrintConnector:
             right_total_synapses / right_count if right_count > 0 else 0
         )
 
+        # Calculate hemisphere connection totals (will be overwritten with actual weights)
+        left_total_connections = 0
+        right_total_connections = 0
+
         return {
             "total_count": total_count,
             "left_count": left_count,
@@ -880,9 +915,17 @@ class NeuPrintConnector:
             "nt_analysis": nt_analysis,
             "dimorphism": dimorphism,
             "synonyms": synonyms,
-            "flywire_types": flywire_types,
+            "flywireType": flywire_types,
             "somaNeuromere": soma_neuromere,
             "trumanHl": truman_hl,
+            "left_upstream_connections": left_upstream_connections,
+            "left_downstream_connections": left_downstream_connections,
+            "right_upstream_connections": right_upstream_connections,
+            "right_downstream_connections": right_downstream_connections,
+            "middle_upstream_connections": middle_upstream_connections,
+            "middle_downstream_connections": middle_downstream_connections,
+            "left_total_connections": left_total_connections,
+            "right_total_connections": right_total_connections,
         }
 
     def _calculate_neurotransmitter_analysis(
@@ -992,6 +1035,8 @@ class NeuPrintConnector:
         roi_df: pd.DataFrame,
         neuron_type: str,
         soma_side: str,
+        complete_summary: Dict[str, Any],
+        raw_neurons_df: Optional[pd.DataFrame] = None,
     ) -> Dict[str, Any]:
         """Get connectivity summary with caching to avoid redundant queries."""
         # Create cache key based on sorted body IDs to ensure consistent caching
@@ -1015,8 +1060,56 @@ class NeuPrintConnector:
             connectivity = {
                 "upstream": [],
                 "downstream": [],
+                "total_upstream": [],
+                "total_downstream": [],
+                "avg_upstream": [],
+                "avg_downstream": [],
+                "avg_connections": [],
                 "regional_connections": {},
             }
+
+        # Calculate side-specific connection totals using synapse weights
+        # We need to query separately for left and right neurons to get accurate weights
+        if (
+            raw_neurons_df is not None
+            and not raw_neurons_df.empty
+            and "somaSide" in raw_neurons_df.columns
+        ):
+            left_body_ids = (
+                raw_neurons_df[raw_neurons_df["somaSide"] == "L"]["bodyId"].tolist()
+                if "bodyId" in raw_neurons_df.columns
+                else []
+            )
+            right_body_ids = (
+                raw_neurons_df[raw_neurons_df["somaSide"] == "R"]["bodyId"].tolist()
+                if "bodyId" in raw_neurons_df.columns
+                else []
+            )
+
+            # Calculate left side connection weights
+            if left_body_ids:
+                left_connectivity = self._get_connectivity_summary(
+                    pd.DataFrame({"bodyId": left_body_ids}), roi_df
+                )
+                connectivity["total_left"] = left_connectivity.get(
+                    "total_upstream", 0
+                ) + left_connectivity.get("total_downstream", 0)
+            else:
+                connectivity["total_left"] = 0
+
+            # Calculate right side connection weights
+            if right_body_ids:
+                right_connectivity = self._get_connectivity_summary(
+                    pd.DataFrame({"bodyId": right_body_ids}), roi_df
+                )
+                connectivity["total_right"] = right_connectivity.get(
+                    "total_upstream", 0
+                ) + right_connectivity.get("total_downstream", 0)
+            else:
+                connectivity["total_right"] = 0
+        else:
+            connectivity["total_left"] = 0
+            connectivity["total_right"] = 0
 
         # Cache the result
         self._connectivity_cache[cache_key] = connectivity
@@ -1028,7 +1121,16 @@ class NeuPrintConnector:
     ) -> Dict[str, Any]:
         """Get connectivity summary for the neurons."""
         if neurons_df.empty:
-            return {"upstream": [], "downstream": [], "regional_connections": {}}
+            return {
+                "upstream": [],
+                "downstream": [],
+                "total_upstream": [],
+                "total_downstream": [],
+                "avg_upstream": [],
+                "avg_downstream": [],
+                "avg_connections": [],
+                "regional_connections": {},
+            }
 
         try:
             # Get body IDs from the neuron DataFrame
@@ -1039,7 +1141,16 @@ class NeuPrintConnector:
                 body_ids = neurons_df.index.tolist()
 
             if not body_ids:
-                return {"upstream": [], "downstream": [], "regional_connections": {}}
+                return {
+                    "upstream": [],
+                    "downstream": [],
+                    "total_upstream": [],
+                    "total_downstream": [],
+                    "avg_upstream": [],
+                    "avg_downstream": [],
+                    "avg_connections": [],
+                    "regional_connections": {},
+                }
 
             # Check if this neuron type innervates layer regions (only if roi_df is available)
             innervates_layers = False
@@ -1339,15 +1450,50 @@ class NeuPrintConnector:
             result = {
                 "upstream": upstream_partners,
                 "downstream": downstream_partners,
+                "total_upstream": sum(p.get("weight") or 0 for p in upstream_partners),
+                "total_downstream": sum(
+                    p.get("weight") or 0 for p in downstream_partners
+                ),
+                "avg_upstream": (
+                    (
+                        sum(p.get("weight") or 0 for p in upstream_partners)
+                        / len(body_ids)
+                    )
+                    if len(body_ids) > 0
+                    else 0
+                ),
+                "avg_downstream": (
+                    (
+                        sum(p.get("weight") or 0 for p in downstream_partners)
+                        / len(body_ids)
+                    )
+                    if len(body_ids) > 0
+                    else 0
+                ),
+                "avg_connections": (
+                    (
+                        sum(p.get("weight") or 0 for p in upstream_partners)
+                        + sum(p.get("weight") or 0 for p in downstream_partners)
+                    )
+                    / len(body_ids)
+                    if len(body_ids) > 0
+                    else 0
+                ),
                 "regional_connections": regional_connections,
                 "note": f"Connections for {len(body_ids)} neurons",
             }
+
             return result
 
         except Exception as e:
             return {
                 "upstream": [],
                 "downstream": [],
+                "total_upstream": [],
+                "total_downstream": [],
+                "avg_upstream": [],
+                "avg_downstream": [],
+                "avg_connections": [],
                 "regional_connections": {},
                 "note": f"Error fetching connectivity: {str(e)}",
             }
@@ -1827,8 +1973,8 @@ class NeuPrintConnector:
             return self._roi_hierarchy_cache
 
         try:
-            from neuprint.queries import fetch_roi_hierarchy
             import neuprint
+            from neuprint.queries import fetch_roi_hierarchy
 
             # Save current default client
             original_client = neuprint.default_client
@@ -1940,6 +2086,11 @@ class NeuPrintConnector:
                 # Calculate summary statistics
                 summary = self._calculate_summary(neurons_df, neuron_type, soma_side)
 
+                # Calculate complete summary statistics for the entire neuron type
+                complete_summary = self._calculate_summary(
+                    raw_neurons_df, neuron_type, "all"
+                )
+
                 # Get connectivity data with caching
                 body_ids = (
                     neurons_df["bodyId"].tolist()
@@ -1947,13 +2098,21 @@ class NeuPrintConnector:
                     else []
                 )
                 connectivity = self._get_cached_connectivity_summary(
-                    body_ids, roi_df, neuron_type, soma_side
+                    body_ids,
+                    roi_df,
+                    neuron_type,
+                    soma_side,
+                    complete_summary,
+                    raw_neurons_df,
                 )
+
+                ####
 
                 results[neuron_type] = {
                     "neurons": neurons_df,
                     "roi_counts": roi_df,
                     "summary": summary,
+                    "complete_summary": complete_summary,
                     "connectivity": connectivity,
                     "type": neuron_type,
                     "soma_side": soma_side,

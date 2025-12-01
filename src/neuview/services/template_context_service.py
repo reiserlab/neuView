@@ -7,11 +7,16 @@ variables, and assembling context dictionaries.
 """
 
 import logging
-import pandas as pd
 from datetime import datetime
-from typing import Dict, Any, Optional
-from ..utils import get_git_version
+from typing import Any, Dict, Optional
 
+import pandas as pd
+
+from ..utils import get_git_version
+from .statistics_calculator import (
+    CombinedStatisticsCalculator,
+    SideStatisticsCalculator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +103,11 @@ class TemplateContextService:
             )
         )
 
+        # Prepare summary statistics for display
+        summary_stats = self.prepare_summary_statistics(
+            summary, complete_summary, processed_connectivity, soma_side
+        )
+
         # Prepare base context
         context = {
             "config": self.config,
@@ -115,6 +125,7 @@ class TemplateContextService:
             "processed_synonyms": metadata["processed_synonyms"],
             "processed_flywire_types": metadata["processed_flywire_types"],
             "is_neuron_page": True,
+            "summary_stats": summary_stats,
         }
 
         # Add analysis results if provided
@@ -304,3 +315,81 @@ class TemplateContextService:
                 return False
 
         return True
+
+    def prepare_summary_statistics(
+        self,
+        summary: Dict[str, Any],
+        complete_summary: Dict[str, Any],
+        connectivity: Dict[str, Any],
+        soma_side: str,
+    ) -> Dict[str, Any]:
+        """
+        Prepare all summary statistics for template rendering.
+
+        This method uses specialized calculator classes to compute statistics,
+        making templates cleaner and logic more testable.
+
+        Args:
+            summary: Side-specific summary data
+            complete_summary: Complete summary data (all sides)
+            connectivity: Connectivity data
+            soma_side: The soma side ('left', 'right', 'middle', 'combined')
+
+        Returns:
+            Dictionary with all calculated statistics ready for template use
+        """
+        if soma_side == "combined":
+            return self._prepare_combined_summary_stats(complete_summary, connectivity)
+        elif soma_side in ["left", "right", "middle"]:
+            return self._prepare_side_summary_stats(
+                summary, complete_summary, connectivity, soma_side
+            )
+        else:
+            logger.warning(f"Unknown soma_side: {soma_side}")
+            return {}
+
+    def _prepare_side_summary_stats(
+        self,
+        summary: Dict[str, Any],
+        complete_summary: Dict[str, Any],
+        connectivity: Dict[str, Any],
+        soma_side: str,
+    ) -> Dict[str, Any]:
+        """
+        Prepare summary statistics for individual side pages (L/R/M).
+
+        Uses SideStatisticsCalculator to compute statistics for a single hemisphere.
+
+        Args:
+            summary: Side-specific summary data
+            complete_summary: Complete summary data
+            connectivity: Connectivity data
+            soma_side: The soma side ('left', 'right', 'middle')
+
+        Returns:
+            Dictionary with side-specific calculated statistics
+        """
+        calculator = SideStatisticsCalculator(
+            summary, complete_summary, connectivity, soma_side
+        )
+        stats = calculator.calculate()
+        return stats.to_template_dict()
+
+    def _prepare_combined_summary_stats(
+        self, complete_summary: Dict[str, Any], connectivity: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Prepare summary statistics for combined pages (C).
+
+        Uses CombinedStatisticsCalculator to compute statistics across all hemispheres.
+
+        Args:
+            complete_summary: Complete summary data
+            connectivity: Connectivity data
+
+        Returns:
+            Dictionary with combined calculated statistics
+        """
+        calculator = CombinedStatisticsCalculator(complete_summary, connectivity)
+        stats = calculator.calculate()
+        return stats.to_template_dict()
