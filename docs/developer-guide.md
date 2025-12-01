@@ -552,7 +552,7 @@ Automatic detection based on dataset name in configuration.
 
 Enable verbose logging:
 ```bash
-pixi run neuview build --verbose
+pixi run neuview --verbose generate
 ```
 
 Or set environment variable:
