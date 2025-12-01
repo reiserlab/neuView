@@ -22,6 +22,8 @@ class DatasetInfo:
     soma_side_extraction: Optional[str] = None  # regex pattern
     pre_synapse_column: str = "pre"
     post_synapse_column: str = "post"
+    upstream_column: str = "upstream"
+    downstream_column: str = "downstream"
     instance_column: str = "instance"
     type_column: str = "type"
     body_id_column: str = "bodyId"
@@ -398,6 +400,8 @@ class CNSAdapter(DatasetAdapter):
             soma_side_column="somaSide",
             pre_synapse_column="pre",
             post_synapse_column="post",
+            upstream_column="upstream",
+            downstream_column="downstream",
             roi_columns=["inputRois", "outputRois"],
         )
         roi_strategy = CNSRoiQueryStrategy()
@@ -446,6 +450,20 @@ class CNSAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
+    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
+        """Get connection counts from CNS dataset."""
+        up_total = (
+            neurons_df[self.dataset_info.upstream_column].sum()
+            if self.dataset_info.upstream_column in neurons_df.columns
+            else 0
+        )
+        down_total = (
+            neurons_df[self.dataset_info.downstream_column].sum()
+            if self.dataset_info.downstream_column in neurons_df.columns
+            else 0
+        )
+        return int(up_total), int(down_total)
+
 
 class HemibrainAdapter(DatasetAdapter):
     """Adapter for Hemibrain dataset."""
@@ -456,6 +474,8 @@ class HemibrainAdapter(DatasetAdapter):
             soma_side_column="somaSide",
             pre_synapse_column="pre",
             post_synapse_column="post",
+            upstream_column="upstream",
+            downstream_column="downstream",
             roi_columns=["inputRois", "outputRois"],
         )
         roi_strategy = HemibrainRoiQueryStrategy()
@@ -510,6 +530,20 @@ class HemibrainAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
+    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
+        """Get connection counts from Hemibrain dataset."""
+        up_total = (
+            neurons_df[self.dataset_info.upstream_column].sum()
+            if self.dataset_info.upstream_column in neurons_df.columns
+            else 0
+        )
+        down_total = (
+            neurons_df[self.dataset_info.downstream_column].sum()
+            if self.dataset_info.downstream_column in neurons_df.columns
+            else 0
+        )
+        return int(up_total), int(down_total)
+
 
 class OpticLobeAdapter(DatasetAdapter):
     """Adapter for Optic Lobe dataset."""
@@ -520,6 +554,8 @@ class OpticLobeAdapter(DatasetAdapter):
             soma_side_extraction=r"(?:_|-|\()([LRMlrm])(?:_|\)|$|[^a-zA-Z])",  # Extract L, R, or M from instance names with flexible delimiters
             pre_synapse_column="pre",
             post_synapse_column="post",
+            upstream_column="upstream",
+            downstream_column="downstream",
             roi_columns=["inputRois", "outputRois"],
         )
         roi_strategy = OpticLobeRoiQueryStrategy()
@@ -587,6 +623,20 @@ class OpticLobeAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
+    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
+        """Get connection counts from Optic Lobe dataset."""
+        up_total = (
+            neurons_df[self.dataset_info.upstream_column].sum()
+            if self.dataset_info.upstream_column in neurons_df.columns
+            else 0
+        )
+        down_total = (
+            neurons_df[self.dataset_info.downstream_column].sum()
+            if self.dataset_info.downstream_column in neurons_df.columns
+            else 0
+        )
+        return int(up_total), int(down_total)
+
 
 class FafbAdapter(DatasetAdapter):
     """Adapter for FlyWire FAFB dataset."""
@@ -597,6 +647,8 @@ class FafbAdapter(DatasetAdapter):
             soma_side_extraction=r"(?:_|-|\()([LRMlrm])(?:_|\)|$|[^a-zA-Z])",  # Extract L, R, or M from instance names with flexible delimiters
             pre_synapse_column="pre",
             post_synapse_column="post",
+            upstream_column="upstream",
+            downstream_column="downstream",
             roi_columns=["inputRois", "outputRois"],
         )
         roi_strategy = (
@@ -721,6 +773,20 @@ class FafbAdapter(DatasetAdapter):
             else 0
         )
         return int(pre_total), int(post_total)
+
+    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
+        """Get connection counts from FAFB dataset."""
+        up_total = (
+            neurons_df[self.dataset_info.upstream_column].sum()
+            if self.dataset_info.upstream_column in neurons_df.columns
+            else 0
+        )
+        down_total = (
+            neurons_df[self.dataset_info.downstream_column].sum()
+            if self.dataset_info.downstream_column in neurons_df.columns
+            else 0
+        )
+        return int(up_total), int(down_total)
 
 
 class DatasetAdapterFactory:

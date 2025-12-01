@@ -59,6 +59,13 @@ class ConnectivityCombinationService:
             "downstream": self._combine_partner_entries(
                 connectivity_data.get("downstream", [])
             ),
+            "total_upstream": connectivity_data.get("total_upstream", []),
+            "total_downstream": connectivity_data.get("total_downstream", []),
+            "total_left": connectivity_data.get("total_left", []),
+            "total_right": connectivity_data.get("total_right", []),
+            "avg_upstream": connectivity_data.get("avg_upstream", []),
+            "avg_downstream": connectivity_data.get("avg_downstream", []),
+            "avg_connections": connectivity_data.get("avg_connections", []),
             "regional_connections": connectivity_data.get("regional_connections", {}),
             "note": connectivity_data.get("note", ""),
         }

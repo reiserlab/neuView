@@ -1,0 +1,147 @@
+{% from "macros.html.jinja" import stat_card%}
+
+{# -- Summary statistics - Full width -- Combined/All view -- #}
+<section id="summary-stats">
+    <div class="row">
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ complete_summary.total_count }}</div>
+                <div class="stat-label">Neurons</div>
+                {% if complete_summary.left_count > 0 or complete_summary.right_count > 0 %}
+                <div style="font-size: 0.8em; margin-top: 5px; color: #666;">
+                     Right: {{ complete_summary.right_count }} | Left: {{ complete_summary.left_count }}
+                    <br><span title="log Ratio, negative numbers lean right, positive left">
+                        log ratio
+                    </span>: {{ "%.2f"|format(log_ratio(complete_summary.left_count, complete_summary.right_count)) }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                {# -- C page: Show hemisphere breakdown -- #}
+                <div class="stat-number">{{ summary_stats.total_synapses | format_synapse_count | safe }}</div>
+                <div class="stat-label" title="Sum of PSDs and T-bars">Synapses</div>
+                {% if summary_stats.right_synapses > 0 or summary_stats.left_synapses > 0 %}
+                <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                    Right: {{ summary_stats.right_synapses | format_synapse_count | safe }} | Left: {{ summary_stats.left_synapses | format_synapse_count | safe }}
+                    <br><span title="Log Ratio negative numbers mean more right synapses, positive numbers more left synapses">
+                        log ratio
+                    </span>: {{ "%.2f"|format(log_ratio(summary_stats.left_synapses, summary_stats.right_synapses)) }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                {# -- C page: Show hemisphere breakdown -- #}
+                <div class="stat-number">{{ summary_stats.total_connections | format_synapse_count | safe }}</div>
+                <div class="stat-label">Connections</div>
+                <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                    Right: {{ connectivity.total_right | format_synapse_count | safe }} | Left: {{ connectivity.total_left | format_synapse_count | safe }}
+                    <br><span title="log Ratio, negative numbers lean right, positive left">
+                        log ratio
+                    </span>: {{ "%.2f"|format(log_ratio(connectivity.total_left, connectivity.total_right)) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                {# -- C page: Show hemisphere breakdown for neurotransmitters -- #}
+                {% if complete_summary.nt_analysis and complete_summary.nt_analysis | length > 0 %}
+                    {% set most_common_nt = complete_summary.nt_analysis[0] %}
+                    <div class="stat-number">{{ most_common_nt.nt_type | abbreviate_neurotransmitter | safe }}
+                        {% if most_common_nt.mean_confidence %} <abbr style="font-size:14px; color:#666;" title="{{ (most_common_nt.mean_confidence*100) | format_percentage }} Confidence"> ({{ (most_common_nt.mean_confidence * 100) | format_percentage }} CL)</abbr>{% endif %}
+                    </div>
+                    <div class="stat-label">Neurotransmitter</div>
+
+                    {% if complete_summary.nt_analysis | length > 1 %}
+                        {# Show other neurotransmitters #}
+                        <div style="font-size: 0.8em; margin-top: 8px; color:#666;">
+                            {% for nt_info in complete_summary.nt_analysis[1:] %}
+                                <div style="margin-bottom: 2px;">
+                                    {{- nt_info.nt_type | abbreviate_neurotransmitter | safe }}: {{ nt_info.count }}
+                                    neuron{{ "s" if nt_info.count > 1 -}}
+                                    {%- if nt_info.mean_confidence %} ({{ (nt_info.mean_confidence*100) | format_percentage }} CL){% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {# Fallback to old behavior if no nt_analysis #}
+                    <div class="stat-number">{{ complete_summary.consensus_nt | abbreviate_neurotransmitter | safe}}</div>
+                    <div class="stat-label">Neurotransmitter</div>
+                    {% if complete_summary.consensus_nt != complete_summary.celltype_predicted_nt %}
+                    <div>Predicted: {{ complete_summary.celltype_predicted_nt | abbreviate_neurotransmitter | safe}}</div>
+                    {% endif %}
+                    {% if complete_summary.celltype_predicted_nt_confidence %}
+                    <div style="font-size: 0.8em; margin-top:5px; color:#666;">
+                        {% if complete_summary.celltype_total_nt_predictions %}
+                            Predictions: {{ complete_summary.celltype_total_nt_predictions | format_number }}
+                        {% endif %}
+                        <span title="Confidence for neurotransmitter prediction">Confidence: {{ (complete_summary.celltype_predicted_nt_confidence*100) | format_percentage}}</span>
+                    </div>
+                    {% elif complete_summary.celltype_total_nt_predictions %}
+                    <div style="font-size: 0.8em; margin-top:5px; color:#666;">
+                        Predictions: {{ complete_summary.celltype_total_nt_predictions | format_number }}
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                {# -- C page: Show average across all neurons with per-side breakdown -- #}
+                <div class="stat-number">{{ summary_stats.avg_synapses | format_synapse_count | safe }}</div>
+                <div class="stat-label">Synapses per Neuron</div>
+                {% if summary_stats.left_count > 0 or summary_stats.right_count > 0 or summary_stats.middle_count > 0 %}
+                <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                    {% if summary_stats.right_count > 0 %}
+                        Right: {{ summary_stats.right_avg | format_synapse_count | safe }}
+                    {% endif %}
+                    {% if summary_stats.left_count > 0 %}
+                        {% if summary_stats.right_count > 0 %} | {% endif %}Left: {{ summary_stats.left_avg | format_synapse_count | safe }}
+                    {% endif %}
+                    {% if summary_stats.middle_count > 0 %}
+                        {% if summary_stats.left_count > 0 or summary_stats.right_count > 0 %} | {% endif %}Middle: {{ summary_stats.middle_avg | format_synapse_count | safe }}
+                    {% endif %}
+                    {% if summary_stats.right_count > 0 and summary_stats.left_count > 0 %}
+                        <br>
+                        <span title="Log Ratio negative numbers mean more right synapses, positive numbers more left synapses">
+                            log ratio
+                        </span>: {{ "%.2f"|format(log_ratio(summary_stats.left_avg, summary_stats.right_avg)) }}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-md-4">
+            <div class="stat-card">
+                {# -- C page: Show average across all neurons with per-side breakdown -- #}
+                <div class="stat-number">{{ summary_stats.avg_connections | format_synapse_count | safe }}</div>
+                <div class="stat-label">Connections per Neuron</div>
+                {% if summary_stats.left_count > 0 or summary_stats.right_count > 0 %}
+                <div style="font-size: 0.8em; margin-top: 5px; color:#666;">
+                    {% if summary_stats.right_count > 0 %}
+                        Right: {{ summary_stats.right_avg_connections | format_synapse_count | safe }}
+                    {% endif %}
+                    {% if summary_stats.left_count > 0 %}
+                        {% if summary_stats.right_count > 0 %} | {% endif %}Left: {{ summary_stats.left_avg_connections | format_synapse_count | safe }}
+                    {% endif %}
+                    {% if summary_stats.right_count > 0 and summary_stats.left_count > 0 %}
+                        <br>
+                        <span title="Log Ratio negative numbers mean more right connections, positive numbers more left connections">
+                            log ratio
+                        </span>: {{ "%.2f"|format(log_ratio(summary_stats.left_avg_connections, summary_stats.right_avg_connections)) }}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
