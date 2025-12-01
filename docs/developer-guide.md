@@ -39,7 +39,7 @@ neuView is a modern Python CLI tool that generates beautiful HTML pages for neur
 ### Technology Stack
 
 - **Backend**: Python 3.11+, asyncio for async processing
-- **Data Layer**: NeuPrint API, persistent caching with SQLite
+- **Data Layer**: NeuPrint API, persistent file-based caching with pickle
 - **Frontend**: Modern HTML5, CSS3, vanilla JavaScript
 - **Templates**: Jinja2 with custom filters and extensions
 - **Testing**: pytest with comprehensive coverage
@@ -96,30 +96,30 @@ neuView uses pixi for task management with separate commands for different types
 #### Testing Tasks
 
 **Unit Tests** - Fast, isolated tests for individual components:
-**Unit Test Commands** (defined in `pixi.toml`):
+**Unit Test Commands** (defined in `pyproject.toml`):
 - `pixi run unit-test` - Run all unit tests
 - `pixi run unit-test-verbose` - Detailed output with specific file/test targeting support
 
 **Integration Tests** - End-to-end tests for component interactions:
-**Integration Test Commands** (defined in `pixi.toml`):
+**Integration Test Commands** (defined in `pyproject.toml`):
 - `pixi run integration-test` - Run all integration tests
 - `pixi run integration-test-verbose` - Detailed output with specific file targeting support
 
 **General Testing**:
-**Combined Test Commands** (defined in `pixi.toml`):
+**Combined Test Commands** (defined in `pyproject.toml`):
 - `pixi run test` - Run all tests (unit + integration)
 - `pixi run test-verbose` - Detailed output for all tests
 - `pixi run test-coverage` - Generate coverage reports
 
 #### Code Quality Tasks
 
-**Code Quality Commands** (defined in `pixi.toml`):
+**Code Quality Commands** (defined in `pyproject.toml`):
 - `pixi run format` - Format code with ruff
 - `pixi run check` - Run linting and quality checks
 
 #### Content Generation Tasks
 
-**Content Generation Commands** (defined in `pixi.toml`):
+**Content Generation Commands** (defined in `pyproject.toml`):
 - `pixi run clean-output` - Clean generated output
 - `pixi run fill-all` - Fill processing queue with all neuron types
 - `pixi run pop-all` - Process all items in queue
@@ -130,7 +130,7 @@ Queue management implemented in `src/neuview/services/queue_service.py`.
 
 #### Development Support Tasks
 
-**Development Support Commands** (defined in `pixi.toml`):
+**Development Support Commands** (defined in `pyproject.toml`):
 - `pixi run setup-env` - Setup development environment
 - `pixi run help` - CLI help system
 - `pixi run subset-medium` / `pixi run subset-medium-no-index` - Generate medium-sized test datasets
@@ -143,7 +143,7 @@ Implementation in `scripts/extract_and_fill.py` and CLI modules.
 
 The project includes automated version management for releases:
 
-**Version Management** (defined in `pixi.toml`):
+**Version Management** (defined in `pyproject.toml`):
 - `pixi run increment-version` - Increment patch version and create git tag
 
 Implementation in `scripts/increment_version.py` with `--dry-run` support for testing.
@@ -543,16 +543,7 @@ All caches are organized under the output directory to maintain consistency. Sta
 
 **Container Integration Pattern**: Register cache-aware services with output directory injection. See `roi_data_service_factory()` in `PageGenerationContainer` for reference implementation.
 
-#### Migration Considerations
 
-When updating cache locations:
-
-1. **Automatic Migration**: Cache files regenerate automatically from sources
-2. **No Data Loss**: Old cache files can be safely removed
-3. **Backward Compatibility**: Fallback paths maintain functionality
-4. **Clean Transition**: Remove old cache files after verification
-
-**Migration Pattern**: Services support automatic migration from previous cache locations. The ROI Data Service demonstrates output directory adoption with automatic cleanup.
 
 ## Development Patterns
 
@@ -640,12 +631,12 @@ End-to-end tests that verify component interactions and real-world scenarios.
 
 #### Test Execution Commands
 
-**Test execution tasks are defined in `pixi.toml`:**
+**Test execution tasks are defined in `pyproject.toml`:**
 - Unit tests: `pixi run unit-test` (fast feedback)
 - Integration tests: `pixi run integration-test` (comprehensive testing)
 - All tests: `pixi run test` (complete test suite)
 - Coverage reports: `pixi run test-coverage`
-- Verbose output: Add `-verbose` suffix to any test command
+- Verbose output: Add `--verbose` suffix to any test command
 
 **Selective execution supports targeting specific files, classes, or methods using pytest syntax.**
 
@@ -656,7 +647,6 @@ End-to-end tests that verify component interactions and real-world scenarios.
 - `test_male_cns_integration.py` - Integration tests for end-to-end scenarios
 - `services/` - Service-specific test modules
 - `visualization/` - Visualization component tests
-- `fixtures/` - Test data and fixture files
 
 ### Naming Conventions
 
@@ -682,30 +672,6 @@ End-to-end tests that verify component interactions and real-world scenarios.
 - Integration tests use secure token injection for NeuPrint access
 - Parallel execution for efficient CI pipeline
 
-### Test Data and Fixtures
-
-#### Unit Test Data
-- Hardcoded test values for predictable behavior
-- Use of mock objects for external dependencies
-- Parameterized tests for multiple similar scenarios
-
-#### Integration Test Data
-- Temporary configuration files created during test execution
-- Real project configuration files when available
-- Cleanup of temporary resources after tests
-
-### Dataset Alias Testing
-
-**Dataset Alias Testing**: Special focus on testing dataset alias functionality with comprehensive test cases for versioned aliases. See `test_male_cns_versioned_alias_resolution()` and `test_end_to_end_male_cns_workflow()` in test files for reference implementations.
-
-### Debugging Failed Tests
-
-#### Unit Test Failures
-Run specific failing tests with verbose output using pytest selection syntax. Check test markers to understand test categorization.
-
-#### Integration Test Failures
-Verify environment setup, token configuration, and run tests with verbose debugging and traceback options to diagnose integration test issues.
-
 ### Adding New Tests
 
 When adding new features:
@@ -716,13 +682,55 @@ When adding new features:
 4. **Follow naming conventions**
 5. **Ensure proper cleanup** of resources in integration tests
 
-### Test Data Factory
+### Test Fixtures
 
-**TestDataFactory** (`test/fixtures/test_data_factory.py`):
-- Centralized test data creation for consistent testing
-- Key methods: `create_neuron_data()`, `create_connectivity_data()`
-- Provides standardized test data structures for neuron and connectivity testing
-- Parameterizable factory methods for different test scenarios
+neuView uses inline pytest fixtures defined within individual test files rather than a centralized factory pattern.
+
+**Fixture Pattern** (defined in test files):
+- Unit tests: Use `@pytest.fixture` with `unittest.mock.Mock` objects
+- Integration tests: Use temporary config files and real database connections
+- Test-specific fixtures: Defined inline for clarity and simplicity
+
+**Example Fixture** (`test/services/test_neuron_selection_service.py`):
+```python
+@pytest.fixture
+def selection_service():
+    """Create NeuronSelectionService instance."""
+    mock_config = Mock()
+    return NeuronSelectionService(mock_config)
+
+@pytest.fixture
+def mock_connector():
+    """Create mock connector for testing."""
+    connector = Mock()
+    connector.dataset_adapter = Mock()
+    connector.dataset_adapter.dataset_info = Mock()
+    return connector
+```
+
+**Example Mock Data** (`test/services/test_soma_detection_service.py`):
+```python
+@pytest.fixture
+def mock_query_result_bilateral():
+    """Mock DataFrame result for bilateral neuron type."""
+    mock_result = MagicMock()
+    mock_result.empty = False
+    mock_result.iloc = [
+        {"leftCount": 10, "rightCount": 8, "middleCount": 0, "totalCount": 18}
+    ]
+    return mock_result
+```
+
+**Test Data Strategies:**
+- **Unit tests**: Use `unittest.mock.Mock` and `MagicMock` for fast, isolated testing
+- **Integration tests**: Connect to real NeuPrint database or use temporary config files
+- **Config objects**: Use `Config.create_minimal_for_testing()` for test configurations
+
+**Benefits:**
+- Simple and maintainable (no central dependency)
+- Test data visible next to tests that use it
+- Easy to modify fixtures for specific test needs
+- Minimal boilerplate and coupling between test files
 
 ### Script Management
 
@@ -787,11 +795,10 @@ See current utility scripts in `scripts/` directory for reference implementation
 
 Environment variable support for sensitive configuration:
 
-- `NEUPRINT_APPLICATION_CREDENTIALS`: NeuPrint API token
-- `NEUVIEW_CONFIG_PATH`: Custom configuration file path
-- `NEUVIEW_CACHE_DIR`: Cache directory override
-- `NEUVIEW_DEBUG`: Enable debug logging
-- `NEUVIEW_PROFILE`: Enable performance profiling
+#### Currently Implemented
+
+- `NEUPRINT_TOKEN` - NeuPrint API token (required)
+  - Checked in three locations: `.env` file, environment, config.yaml
 
 ### Configuration Validation
 
@@ -848,6 +855,602 @@ Environment variable support for sensitive configuration:
 - Key methods: `load_citations()`, `get_citation()`, `create_citation_link()`
 - Automatic missing citation logging and validation
 - Supports custom link text and output directory configuration
+
+## CLI Reference
+
+### Overview
+
+neuView provides a comprehensive command-line interface for generating neuron type pages, managing the processing queue, and testing connections. All commands support the `--verbose` flag for detailed logging output.
+
+### Global Options
+
+Available for all commands:
+
+- `-c, --config TEXT` - Path to configuration file (default: `config.yaml`)
+- `-v, --verbose` - Enable verbose output and DEBUG level logging
+- `--version` - Show neuView version from git tags and exit
+- `--help` - Show help message and exit
+
+### Commands
+
+#### generate
+
+Generate HTML pages for neuron types.
+
+**Usage:**
+```bash
+neuview generate [OPTIONS]
+```
+
+**Options:**
+- `--neuron-type, -n TEXT` - Specific neuron type to generate page for
+- `--output-dir TEXT` - Custom output directory (overrides config)
+- `--image-format [svg|png]` - Format for hexagon grid images (default: svg)
+- `--embed/--no-embed` - Embed images directly in HTML instead of saving to files (default: no-embed)
+- `--minify/--no-minify` - Enable/disable HTML minification (default: minify)
+
+**Examples:**
+```bash
+# Generate page for specific neuron type
+neuview generate --neuron-type Tm3
+
+# Generate with PNG images and embedded content
+neuview generate -n Dm4 --image-format png --embed
+
+# Generate without minification for debugging
+neuview generate -n SAD103 --no-minify
+
+# Auto-discover and generate for multiple types (up to 20)
+neuview generate
+```
+
+#### inspect
+
+Inspect detailed information about a specific neuron type including counts, soma sides, and synapse statistics.
+
+**Usage:**
+```bash
+neuview inspect NEURON_TYPE
+```
+
+**Arguments:**
+- `NEURON_TYPE` - Name of the neuron type to inspect (required)
+
+**Examples:**
+```bash
+# Get detailed statistics for Tm3
+neuview inspect Tm3
+
+# Inspect with verbose logging
+neuview --verbose inspect Dm4
+```
+
+**Output includes:**
+- Total neuron count
+- Soma side distribution (left/right/middle)
+- Bilateral ratio
+- Synapse statistics (average, median, std dev)
+- Computation timestamp
+
+#### test-connection
+
+Test connection to the NeuPrint server and verify dataset access.
+
+**Usage:**
+```bash
+neuview test-connection [OPTIONS]
+```
+
+**Options:**
+- `--detailed` - Show detailed dataset information
+- `--timeout INTEGER` - Connection timeout in seconds (default: 30)
+
+**Examples:**
+```bash
+# Basic connection test
+neuview test-connection
+
+# Detailed server and dataset information
+neuview test-connection --detailed
+
+# With custom timeout
+neuview test-connection --timeout 60
+```
+
+#### fill-queue
+
+Create YAML queue files with generate command options and update JSON cache manifest. This is the first step in batch processing workflows.
+
+**Usage:**
+```bash
+neuview fill-queue [OPTIONS]
+```
+
+**Options:**
+- `--neuron-type, -n TEXT` - Specific neuron type to add to queue
+- `--all` - Create queue files for all discovered neuron types and update cache manifest
+- `--output-dir TEXT` - Custom output directory
+- `--image-format [svg|png]` - Format for hexagon grid images (default: svg)
+- `--embed/--no-embed` - Embed images directly in HTML (default: no-embed)
+
+**Examples:**
+```bash
+# Add single neuron type to queue
+neuview fill-queue --neuron-type Tm3
+
+# Fill queue with all discovered types
+neuview fill-queue --all
+
+# Fill queue with custom options
+neuview fill-queue --all --image-format png --embed
+```
+
+**Queue Files:**
+- Created in `output/.queue/` directory
+- YAML format with command parameters
+- Includes `.lock` mechanism to prevent concurrent processing
+- Updates `output/.cache/cache_manifest.json`
+
+#### pop
+
+Pop and process a single queue file from the processing queue. Processes one item at a time using FIFO order.
+
+**Usage:**
+```bash
+neuview pop [OPTIONS]
+```
+
+**Options:**
+- `--output-dir TEXT` - Custom output directory
+- `--minify/--no-minify` - Enable/disable HTML minification (default: minify)
+
+**Examples:**
+```bash
+# Process one queue item
+neuview pop
+
+# Process without minification
+neuview pop --no-minify
+
+# Process all items in queue (using pixi task)
+pixi run pop-all
+```
+
+**Processing:**
+- Acquires file lock to prevent concurrent processing
+- Reads YAML queue file
+- Generates page with stored parameters
+- Removes queue file on success
+- Returns lock file to `.yaml` on error for retry
+
+#### create-list
+
+Generate an index page listing all available neuron types with ROI analysis and comprehensive neuron information.
+
+**Usage:**
+```bash
+neuview create-list [OPTIONS]
+```
+
+**Options:**
+- `--output-dir TEXT` - Output directory to scan for neuron pages
+- `--minify/--no-minify` - Enable/disable HTML minification (default: minify)
+
+**Examples:**
+```bash
+# Create index page
+neuview create-list
+
+# Create without minification
+neuview create-list --no-minify
+```
+
+**Generated Files:**
+- `output/index.html` - Main index page
+- Uses cached neuron type data to avoid database re-queries
+- Includes ROI analysis across all neuron types
+- Provides search and filter functionality
+
+### Verbose Logging
+
+The `--verbose` flag enables DEBUG level logging throughout the application. This provides detailed information about:
+
+- Cache operations (hits, misses, saves, expirations)
+- Database query execution and results
+- File operations and path resolutions
+- Data processing steps and transformations
+- ROI hierarchy loading and validation
+- Template rendering and context preparation
+- Performance timing for operations
+
+**Example with verbose output:**
+```bash
+neuview --verbose generate --neuron-type Tm3
+```
+
+**Logger output includes:**
+- Timestamp for each operation
+- Logger name (module path)
+- Log level (DEBUG, INFO, WARNING, ERROR)
+- Detailed message with context
+
+**Key loggers to watch:**
+- `neuview.cache` - Cache operations and expiration
+- `neuview.services.*` - Service-level operations
+- `neuview.visualization.*` - Data processing and visualization
+
+## Cache Implementation Details
+
+### Overview
+
+neuView uses a persistent file-based caching system with pickle serialization to store expensive query results and computed data across sessions.
+
+### Cache Architecture
+
+**Implementation:** `src/neuview/strategies/cache/file_cache.py`
+
+The cache system provides:
+- **Persistent storage** - Data survives application restarts
+- **TTL support** - Automatic expiration of stale data
+- **Thread-safe operations** - Concurrent access protection with `threading.RLock()`
+- **Metadata tracking** - Separate files for expiration information
+- **MD5 key hashing** - Safe filename generation from cache keys
+
+### Cache Types
+
+#### File Cache Strategy
+
+**Primary cache backend** using pickle serialization:
+
+```python
+class FileCacheStrategy(CacheStrategy):
+    def __init__(self, cache_dir: str, default_ttl: Optional[int] = None)
+```
+
+**Features:**
+- Stores data in `{cache_dir}/{md5_hash}.cache` files
+- Metadata stored in `{md5_hash}.meta` files
+- Automatic directory creation
+- Configurable TTL (default: 24 hours for neuron type cache)
+- Thread-safe read/write operations
+
+#### Memory Cache Strategy
+
+**Fast in-memory cache** for frequently accessed data:
+
+```python
+class MemoryCacheStrategy(CacheStrategy):
+```
+
+**Features:**
+- LRU eviction policy
+- No persistence across restarts
+- Fastest access times
+- Used for temporary computation results
+
+#### Composite Cache
+
+**Multi-level caching** combining memory and file strategies:
+
+```python
+class CompositeCacheStrategy(CacheStrategy):
+```
+
+**Behavior:**
+- Checks memory cache first (fastest)
+- Falls back to file cache on miss
+- Promotes file cache hits to memory
+- Writes to all configured levels
+
+### Cache Directory Structure
+
+```
+output/
+├── .cache/
+│   ├── {md5_hash}.cache          # Pickled data
+│   ├── {md5_hash}.meta           # TTL metadata (JSON)
+│   ├── roi_hierarchy.json        # ROI hierarchy cache
+│   └── cache_manifest.json       # Neuron type manifest
+└── .queue/
+    ├── {neuron_type}.yaml        # Queue files
+    └── {neuron_type}.yaml.lock   # Processing locks
+```
+
+### Cache Key Strategy
+
+**Key generation:**
+```python
+safe_key = hashlib.md5(key.encode()).hexdigest()
+```
+
+**Key components typically include:**
+- Neuron type name
+- Query parameters
+- Dataset identifier
+- Soma side filter
+- ROI context
+
+**Example keys:**
+- `neuron_type:Tm3:soma_side:left`
+- `roi_hierarchy:male-cns:v0.9`
+- `connectivity:Tm3:threshold:5`
+
+### Cache Lifecycle Management
+
+#### Saving Data
+
+```python
+cache_manager.save_neuron_type_cache(cache_data)
+```
+
+**Process:**
+1. Serialize data to JSON (for neuron type cache) or pickle (for general cache)
+2. Generate MD5 hash from cache key
+3. Write data to `{hash}.cache` file
+4. Write metadata with TTL to `{hash}.meta` file
+5. Log operation at DEBUG level
+
+#### Loading Data
+
+```python
+cache_data = cache_manager.load_neuron_type_cache(neuron_type)
+```
+
+**Process:**
+1. Generate cache key and hash
+2. Check if cache file exists
+3. Load metadata and check expiration
+4. Return `None` if expired
+5. Deserialize and return data if valid
+6. Log cache hit/miss at DEBUG level
+
+#### Invalidation
+
+```python
+cache_manager.invalidate_neuron_type_cache(neuron_type)
+```
+
+**Strategies:**
+- Manual: `rm -rf output/.cache/`
+- Programmatic: `cache_manager.invalidate_neuron_type_cache()`
+- Automatic: TTL expiration (default: 24 hours)
+
+### Error-Resilient Caching
+
+**All cache operations use try/except:**
+- Cache failures never block page generation
+- Warnings logged for debugging
+- Graceful degradation to database queries
+- Missing cache treated as cache miss
+
+**Example pattern:**
+```python
+try:
+    # Attempt cache operation
+    cache_data = load_from_cache(key)
+except Exception as e:
+    logger.warning(f"Cache operation failed: {e}")
+    cache_data = None  # Proceed without cache
+```
+
+### Cache Performance
+
+**Expected behavior:**
+- First generation: Cache miss, query database (~2-5s per type)
+- Subsequent generations: Cache hit, no database query (~50-200ms)
+- Index generation: Uses cached data, no re-queries
+- Cache expiry: 24 hours default (configurable)
+
+**Cache hit rates:**
+- Development: ~30-50% (frequent invalidation)
+- Production: ~90-95% (stable data)
+- Index generation: ~100% (relies on generation cache)
+
+### Container Integration Pattern
+
+**Service container provides cache service:**
+
+```python
+@property
+def cache_service(self) -> NeuronTypeCacheManager:
+    if not self._cache_service:
+        cache_dir = self.config.output.directory / ".cache"
+        self._cache_service = NeuronTypeCacheManager(cache_dir=str(cache_dir))
+    return self._cache_service
+```
+
+**Benefits:**
+- Single cache instance per container
+- Lazy initialization
+- Consistent cache location
+- Easy dependency injection
+
+## Queue System Details
+
+### Overview
+
+The queue system enables batch processing of neuron types with parallel execution support, avoiding duplicate work and providing fault tolerance.
+
+### Queue Architecture
+
+**Implementation:** `src/neuview/services/queue_file_manager.py`, `src/neuview/services/queue_processor.py`
+
+### Queue File Format
+
+Queue files are YAML documents storing generation parameters:
+
+```yaml
+neuron_type: "Tm3"
+output_directory: "output"
+image_format: "svg"
+embed_images: false
+minify: true
+config_file: "config.yaml"
+```
+
+### Queue Directory Structure
+
+```
+output/.queue/
+├── Tm3.yaml                    # Ready to process
+├── Dm4.yaml.lock              # Currently processing
+├── SAD103.yaml                # Waiting
+└── AOTU019.yaml               # Waiting
+```
+
+### Lock File Mechanism
+
+**Purpose:** Prevent concurrent processing of the same neuron type
+
+**Process:**
+1. `pop` command finds first `.yaml` file
+2. Renames to `.yaml.lock` (atomic operation)
+3. Processes the queue item
+4. Deletes `.lock` file on success
+5. Renames back to `.yaml` on error for retry
+
+**Benefits:**
+- Atomic lock acquisition
+- No orphaned locks (file-based)
+- Simple error recovery
+- Visible processing state
+
+### Queue Operations
+
+#### Fill Queue
+
+**Single neuron type:**
+```bash
+neuview fill-queue --neuron-type Tm3
+```
+
+**All discovered types:**
+```bash
+neuview fill-queue --all
+```
+
+**Custom parameters:**
+```bash
+neuview fill-queue --all --image-format png --embed
+```
+
+#### Process Queue
+
+**Single item (manual):**
+```bash
+neuview pop
+```
+
+**All items (parallel with pixi):**
+```bash
+pixi run pop-all
+```
+
+This uses GNU Parallel to process multiple items concurrently:
+```bash
+yes pop | head -n $(find output/.queue -name '*.yaml' | wc -l) | parallel --no-notice neuview
+```
+
+#### Queue Status
+
+**Check queue size:**
+```bash
+ls -1 output/.queue/*.yaml | wc -l
+```
+
+**List pending items:**
+```bash
+ls -1 output/.queue/*.yaml
+```
+
+**Check for locked items:**
+```bash
+ls -1 output/.queue/*.lock
+```
+
+#### Clear Queue
+
+**Remove all queue files:**
+```bash
+rm -rf output/.queue/
+```
+
+**Remove specific neuron type:**
+```bash
+rm output/.queue/Tm3.yaml*
+```
+
+### Cache Manifest Integration
+
+**File:** `output/.cache/cache_manifest.json`
+
+**Purpose:** Track all neuron types in the queue for index generation
+
+**Structure:**
+```json
+{
+  "neuron_types": ["Tm3", "Dm4", "SAD103"],
+  "last_updated": "2024-01-15T10:30:00",
+  "total_count": 3
+}
+```
+
+**Updates:**
+- `fill-queue --all` creates/updates manifest
+- `create-list` uses manifest to discover available types
+- Avoids database queries during index generation
+
+### Workflow Integration
+
+**Complete batch workflow:**
+```bash
+# 1. Clean previous output
+pixi run clean-output
+
+# 2. Fill queue with all types
+pixi run fill-all
+
+# 3. Process all items in parallel
+pixi run pop-all
+
+# 4. Generate index page
+pixi run create-list
+
+# 5. Increment version
+pixi run increment-version
+```
+
+**Or use the combined task:**
+```bash
+pixi run create-all-pages
+```
+
+### Error Handling
+
+**Queue processing errors:**
+- Lock file renamed back to `.yaml`
+- Error message logged
+- Item remains in queue for retry
+- No data corruption
+
+**Common errors:**
+- Database connection timeout → Retry queue item
+- Invalid neuron type → Remove from queue manually
+- Missing dependencies → Check environment setup
+- Permission errors → Check output directory permissions
+
+### Performance Considerations
+
+**Serial processing:**
+- ~2-5 seconds per neuron type (with cache misses)
+- ~50-200ms per neuron type (with cache hits)
+- Predictable, sequential
+
+**Parallel processing:**
+- Use `pixi run pop-all` (GNU Parallel)
+- Processes multiple items concurrently
+- Limited by database connection pool
+- 3-5x faster for large queues
 
 ## Dataset Aliases
 
@@ -1080,28 +1683,11 @@ Combined pages showed separate ROI entries:
 
 ### Dynamic ROI Data System
 
-The Dynamic ROI Data System replaces hardcoded ROI arrays in Neuroglancer templates with live data fetched from Google Cloud Storage, ensuring ROI information is always up-to-date.
+The Dynamic ROI Data System fetches live ROI data from Google Cloud Storage, ensuring ROI information is always up-to-date.
 
-#### Problem Statement
+#### Architecture
 
-Previously, the `neuroglancer-url-generator.js.jinja` template contained hardcoded arrays:
-
-```javascript
-// Hardcoded ROI data (maintenance burden)
-const ROI_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ...];
-const ALL_ROIS = ["AL(L)", "AL(R)", "AME(L)", "AME(R)", ...];
-const VNC_IDS = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, ...];
-const VNC_NAMES = ["CV-posterior", "LegNp(T1)(L)", ...];
-```
-
-This approach had significant drawbacks:
-- **Manual Maintenance**: Required manual updates when ROI data changed
-- **Data Inconsistency**: Risk of hardcoded data becoming stale
-- **Version Mismatch**: Potential conflicts between different dataset versions
-
-#### Solution Architecture
-
-The system now uses a `ROIDataService` that:
+The system uses a `ROIDataService` that:
 
 1. **Fetches Live Data**: Retrieves ROI segment properties from GCS endpoints
 2. **Caches Locally**: Stores data in `output/.cache/roi_data/` for performance
@@ -1202,54 +1788,15 @@ for key, value in roi_data.items():
     self.env.globals[key] = value
 ```
 
-#### Jinja Template Processing Fix
+#### ROI ID Collision Handling
 
-A critical bug was resolved where Jinja placeholders weren't being processed correctly.
+The system handles ROI ID collisions between brain and VNC datasets.
 
-**Problem**: The entire JavaScript template was wrapped in `{% raw %}` tags, preventing Jinja expression processing:
-
-```javascript
-// Template variables (processed)
-const NEUROGLANCER_BASE_URL = "{{ neuroglancer_base_url }}";
-
-{% raw %}
-// Everything here is literal text - Jinja expressions NOT processed
-const ROI_IDS = {{ roi_ids|tojson }};  // ❌ Not processed!
-{% endraw %}
-```
-
-**Solution**: Moved ROI data declarations outside the `{% raw %}` block:
-
-```javascript
-// Template variables (processed by Jinja)
-const NEUROGLANCER_BASE_URL = "{{ neuroglancer_base_url }}";
-const ROI_IDS = {{ roi_ids|tojson }};
-const ALL_ROIS = {{ all_rois|tojson }};
-
-{% raw %}
-// Static JavaScript code (not processed by Jinja)
-// ... rest of JavaScript
-{% endraw %}
-```
-
-#### ROI ID Collision Fix
-
-A sophisticated fix was implemented to resolve ROI ID collisions between brain and VNC datasets.
-
-**Problem**: ROI segment IDs overlap between datasets:
+ROI segment IDs can overlap between datasets:
 - ID 7: "AOTU(L)" in brain dataset, "LegNp(T2)(L)" in VNC dataset
-- Clicking brain ROI checkboxes incorrectly toggled VNC layers
+- Without context tracking, clicking brain ROI checkboxes could toggle VNC layers
 
-**Root Cause**: Layer assignment logic used only ID values without dataset context:
-
-```javascript
-// Problematic code
-if (VNC_IDS.includes(parseInt(roiId))) {
-    // Always assigned to VNC layer, even for brain ROIs with same ID
-}
-```
-
-**Solution**: Introduced context tracking with `selectedRoiContexts` map:
+**Implementation**: The system uses context tracking with `selectedRoiContexts` map:
 
 ```javascript
 // Context-aware ROI management
@@ -1439,15 +1986,6 @@ The filtering implementation can be tested with:
 - Visual feedback verification through DOM element counting
 - Console logging for debugging filter behavior
 
-#### Future Enhancements
-
-Planned improvements:
-1. **Filter Combinations**: Allow synonym AND Flywire filters simultaneously
-2. **Filter Persistence**: Save filter state in URL parameters
-3. **Advanced Search**: Boolean operators for complex queries
-4. **Performance**: Virtual scrolling for large datasets
-
-
 #### CV Calculation
 
 **CV Implementation** (`src/neuview/services/partner_analysis_service.py`):
@@ -1488,45 +2026,6 @@ Planned improvements:
 - `test_cv_combination()` - Validates weighted average calculation for L/R entry combinations
 - Comprehensive test cases covering edge cases and statistical accuracy
 - Assertion-based validation for CV calculation correctness
-
-### Neuroglancer Integration Fixes
-
-#### Problem
-Neuroglancer JavaScript errors due to placeholder mismatches:
-
-**Problem**: Neuroglancer JavaScript errors due to placeholder type mismatches with expected array format.
-
-#### Solution
-**Template Variable Correction** (`src/neuview/services/neuroglancer_js_service.py`):
-- Correct placeholder types in template generation
-- Empty array initialization instead of string placeholders
-- Proper JSON array format for Neuroglancer compatibility
-
-#### Flexible Dataset Layer Detection
-
-**Multi-Dataset Layer Detection** (`templates/static/js/neuroglancer-url-generator.js.jinja`):
-- Enhanced layer detection logic for multiple dataset types
-- Flexible segmentation layer identification by type and properties
-- Support for both CNS ("cns-seg") and FAFB ("flywire-fafb:v783b") layer names
-
-### HTML Tooltip System Implementation
-
-Rich tooltips for enhanced user experience:
-
-#### Basic Structure
-
-**HTML Tooltip Structure** (`templates/sections/tooltips.html.jinja`):
-- Rich HTML content containers with formatted text, lists, and styling
-- Tooltip content wrapper with trigger elements
-- Flexible content structure supporting headings, paragraphs, and lists
-
-#### JavaScript Implementation
-
-**Tooltip JavaScript** (`templates/static/js/tooltip-system.js`):
-- `initializeHtmlTooltips()` - Sets up event listeners for tooltip elements
-- `positionTooltip()` - Dynamic positioning with screen boundary detection
-- Mouseenter/mouseleave event handling for show/hide behavior
-- Automatic positioning adjustment to prevent off-screen display
 
 ## Troubleshooting
 
@@ -1660,26 +2159,63 @@ Citation logging is automatically enabled when an output directory is provided t
 
 #### Development Mode
 
-Enable development mode by setting the `NEUVIEW_DEBUG` and `NEUVIEW_PROFILE` environment variables and running neuview with the `--verbose` flag.
+Enable development mode by running neuview with the `--verbose` flag:
 
-This enables:
-- Detailed operation logging
-- Performance timing information
-- Memory usage tracking
-- Cache operation details
-- Database query logging
+```bash
+neuview --verbose generate --neuron-type Tm3
+```
+
+This enables DEBUG level logging which provides:
+- Detailed cache operation logging (hits, misses, saves, expirations)
+- ROI hierarchy loading and validation details
+- File operation and path resolution tracking
+- Data processing steps and transformations
+- Performance timing information for some operations
+- Citation tracking and missing citation warnings
+
+
 
 ### Logging Architecture
 
-neuView uses a multi-layer logging system for different concerns including main application logging and dedicated citation logging with isolated loggers.
+neuView uses Python's standard `logging` module with a multi-logger architecture for different concerns.
 
 #### System Loggers
 
-The system uses separate loggers for main application events and citation tracking. See the logging configuration in the service files for logger setup and configuration.
+The system uses separate loggers throughout the codebase:
+
+**Primary loggers:**
+- `neuview.cache` - Cache operations (NeuronTypeCacheManager)
+- `neuview.services.*` - Service-level operations
+- `neuview.visualization.*` - Data processing and visualization
+- `neuview.missing_citations` - Dedicated citation tracking
+
+**Logger configuration:**
+- Default level: WARNING (set in `cli.py`)
+- Verbose mode: DEBUG (enabled with `--verbose` flag)
+- Format: `%(asctime)s - %(name)s - %(levelname)s - %(message)s`
+
+**Key modules with active logging:**
+- `src/neuview/cache.py` - 13 logger calls for cache operations
+- `src/neuview/visualization/` - Multiple logger calls for data processing
+- `src/neuview/services/citation_service.py` - Citation tracking
 
 #### Citation Logging Implementation
 
-The citation logging system automatically tracks missing citations with dedicated logger setup, log directory creation, file rotation handling, and custom formatting. See the `_setup_citation_logger` method in the citation service for the complete implementation including rotating file handlers and UTF-8 encoding support.
+The citation logging system uses a dedicated logger with rotating file handlers:
+
+**Implementation details:**
+- **Logger name:** `neuview.missing_citations`
+- **Handler:** `RotatingFileHandler` (1MB max size, 5 backups)
+- **Level:** INFO (independent of main logger level)
+- **Format:** Timestamped entries with context
+- **Encoding:** UTF-8 for international character support
+
+**Setup location:** `src/neuview/services/citation_service.py` in `_setup_citation_logger()` method
+
+**Automatic triggers:**
+- Text processing with synonyms (`TextUtils.process_synonyms()`)
+- Citation link creation (`CitationService.create_citation_link()`)
+- Missing citation references in templates
 
 #### Integration Points
 
