@@ -343,21 +343,39 @@
             <h3>Summary Statistics</h3>
             <p>The summary section provides key quantitative information:</p>
 
-            <h4>Total Neurons</h4>
+            <h4>Neurons</h4>
             <p>
-              The number of individual neurons of this type in the dataset. For bilateral neurons, counts and ratios may
+              The number of individual neurons of this type in the dataset. For bilateral neurons, counts per hemisphere and ratios may
               be shown across hemispheres.
             </p>
 
-            <h4>Total Synapses</h4>
-            <p>Combined pre-synaptic (outputs) and post-synaptic (inputs), with breakdowns where applicable.
-            For combined pages the breakdown shows the number of neurons assigned to each hemisphere.
-            Whereas for unilateral pages the breakdown shows the number of pre and post synapses across all neurons of the type.</p>
+            <h4>Synapses</h4>
+            <p>Combined post-synaptic (inputs) and pre-synaptic (outputs), with breakdowns and log ratios where applicable. Technically, this number is a pre-calculated property for each neuron inside the neuprint database.<br/>
+            For combined pages the breakdown shows the number of neurons assigned to each hemisphere and their ratio.
+            Whereas for unilateral pages the breakdown shows the number of post and pre synapses across all neurons of the type assigned to that side.</p>
 
-            <h4>Mean Synapses</h4>
-            <p>Average number of synapses per neuron of this type. Useful for comparing connectivity levels.
+            <h4>Connections</h4>
+            <p>
+              Combined upstream and downstream connections. Here, connections are the number of anatomical synapses between neurons. Technically, this number comes from the number of connected <em>synapse</em>s, which are combined to <em>SynapseSet</em>s and part of <em>Neuron</em>s inside the neuprint database.<br/>
+              For combined pages the breakdown shows the number of neurons assigned to each hemisphere and their ratio.
+              Whereas for unilateral pages the breakdown shows the number of upstream and downstream connections across all neurons of the type assigned to that side.
+            </p>
+
+            <h4>Neurotransmitter</h4>
+            <p>
+              Predicted neurotransmitter for the type and the corresponding confidence level (CL).
+              For some types, the predicted neurotransmitter may be <em>Unc</em> for unclear.
+            </p>
+
+            <h4>Synapses per Neuron</h4>
+            <p>Average number of synapses per neuron of this type. Useful for comparing connectivity levels.<br/>
             For the combined page, the breakdown shows the mean number of synapses for neurons on the right and left.
             Whereas for unilateral pages the breakdown shows the mean number of pre and post synapses per neuron assigned to that side.</p>
+
+            <h4>Connections per Neuron</h4>
+            <p>Average number of connections per neuron of this type. Useful for comparing connectivity levels.<br/>
+            For the combined page, the breakdown shows the mean number of connections for neurons on the right and left.
+            Whereas for unilateral pages the breakdown shows the mean number of pre and post connections per neuron assigned to that side.</p>
 
             <h4>Log Ratios</h4>
             <p>
@@ -365,11 +383,6 @@
               values above 0 favor left/outputs.
             </p>
 
-            <h4>Neurotransmitter</h4>
-            <p>
-              Predicted neurotransmitter for the type and the corresponding confidence level (CL).
-              For some types, the predicted neurotransmitter may be "Unc" for unclear.
-            </p>
           </div>
 
           {# Layer Analysis #}
