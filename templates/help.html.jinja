@@ -40,11 +40,10 @@
           <ul>
             <li><a href="#header-info">Header Information</a></li>
             <li><a href="#summary-stats">Summary Statistics</a></li>
-            <li><a href="#layer-analysis">Layer Analysis</a></li>
-            <li><a href="#neuroglancer">Neuroglancer 3D Viewer</a></li>
-            <li><a href="#eyemaps">Eye Maps</a></li>
+            <li><a href="#layer-column-coverage">Layer and Column Coverage</a></li>
+            <li><a href="#neuron-visualization">Neuron Visualization</a></li>
             <li><a href="#roi-innervation">ROI Innervation</a></li>
-            <li><a href="#connectivity">Connectivity Data</a></li>
+            <li><a href="#s-c">Connectivity</a></li>
           </ul>
         </li>
         <li><a href="#terminology">Terminology</a></li>
@@ -385,12 +384,13 @@
 
           </div>
 
-          {# Layer Analysis #}
-          <div id="layer-analysis" class="pm-stacked">
-            <h3>Layer Analysis</h3>
-            <p>Detailed analysis of neuron distribution across layers in visual system neuropils:</p>
+          {# Columnar Layer and Spatial Coverage (Eye Maps) #}
+          <div id="layer-column-coverage" class="pm-stacked">
+            <h3>Layer and Column Coverage</h3>
+            <p><em>Note: These views are only present for visual system neuron types with columnar organization.</em></p>
+            <p>Detailed analysis of neuron distribution across layers in visual system neuropils. This section explains how to interpret the “Mean Synapse Count per Layer” tables shown on individual neuron type pages (e.g., Tm3).</p>
 
-            <h4>Layer Tables</h4>
+            <h4>Mean Synapse Count per Layer</h4>
             <ul>
               <li><strong>Layer names and anatomical locations:</strong> Lamina (LA),
              Medulla (ME), Lobula (LO), Accessory Medulla (AME), Lobula Plate (LOP) and Central Brain (CB). </li>
@@ -407,8 +407,9 @@
               the tables include only the counts for the ipsilateral synapses.</li>
             </ul>
 
-            <h4>Hexagonal Grid Visualizations</h4>
-            <p>Interactive hexagonal grids show the spatial distribution of neuron terminals across columnar structure of visual system regions.</p>
+            <h4>Population Spatial Coverage</h4>
+            <p><em>Note: These Population Spatial Coverage maps are only present for visual system neuron types with columnar organization.</em></p>
+            <p>This section visualizes how a neuron type covers the columnar structure of visual system regions using interactive hexagonal grids.</p>
             <p>The plots show the neural innervation of the <strong>ipsilateral</strong> medulla (ME), lobula (LO) and lobula plate (LOP).
             <ul>
               <li><strong>Column Analysis:</strong> Which columns within the ROI the neurons innervate.</li>
@@ -420,10 +421,10 @@
             <img src="static/images/eyemap_demo.gif" width="50%" alt="Interactivity of the hexagonal eyemap plots." style="display: block; margin-left: auto; margin-right: auto;">
           </div>
 
-          {# Neuroglancer #}
-          <div id="neuroglancer" class="pm-stacked">
-            <h3>Neuroglancer 3D Viewer</h3>
-            <p>Interactive 3D visualization of neuron morphology:</p>
+          {# Neuron Visualization #}
+          <div id="neuron-visualization" class="pm-stacked">
+            <h3>Neuron Visualization</h3>
+            <p>Interactive 3D visualization of neuron morphology using the embedded Neuroglancer viewer:</p>
 
             <h4>Viewing the 3D Model</h4>
             <ul>
@@ -456,7 +457,7 @@
             <h4>Adding Partners from the Connectivity table</h4></div>
             <p>
               You can add connected partners to the 3D view directly from the Connectivity tables by selecting their
-              blue checkboxes (see Connectivity Data). Some connected cell types have filled pink checkboxes because there
+              blue checkboxes (see Connectivity section below). Some connected cell types have filled pink checkboxes because there
               are no neurons of that type that directly innervate the example neuron visible by default in the neuroglancer view.
               A random neuron of that type can be added by searching for the type in the search box within the neuroglancer view and adding it manually.
             </p>
@@ -484,8 +485,8 @@
           </div>
 
           {# Connectivity #}
-          <div id="connectivity" class="pm-stacked">
-            <h3>Connectivity Data</h3>
+          <div id="s-c" class="pm-stacked">
+            <h3>Connectivity</h3>
             <p>Comprehensive analysis of synaptic connections with other neuron types:</p>
             <ul>
               <li><strong>Upstream Partners:</strong> Neurons that provide input (pre-synaptic partners)</li>
