@@ -77,8 +77,11 @@ neuView follows a layered architecture pattern:
 - `pixi run format` - Format code with ruff
 
 **Content Generation:**
-- `pixi run neuview build` - Generate website
+- `pixi run neuview generate` - Generate website for 10 random neuron types
+    - `pixi run neuview generate -n Dm4` - Generate website for a specific neuron type, here *Dm4*
 - `pixi run neuview inspect <type>` - Inspect neuron type data
+- `pixi run create-all-pages` - Generate website with all neurons in the data set. **Note:** This command will also increment the version in git.
+
 
 ## Neuron Data System
 
@@ -448,11 +451,11 @@ pixi run unit-test
 # Run only integration tests
 pixi run integration-test
 
+# Run with coverage
+pixi run test-coverage
+
 # Run specific test file
 pixi run pytest test/unit/test_neuron_type.py
-
-# Run with coverage
-pixi run pytest --cov=src
 ```
 
 ### Test Structure
