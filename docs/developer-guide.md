@@ -39,7 +39,7 @@ neuView is a modern Python CLI tool that generates beautiful HTML pages for neur
 ### Technology Stack
 
 - **Backend**: Python 3.11+, asyncio for async processing
-- **Data Layer**: NeuPrint API, persistent caching with SQLite
+- **Data Layer**: NeuPrint API, persistent file-based caching with pickle
 - **Frontend**: Modern HTML5, CSS3, vanilla JavaScript
 - **Templates**: Jinja2 with custom filters and extensions
 - **Testing**: pytest with comprehensive coverage
@@ -96,30 +96,30 @@ neuView uses pixi for task management with separate commands for different types
 #### Testing Tasks
 
 **Unit Tests** - Fast, isolated tests for individual components:
-**Unit Test Commands** (defined in `pixi.toml`):
+**Unit Test Commands** (defined in `pyproject.toml`):
 - `pixi run unit-test` - Run all unit tests
 - `pixi run unit-test-verbose` - Detailed output with specific file/test targeting support
 
 **Integration Tests** - End-to-end tests for component interactions:
-**Integration Test Commands** (defined in `pixi.toml`):
+**Integration Test Commands** (defined in `pyproject.toml`):
 - `pixi run integration-test` - Run all integration tests
 - `pixi run integration-test-verbose` - Detailed output with specific file targeting support
 
 **General Testing**:
-**Combined Test Commands** (defined in `pixi.toml`):
+**Combined Test Commands** (defined in `pyproject.toml`):
 - `pixi run test` - Run all tests (unit + integration)
 - `pixi run test-verbose` - Detailed output for all tests
 - `pixi run test-coverage` - Generate coverage reports
 
 #### Code Quality Tasks
 
-**Code Quality Commands** (defined in `pixi.toml`):
+**Code Quality Commands** (defined in `pyproject.toml`):
 - `pixi run format` - Format code with ruff
 - `pixi run check` - Run linting and quality checks
 
 #### Content Generation Tasks
 
-**Content Generation Commands** (defined in `pixi.toml`):
+**Content Generation Commands** (defined in `pyproject.toml`):
 - `pixi run clean-output` - Clean generated output
 - `pixi run fill-all` - Fill processing queue with all neuron types
 - `pixi run pop-all` - Process all items in queue
@@ -130,7 +130,7 @@ Queue management implemented in `src/neuview/services/queue_service.py`.
 
 #### Development Support Tasks
 
-**Development Support Commands** (defined in `pixi.toml`):
+**Development Support Commands** (defined in `pyproject.toml`):
 - `pixi run setup-env` - Setup development environment
 - `pixi run help` - CLI help system
 - `pixi run subset-medium` / `pixi run subset-medium-no-index` - Generate medium-sized test datasets
@@ -143,7 +143,7 @@ Implementation in `scripts/extract_and_fill.py` and CLI modules.
 
 The project includes automated version management for releases:
 
-**Version Management** (defined in `pixi.toml`):
+**Version Management** (defined in `pyproject.toml`):
 - `pixi run increment-version` - Increment patch version and create git tag
 
 Implementation in `scripts/increment_version.py` with `--dry-run` support for testing.
@@ -640,7 +640,7 @@ End-to-end tests that verify component interactions and real-world scenarios.
 
 #### Test Execution Commands
 
-**Test execution tasks are defined in `pixi.toml`:**
+**Test execution tasks are defined in `pyproject.toml`:**
 - Unit tests: `pixi run unit-test` (fast feedback)
 - Integration tests: `pixi run integration-test` (comprehensive testing)
 - All tests: `pixi run test` (complete test suite)
@@ -787,11 +787,7 @@ See current utility scripts in `scripts/` directory for reference implementation
 
 Environment variable support for sensitive configuration:
 
-- `NEUPRINT_APPLICATION_CREDENTIALS`: NeuPrint API token
-- `NEUVIEW_CONFIG_PATH`: Custom configuration file path
-- `NEUVIEW_CACHE_DIR`: Cache directory override
-- `NEUVIEW_DEBUG`: Enable debug logging
-- `NEUVIEW_PROFILE`: Enable performance profiling
+- `NEUPRINT_TOKEN`: NeuPrint API token
 
 ### Configuration Validation
 
