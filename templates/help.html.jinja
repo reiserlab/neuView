@@ -344,19 +344,24 @@
 
             <h4>Neurons</h4>
             <p>
-              The number of individual neurons of this type in the dataset. For bilateral neurons, counts per hemisphere and ratios may
-              be shown across hemispheres.
+              The number of individual neurons of this type in the dataset. For bilateral neurons, counts reflect the number per hemisphere and log ratios
+              show the balance across hemispheres.
             </p>
 
             <h4>Synapses</h4>
-            <p>Combined post-synaptic (inputs) and pre-synaptic (outputs), with breakdowns and log ratios where applicable. Technically, this number is a pre-calculated property for each neuron inside the neuprint database.<br/>
-            For combined pages the breakdown shows the number of neurons assigned to each hemisphere and their ratio.
-            Whereas for unilateral pages the breakdown shows the number of post and pre synapses across all neurons of the type assigned to that side.</p>
+            <p>Combined post-synaptic (inputs) and pre-synaptic (T-bars, outputs), with breakdowns and log ratios where applicable. 
+            Technically, this number is a pre-calculated property for each neuron from the neuPrint database.<br/>
+            For combined pages the breakdown shows the total number of synapses assigned to each hemisphere and their ratio.
+            Whereas for unilateral pages the breakdown and log ratio shows the number of post and pre synapses across all neurons of the type assigned to that side.</p>
 
             <h4>Connections</h4>
             <p>
-              Combined upstream and downstream connections. Here, connections are the number of anatomical synapses between neurons. Technically, this number comes from the number of connected <em>synapse</em>s, which are combined to <em>SynapseSet</em>s and part of <em>Neuron</em>s inside the neuprint database.<br/>
-              For combined pages the breakdown shows the number of neurons assigned to each hemisphere and their ratio.
+              Combined upstream and downstream connections, with breakdowns and log ratios where applicable. 
+              Here, connections are the number of anatomical synapses between neurons. Technically, this number comes from the number of connected 
+              <em>synapse</em>s, which are combined to form <em>SynapseSet</em>s and assigned to <em>Neuron</em>s within the neuprint database. 
+              It is possible that a single pre-synapse of a target cell can contain multiple anatomical synaptic contacts (downstream connections) 
+              and so cells can have more downstream connections than pre-synapses.<br/> 
+              For combined pages the breakdown shows the total number of connections assigned to each hemisphere and their ratio.
               Whereas for unilateral pages the breakdown shows the number of upstream and downstream connections across all neurons of the type assigned to that side.
             </p>
 
@@ -574,19 +579,22 @@
             </dd>
 
             <dt>Synapse Count</dt>
-            <dd>The number of synaptic connections. Higher counts indicate stronger or denser connectivity. neuView uses the properties from the neurons in the database.</dd>
+            <dd>The number of synaptic connections. Higher counts indicate denser connectivity. neuView uses the properties from the neurons in the database.</dd>
 
             <dt>Post-synaptic Sites</dt>
-            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners. In the data model, this is the `Neuron.post` property.</dd>
+            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners. In the neuPrint data model, this is the `Neuron.post` property.</dd>
 
             <dt>Pre-synaptic Sites (T-bars)</dt>
-            <dd>Presynaptic release sites where a neuron outputs signals. Also called t-bars. One presynaptic site can connect to multiple postsynaptic partners. In the neuprint data model, this is the `Neuron.pre` property.</dd>
+            <dd>Presynaptic release sites where a neuron outputs signals, also called t-bars. In the neuprint data model, this is the `Neuron.pre` property.</dd>
 
             <dt>Connections</dt>
-            <dd>Input connections are conceptually similar to post-synaptic sites while a group of post-synaptic sites form a single output connection. We calculate the number of connections by identifying the connecting neurons and then use the `weight` property from the `ConnectsTo` edge between the neurons.</dd>
+            <dd>Input `upstream` connections are conceptually similar to post-synaptic sites while one presynaptic site can connect to multiple `downstream` postsynaptic partners.
+            We calculate the number of connections by identifying the connecting neurons and then use the `weight` property from the `ConnectsTo` edge between the neurons.</dd>
 
-            <dt>Connections vs. Synapses</dt>
-            <dd>The numeric difference between post-synaptic sites and input connections stems from the difference in how the numbers are retrieves (see Synapse Count and Connections above). A single presynaptic site (t-bar) can form multiple connections to different postsynaptic partners. Therefore, the number of output connections can be greater than the number of presynaptic sites.</dd>
+            <blockquote>
+              <strong>Connections vs. Synapses</strong>
+              The numeric difference between post-synaptic sites and input connections stems from the difference in how the numbers are retrieved (see Synapse Count and Connections above). A single presynaptic site (t-bar) can form multiple connections to different postsynaptic partners. Therefore, the number of output connections can be greater than the number of presynaptic sites.
+            </blockquote>
 
             <dt>Inputs</dt>
             <dd>All pre-synaptic connecting cell types upstream from a given cell type (neurons providing input to the cell type).</dd>
