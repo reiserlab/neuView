@@ -73,7 +73,7 @@ neuView follows a layered architecture pattern:
 - `pixi run test` - Run all tests
 
 **Code Quality:**
-- `pixi run lint` - Run ruff linter
+- `pixi run check` - Run ruff linter
 - `pixi run format` - Format code with ruff
 
 **Content Generation:**

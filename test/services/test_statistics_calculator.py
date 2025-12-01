@@ -3,8 +3,6 @@
 This module tests the calculator classes that compute statistics from raw data.
 """
 
-import pytest
-
 from neuview.services.statistics_calculator import (
     CombinedStatisticsCalculator,
     SideStatisticsCalculator,
