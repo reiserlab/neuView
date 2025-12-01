@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <!-- Table of Contents -->
+  {# Table of Contents #}
   <div class="row">
     <div class="col-xs-12 col-md-3">
       <h3 class="pm-no-margin">Contents</h3>
@@ -55,7 +55,7 @@
 
     <div class="col-xs-12 col-md-9">
       <div>
-        <!-- Overview -->
+        {# Overview #}
         <section id="overview" class="pm-stacked">
           <h2>Overview</h2>
           <p>
@@ -82,7 +82,7 @@
 
         <hr />
 
-        <!-- Types Page -->
+        {# Types Page #}
         <section id="types-page" class="pm-stacked">
           <h2>Types Index Page</h2>
           <p>
@@ -96,7 +96,7 @@
 
           <img src="static/images/types_page_filter50.gif" width="100%" alt="How to use the types filters.">
 
-          <!-- Using Filters -->
+          {# Using Filters #}
           <div id="filters" class="pm-stacked">
             <h3>Using Filters</h3>
             <p>
@@ -313,7 +313,7 @@
 
         <hr />
 
-        <!-- Individual Neuron Pages -->
+        {# Individual Neuron Pages #}
         <section id="neuron-page" class="pm-stacked">
           <h2>Individual Neuron Pages</h2>
           <p>
@@ -327,7 +327,7 @@
             side of the page or the menu (☰) to switch between views.
           </p>
 
-          <!-- Header Info -->
+          {# Header Info #}
           <div id="header-info" class="pm-stacked">
             <h3>Header Information</h3>
             <p>
@@ -338,7 +338,7 @@
             </p>
           </div>
 
-          <!-- Summary Stats -->
+          {# Summary Stats #}
           <div id="summary-stats" class="pm-stacked">
             <h3>Summary Statistics</h3>
             <p>The summary section provides key quantitative information:</p>
@@ -372,7 +372,7 @@
             </p>
           </div>
 
-          <!-- Layer Analysis -->
+          {# Layer Analysis #}
           <div id="layer-analysis" class="pm-stacked">
             <h3>Layer Analysis</h3>
             <p>Detailed analysis of neuron distribution across layers in visual system neuropils:</p>
@@ -407,7 +407,7 @@
             <img src="static/images/eyemap_demo.gif" width="50%" alt="Interactivity of the hexagonal eyemap plots." style="display: block; margin-left: auto; margin-right: auto;">
           </div>
 
-          <!-- Neuroglancer -->
+          {# Neuroglancer #}
           <div id="neuroglancer" class="pm-stacked">
             <h3>Neuroglancer 3D Viewer</h3>
             <p>Interactive 3D visualization of neuron morphology:</p>
@@ -458,7 +458,7 @@
             </p>
           </div>
 
-          <!-- ROI Innervation -->
+          {# ROI Innervation #}
           <div id="roi-innervation" class="pm-stacked">
             <h3>ROI Innervation</h3>
             <p>Detailed breakdown of connectivity within specific brain regions:</p>
@@ -470,7 +470,7 @@
             </ul>
           </div>
 
-          <!-- Connectivity -->
+          {# Connectivity #}
           <div id="connectivity" class="pm-stacked">
             <h3>Connectivity Data</h3>
             <p>Comprehensive analysis of synaptic connections with other neuron types:</p>
@@ -537,7 +537,7 @@
 
         <hr />
 
-        <!-- Terminology -->
+        {# Terminology #}
         <section id="terminology" class="pm-stacked">
           <h2>Terminology</h2>
           <p>Key terms and concepts used throughout the catalog:</p>
@@ -556,20 +556,23 @@
 
             <dt>Pre-synaptic / Post-synaptic</dt>
             <dd>
-              Pre-synaptic refers to outputs from a neuron; post-synaptic refers to inputs to a neuron.
+                Post-synaptic refers to inputs to a neuron, pre-synaptic refers to outputs from a neuron.
             </dd>
 
             <dt>Synapse Count</dt>
-            <dd>The number of synaptic connections. Higher counts indicate stronger or denser connectivity.</dd>
+            <dd>The number of synaptic connections. Higher counts indicate stronger or denser connectivity. neuView uses the properties from the neurons in the database.</dd>
 
             <dt>Post-synaptic Sites</dt>
-            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners.</dd>
+            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners. In the data model, this is the `Neuron.post` property.</dd>
 
             <dt>Pre-synaptic Sites (T-bars)</dt>
-            <dd>Presynaptic release sites where a neuron outputs signals. Also called t-bars. One presynaptic site can connect to multiple postsynaptic partners.</dd>
+            <dd>Presynaptic release sites where a neuron outputs signals. Also called t-bars. One presynaptic site can connect to multiple postsynaptic partners. In the neuprint data model, this is the `Neuron.pre` property.</dd>
+
+            <dt>Connections</dt>
+            <dd>Input connections are conceptually similar to post-synaptic sites while a group of post-synaptic sites form a single output connection. We calculate the number of connections by identifying the connecting neurons and then use the `weight` property from the `ConnectsTo` edge between the neurons.</dd>
 
             <dt>Connections vs. Synapses</dt>
-            <dd>A single presynaptic site (t-bar) can form multiple connections to different postsynaptic partners. Therefore, the number of output connections can be greater than the number of presynaptic sites.</dd>
+            <dd>The numeric difference between post-synaptic sites and input connections stems from the difference in how the numbers are retrieves (see Synapse Count and Connections above). A single presynaptic site (t-bar) can form multiple connections to different postsynaptic partners. Therefore, the number of output connections can be greater than the number of presynaptic sites.</dd>
 
             <dt>Inputs</dt>
             <dd>All pre-synaptic connecting cell types upstream from a given cell type (neurons providing input to the cell type).</dd>
@@ -622,7 +625,7 @@
 
         <hr />
 
-        <!-- FAQ and Troubleshooting -->
+        {# FAQ and Troubleshooting #}
         <section id="faq" class="pm-stacked">
           <h2>FAQ and Troubleshooting</h2>
           <dl class="pm-stacked">
@@ -662,7 +665,7 @@
           </ul>
         </section>
 
-        <!-- Contact and Feedback -->
+        {# Contact and Feedback #}
         <section id="contact" class="pm-stacked">
           <h2>Contact and Feedback</h2>
           <p>
@@ -679,7 +682,7 @@
           </p>
         </section>
 
-        <!-- Footer -->
+        {# Footer #}
         <div class="pm-stacked">
           <hr />
           <blockquote>
