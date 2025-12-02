@@ -51,11 +51,11 @@ $(document).ready(function() {
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
                 filename: function () {
-                    var valueEl = document.getElementById('roi-slider-value');
-                    var sliderText = valueEl ? valueEl.textContent.trim() : '';
-                    var clean = sliderText.replace(/\s+/g, '');
-                    return 'roi_innervation_{{ neuron_data.type }}_{{ neuron_data.soma_side }}_' +
-                        clean + '_min_percent';
+                    return makeSliderFilename(
+                        'roi_innervation_{{ neuron_data.type }}_{{ neuron_data.soma_side }}',
+                        'roi-slider-value',
+                        '_min_percent',
+                    );
                 },
                 title: 'ROI Innervation Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
@@ -124,11 +124,11 @@ $(document).ready(function() {
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
                 filename: function () {
-                    var valueEl = document.getElementById('upstream-slider-value');
-                    var sliderText = valueEl ? valueEl.textContent.trim() : '';
-                    var numericPart = sliderText.replace(/[^\d.]/g, '') || 'all';
-                    return 'upstream_partners_input_{{ neuron_data.type }}_{{ neuron_data.soma_side }}_' +
-                        numericPart + '_min_conn';
+                    return makeSliderFilename(
+                        'upstream_partners_input_{{ neuron_data.type }}_{{ neuron_data.soma_side }}',
+                        'upstream-slider-value',
+                        '_min_conn',
+                    );
                 },
                 title: 'Upstream Partner Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
@@ -182,11 +182,11 @@ $(document).ready(function() {
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
                 filename: function () {
-                    var valueEl = document.getElementById('downstream-slider-value');
-                    var sliderText = valueEl ? valueEl.textContent.trim() : '';
-                    var numericPart = sliderText.replace(/[^\d.]/g, '') || 'all';
-                    return 'downstream_partners_output_{{ neuron_data.type }}_{{ neuron_data.soma_side }}_' +
-                        numericPart + '_min_conn';
+                    return makeSliderFilename(
+                        'downstream_partners_output_{{ neuron_data.type }}_{{ neuron_data.soma_side }}',
+                        'downstream-slider-value',
+                        '_min_conn',
+                    );
                 },
                 title: 'Downstream Partner Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
