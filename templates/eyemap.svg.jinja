@@ -24,7 +24,7 @@
 </style>
 </defs>
 
-<script type="text/javascript">
+<script>
 //<![CDATA[
 
 function getRegionAndLayerFromPath(path) {
@@ -91,7 +91,7 @@ function sT(evt) {
     t.setAttribute("class", "tooltip-text");
     t.textContent = s;
     textGroup.appendChild(t);
-    const approx = s.length * 6.5; // same approximation you used
+    const approx = s.length * 6.5;
     if (approx > maxWidth) maxWidth = approx;
   }
 
