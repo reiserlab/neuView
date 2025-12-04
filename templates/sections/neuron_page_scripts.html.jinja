@@ -50,7 +50,13 @@ $(document).ready(function() {
         "buttons": [{
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
-                filename: 'roi_innervation_{{ neuron_data.type }}',
+                filename: function () {
+                    return makeSliderFilename(
+                        'roi_innervation_{{ neuron_data.type }}_{{ neuron_data.soma_side }}',
+                        'roi-slider-value',
+                        '_min_percent',
+                    );
+                },
                 title: 'ROI Innervation Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
                 attr: {title: 'Download currently visible ROI innervation data as CSV'}}, {
@@ -117,7 +123,13 @@ $(document).ready(function() {
         "buttons": [{
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
-                filename: 'roi_innervation_{{ neuron_data.type }}',
+                filename: function () {
+                    return makeSliderFilename(
+                        'upstream_partners_input_{{ neuron_data.type }}_{{ neuron_data.soma_side }}',
+                        'upstream-slider-value',
+                        '_min_conn',
+                    );
+                },
                 title: 'Upstream Partner Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
                 attr: {title: 'Download currently visible upstream partner data as CSV'}
@@ -169,7 +181,13 @@ $(document).ready(function() {
         "buttons": [{
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
-                filename: 'roi_innervation_{{ neuron_data.type }}',
+                filename: function () {
+                    return makeSliderFilename(
+                        'downstream_partners_output_{{ neuron_data.type }}_{{ neuron_data.soma_side }}',
+                        'downstream-slider-value',
+                        '_min_conn',
+                    );
+                },
                 title: 'Downstream Partner Data - {{ neuron_data.type }}',
                 exportOptions: {modifier: {search: 'applied'}},
                 attr: {title: 'Download currently visible downstream partner data as CSV'}
