@@ -5,6 +5,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     indexes:
     - https://pypi.org/simple
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -159,7 +161,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/12/a8/b00592f9bede618cbb3df6ffe802fc65f1d1c03d48a10d353b108057d09c/libcst-1.8.6-cp314-cp314-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fa/0c/639643ba37cb25e817e90f284246199f5830adf00da6c719f70a7804f1e8/minify_html-0.16.5-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/55/fc/4945896cc8638536ee787a3bd6ce7cec8ec9acf452d78ec39ab328efa0a1/pyarrow-22.0.0-cp314-cp314-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -307,7 +309,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3a/60/4105441989e321f7ad0fd28ffccb83eb6aac0b7cfb0366dab855dcccfbe5/libcst-1.8.6-cp314-cp314-macosx_10_15_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1e/b4/39b5bab151541187825f344e02583bacdb7675efbb596ab6a6aef0fce963/minify_html-0.16.5-cp314-cp314-macosx_10_12_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0f/a8/7a719076b3c1be0acef56a07220c586f25cd24de0e3f3102b438d18ae5df/pyarrow-22.0.0-cp314-cp314-macosx_12_0_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -455,7 +457,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/67/2f/51a6f285c3a183e50cfe5269d4a533c21625aac2c8de5cdf2d41f079320d/libcst-1.8.6-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/03/dc/ba26f35759a7331cd43aa3ba7db231631876bed750e31e70c83a3dfd4398/minify_html-0.16.5-cp314-cp314-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/b0/0fa4d28a8edb42b0a7144edd20befd04173ac79819547216f8a9f36f9e50/pyarrow-22.0.0-cp314-cp314-macosx_12_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -611,7 +613,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/20/3b/35645157a7590891038b077db170d6dd04335cd2e82a63bdaa78c3297dfe/libcst-1.8.6-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e3/61/eec31bad2e4c8439066f499a8b7c880d2ce47d3779cd04c4e9c8c50d47e8/minify_html-0.16.5.tar.gz
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3c/79/755ff2d145aafec8d347bf18f95e4e81c00127f06d080135dfc86aea417c/pyarrow-22.0.0-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -623,6 +625,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     indexes:
     - https://pypi.org/simple
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -785,7 +789,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/12/a8/b00592f9bede618cbb3df6ffe802fc65f1d1c03d48a10d353b108057d09c/libcst-1.8.6-cp314-cp314-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fa/0c/639643ba37cb25e817e90f284246199f5830adf00da6c719f70a7804f1e8/minify_html-0.16.5-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/55/fc/4945896cc8638536ee787a3bd6ce7cec8ec9acf452d78ec39ab328efa0a1/pyarrow-22.0.0-cp314-cp314-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -941,7 +945,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3a/60/4105441989e321f7ad0fd28ffccb83eb6aac0b7cfb0366dab855dcccfbe5/libcst-1.8.6-cp314-cp314-macosx_10_15_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1e/b4/39b5bab151541187825f344e02583bacdb7675efbb596ab6a6aef0fce963/minify_html-0.16.5-cp314-cp314-macosx_10_12_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0f/a8/7a719076b3c1be0acef56a07220c586f25cd24de0e3f3102b438d18ae5df/pyarrow-22.0.0-cp314-cp314-macosx_12_0_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -1097,7 +1101,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/67/2f/51a6f285c3a183e50cfe5269d4a533c21625aac2c8de5cdf2d41f079320d/libcst-1.8.6-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/03/dc/ba26f35759a7331cd43aa3ba7db231631876bed750e31e70c83a3dfd4398/minify_html-0.16.5-cp314-cp314-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/b0/0fa4d28a8edb42b0a7144edd20befd04173ac79819547216f8a9f36f9e50/pyarrow-22.0.0-cp314-cp314-macosx_12_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -1261,7 +1265,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/20/3b/35645157a7590891038b077db170d6dd04335cd2e82a63bdaa78c3297dfe/libcst-1.8.6-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/f0/92f2d609d6642b5f30cb50a885d2bf1483301c69d5786286500d15651ef2/lsprotocol-2025.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e3/61/eec31bad2e4c8439066f499a8b7c880d2ce47d3779cd04c4e9c8c50d47e8/minify_html-0.16.5.tar.gz
-      - pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3c/79/755ff2d145aafec8d347bf18f95e4e81c00127f06d080135dfc86aea417c/pyarrow-22.0.0-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/cc/09/14feafc13bebb9c85b29b374889c1549d3700cb572f2d43a1bb940d70315/pygls-2.0.0-py3-none-any.whl
@@ -3854,10 +3858,10 @@ packages:
   purls: []
   size: 797030
   timestamp: 1738196177597
-- pypi: https://files.pythonhosted.org/packages/07/c7/d64168da60332c17d24c0d2f08bdf3987e8d1ae9d84b5bbd0eec2eb26a55/networkx-3.6-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl
   name: networkx
-  version: '3.6'
-  sha256: cdb395b105806062473d3be36458d8f1459a4e4b98e236a66c3a48996e07684f
+  version: 3.6.1
+  sha256: d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762
   requires_dist:
   - asv ; extra == 'benchmarking'
   - virtualenv ; extra == 'benchmarking'
@@ -3896,7 +3900,7 @@ packages:
   - pytest-xdist>=3.0 ; extra == 'test'
   - pytest-mpl ; extra == 'test-extras'
   - pytest-randomly ; extra == 'test-extras'
-  requires_python: '>=3.11'
+  requires_python: '>=3.11,!=3.14.1'
 - pypi: https://files.pythonhosted.org/packages/d7/62/61690a7aeb1878f98ccbe2508607547a5dcf5b000c02135258b8898cecd3/neuprint_python-0.5.2-py2.py3-none-any.whl
   name: neuprint-python
   version: 0.5.2
@@ -3914,8 +3918,8 @@ packages:
   requires_python: '>=3.9'
 - pypi: ./
   name: neuview
-  version: 2.7.8
-  sha256: c9de8e60d4ca6476925f68d4177e281dc711227c62f9386175a91acce56ee5f5
+  version: 2.7.10
+  sha256: e3baa1a33031901d6bef383e0c985b287bd53f4908b57b882ab3ec8e7140ddee
   requires_dist:
   - click>=8.0.0
   - jinja2>=3.0.0

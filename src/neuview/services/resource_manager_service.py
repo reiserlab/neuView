@@ -6,13 +6,13 @@ PageGenerator class. It provides methods for copying static files, managing
 directories, and handling other file system operations.
 """
 
-import shutil
 import logging
+import shutil
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
+from ..utils import get_project_root, get_static_dir, get_templates_dir
 from .neuroglancer_js_service import NeuroglancerJSService
-from ..utils import get_templates_dir, get_static_dir, get_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -196,30 +196,32 @@ class ResourceManagerService:
                         "Failed to generate neuroglancer JavaScript file - this is a critical error"
                     )
                     return False
+
+                # Verify the generated file exists and contains expected content
+                if not generated_file.exists():
+                    logger.error(
+                        "Neuroglancer JavaScript file does not exist after generation"
+                    )
+                    return False
+
+                with open(generated_file, "r") as f:
+                    content = f.read()
+                newline = "\n"
+                logger.debug(
+                    f"Generated file exists, size: {len(content)} chars, lines: {len(content.split(newline))}"
+                )
+
+                if "function initializeNeuroglancerLinks" not in content:
+                    logger.error(
+                        "Generated neuroglancer JavaScript file is missing required function 'initializeNeuroglancerLinks'"
+                    )
+                    return False
+
+                logger.debug("✓ Neuroglancer JavaScript file generated successfully")
             else:
                 logger.debug(
                     "Neuroglancer JavaScript file already exists, skipping generation"
                 )
-
-            # Verify the file exists and contains expected content
-            if not generated_file.exists():
-                logger.error("Neuroglancer JavaScript file does not exist")
-                return False
-
-            with open(generated_file, "r") as f:
-                content = f.read()
-            newline = "\n"
-            logger.debug(
-                f"Generated file exists, size: {len(content)} chars, lines: {len(content.split(newline))}"
-            )
-
-            if "function initializeNeuroglancerLinks" not in content:
-                logger.error(
-                    "Generated neuroglancer JavaScript file is missing required function 'initializeNeuroglancerLinks'"
-                )
-                return False
-
-            logger.debug("✓ Neuroglancer JavaScript file generated successfully")
 
             # Copy other static assets (images, fonts, etc.) - Enhanced version
             # Copy all directories and files not already handled

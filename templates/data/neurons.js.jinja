@@ -1,0 +1,26 @@
+/**
+ * Neuron Data - Fallback for CORS-restricted environments
+ *
+ * This file is loaded only when neurons.json cannot be fetched
+ * (e.g., when opening HTML files via file:// protocol)
+ *
+ * This file is generated at build time with embedded neuron data.
+ * Do not edit manually - it will be overwritten during the build process.
+ *
+ * Generated on: {{ generation_timestamp }}
+ * Total neuron types: {{ neuron_data.names|length }}
+ */
+
+(function() {
+  'use strict';
+
+  const neuronData = {{ neuron_data_json|safe }};
+
+  // If callback exists, call it immediately
+  if (typeof window.neuronDataCallback === 'function') {
+    window.neuronDataCallback(neuronData);
+  } else {
+    // Otherwise store for later retrieval
+    window.NEURON_DATA_FALLBACK = neuronData;
+  }
+})();
