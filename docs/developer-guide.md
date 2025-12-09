@@ -33,7 +33,7 @@ neuView is a modern Python CLI tool that generates beautiful HTML pages for neur
 
 ### Technology Stack
 
-- **Backend**: Python 3.11+, asyncio for async processing
+- **Backend**: Python 3.11+ with built-in asyncio support
 - **Data Layer**: NeuPrint API, persistent file-based caching with pickle
 - **Frontend**: Modern HTML5, CSS3, vanilla JavaScript
 - **Templates**: Jinja2 with custom filters and extensions
@@ -57,6 +57,44 @@ neuView follows a layered architecture pattern:
 - pixi package manager
 - NeuPrint access token
 - Git for version control
+
+### Key Dependencies
+
+The project relies on several key Python packages defined in `pyproject.toml`. These are installed and managed through `pixi`, e.g via running `pixi shell` or `pixi install`. 
+
+**Core Dependencies:**
+- `click>=8.0.0` - CLI framework
+- `jinja2>=3.0.0` - Template engine
+- `pyyaml>=6.0` - YAML configuration parsing
+- `requests>=2.28.0` - HTTP requests
+- `pandas>=1.5.0` - Data manipulation
+- `neuprint-python>=0.4.0` - NeuPrint API client
+
+**Visualization & Processing:**
+- `pycairo>=1.20.0` - Cairo graphics library
+- `cairosvg>=2.5.0` - SVG processing
+- `minify-html>=0.16.4,<0.17` - HTML minification
+
+**Development Tools:**
+- `gitpython>=3.1.0` - Git integration for versioning
+- `python-dotenv>=1.0.0` - Environment variable management
+- `toml>=0.10.0` - TOML file parsing
+- `cst-lsp>=0.1.3,<0.2` - Language server protocol support
+
+**Testing (dev environment):**
+- `pytest` - Testing framework
+- `pytest-cov` - Coverage reporting
+- `pytest-asyncio>=1.2.0,<2` - Async test support
+
+**Code Quality (dev environment):**
+- `ruff>=0.12.11,<0.13` - Fast Python linter and formatter
+
+**Workflow Tools:**
+- `parallel>=20200322,<20250623` - GNU Parallel for batch processing
+- `python-lsp-server>=1.13.1,<2` - Python language server
+- `pyprojroot>=0.3.0,<0.4` - Project root detection
+- `psutil>=7.1.0,<8` - System and process utilities
+- `semver>=3.0.4,<4` - Semantic versioning
 
 ### Development Setup
 
@@ -92,6 +130,7 @@ neuView uses pixi for task management with separate commands for different types
 
 **Code Quality Commands** (defined in `pyproject.toml`):
 - `pixi run format` - Format code with ruff
+- `pixi run check` - Check code with ruff linter
 
 **Content Generation:**
 - `pixi run neuview generate` - Generate website for 10 random neuron types
@@ -441,10 +480,9 @@ Custom Jinja2 filters for formatting data in templates.
 
 ### Cache Management
 
-**Clear cache:**
-```bash
-pixi run neuview build --clear-cache
-```
+**Cache Location:**
+- Cache files are stored in `output/.cache/` directory
+- Manually delete this directory to clear all caches: `rm -rf output/.cache/`
 
 **PerformanceMonitor** (`src/neuview/services/performance_monitor.py`):
 - Operation timing and metrics collection
@@ -2124,7 +2162,7 @@ Citation logging is integrated into:
 2. Make changes with tests
 3. Run tests: `pixi run test`
 4. Format code: `pixi run format`
-5. Lint code: `pixi run lint`
+5. Check code: `pixi run check`
 6. Submit pull request
 
 ### Code Style
