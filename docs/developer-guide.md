@@ -1,27 +1,22 @@
 # neuView Developer Guide
 
-A comprehensive guide for developers working on the neuView neuron visualization platform. This guide covers architecture, development setup, implementation details, and contribution guidelines.
+A comprehensive guide for developers working on the neuView neuron visualization platform.
 
 ## Table of Contents
 
 - [Project Overview](#project-overview)
 - [Architecture Overview](#architecture-overview)
 - [Getting Started](#getting-started)
+- [Neuron Data System](#neuron-data-system)
 - [Core Components](#core-components)
 - [Service Architecture](#service-architecture)
 - [Data Processing Pipeline](#data-processing-pipeline)
-- [Visualization System](#visualization-system)
 - [Template System](#template-system)
 - [Performance & Caching](#performance--caching)
-- [Development Patterns](#development-patterns)
 - [Testing Strategy](#testing-strategy)
-- [Dataset Aliases](#dataset-aliases)
 - [Configuration](#configuration)
-- [API Reference](#api-reference)
 - [Dataset-Specific Implementations](#dataset-specific-implementations)
-- [Feature Implementation Guides](#feature-implementation-guides)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 
 ## Project Overview
 
@@ -30,11 +25,11 @@ neuView is a modern Python CLI tool that generates beautiful HTML pages for neur
 ### Key Features
 
 - **🔌 NeuPrint Integration**: Direct data fetching with intelligent caching
-- **📱 Modern Web Interface**: Responsive design with advanced filtering
-- **⚡ High Performance**: Up to 97.9% speed improvement with persistent caching
+- **📱 Modern Web Interface**: Responsive design with advanced filtering and search
+- **⚡ High Performance**: Persistent caching with optimal data loading strategies
 - **🧠 Multi-Dataset Support**: Automatic adaptation for CNS, Hemibrain, Optic-lobe, FAFB
 - **🎨 Beautiful Reports**: Clean, accessible HTML pages with interactive features
-- **🔍 Advanced Search**: Real-time filtering by cell count, neurotransmitter, brain regions
+- **🔍 Advanced Search**: Real-time autocomplete search with synonym and FlyWire type support
 
 ### Technology Stack
 
@@ -47,24 +42,12 @@ neuView is a modern Python CLI tool that generates beautiful HTML pages for neur
 
 ### Architecture Overview
 
-neuView follows a layered architecture pattern with four distinct layers:
+neuView follows a layered architecture pattern:
 
 - **Presentation Layer**: CLI Commands, Templates, Static Assets, HTML Generation
 - **Application Layer**: Services, Orchestrators, Command Handlers, Factories
 - **Domain Layer**: Entities, Value Objects, Domain Services, Business Logic
 - **Infrastructure Layer**: Database, File System, External APIs, Caching, Adapters
-
-For detailed architecture implementation, see `src/neuview/` directory structure.
-
-### Key Architectural Principles
-
-- **Separation of Concerns**: Clear boundaries between layers
-- **Dependency Inversion**: High-level modules don't depend on low-level modules
-- **Single Responsibility**: Each component has one well-defined purpose
-- **Open/Closed Principle**: Open for extension, closed for modification
-- **Command/Query Separation**: Clear distinction between data modification and retrieval
-- **Result Pattern**: Explicit error handling with Result<T> types
-- **Service Container**: Dependency injection for loose coupling
 
 ## Getting Started
 
@@ -77,17 +60,10 @@ For detailed architecture implementation, see `src/neuview/` directory structure
 
 ### Development Setup
 
-1. **Clone the repository:**
-Clone the repository and navigate to the project directory.
-
-2. **Install dependencies:**
-Install dependencies using `pixi install`.
-
-3. **Set up environment:**
-Set up the environment using `pixi run setup-env` and edit the .env file with your NeuPrint token.
-
-4. **Verify setup:**
-Test the connection using `pixi run neuview test-connection`.
+1. **Clone the repository**
+2. **Install dependencies**: `pixi install`
+3. **Set up environment**: `pixi run setup-env` and edit `.env` with your NeuPrint token
+4. **Verify setup**: `pixi run neuview test-connection`
 
 ### Development Commands
 
@@ -98,7 +74,8 @@ neuView uses pixi for task management with separate commands for different types
 **Unit Tests** - Fast, isolated tests for individual components:
 **Unit Test Commands** (defined in `pyproject.toml`):
 - `pixi run unit-test` - Run all unit tests
-- `pixi run unit-test-verbose` - Detailed output with specific file/test targeting support
+- `pixi run integration-test` - Run integration tests
+- `pixi run test` - Run all tests
 
 **Integration Tests** - End-to-end tests for component interactions:
 **Integration Test Commands** (defined in `pyproject.toml`):
@@ -115,9 +92,12 @@ neuView uses pixi for task management with separate commands for different types
 
 **Code Quality Commands** (defined in `pyproject.toml`):
 - `pixi run format` - Format code with ruff
-- `pixi run check` - Run linting and quality checks
 
-#### Content Generation Tasks
+**Content Generation:**
+- `pixi run neuview generate` - Generate website for 10 random neuron types
+    - `pixi run neuview generate -n Dm4` - Generate website for a specific neuron type, here *Dm4*
+- `pixi run neuview inspect <type>` - Inspect neuron type data
+- `pixi run create-all-pages` - Generate website with all neurons in the data set. **Note:** This command will also increment the version in git.
 
 **Content Generation Commands** (defined in `pyproject.toml`):
 - `pixi run clean-output` - Clean generated output
@@ -126,9 +106,9 @@ neuView uses pixi for task management with separate commands for different types
 - `pixi run create-list` - Generate index page
 - `pixi run create-all-pages` - Complete workflow automation
 
-Queue management implemented in `src/neuview/services/queue_service.py`.
+## Neuron Data System
 
-#### Development Support Tasks
+The neuron search functionality uses a dual-source data loading system that provides universal compatibility and external API access.
 
 **Development Support Commands** (defined in `pyproject.toml`):
 - `pixi run setup-env` - Setup development environment
@@ -137,289 +117,253 @@ Queue management implemented in `src/neuview/services/queue_service.py`.
 - `pixi run subset-small` / `pixi run subset-small-no-index` - Generate small test datasets
 - `pixi run extract-and-fill` - Batch processing from config files
 
-Implementation in `scripts/extract_and_fill.py` and CLI modules.
+```
+output/
+├── data/
+│   ├── neurons.json          # Primary: JSON for external services & HTTP(S)
+│   └── neurons.js            # Fallback: JavaScript wrapper for file:// access
+└── static/
+    └── js/
+        └── neuron-search.js  # Search logic (no embedded data)
+```
 
-#### Version Management Tasks
+### Data Format (Version 2.0)
 
-The project includes automated version management for releases:
+**Structure:**
+```json
+{
+  "names": ["AN07B013", "AOTU001", ...],
+  "neurons": [
+    {
+      "name": "AN07B013",
+      "urls": {
+        "combined": "AN07B013.html",
+        "left": "AN07B013_L.html",
+        "right": "AN07B013_R.html"
+      },
+      "types": {
+        "flywire": ["AN_GNG_60"],
+        "synonyms": ["Cachero 2010: aSP-j"]
+      }
+    }
+  ],
+  "metadata": {
+    "generated": "2025-01-26 15:04:31",
+    "total_types": 28,
+    "version": "2.0"
+  }
+}
+```
 
 **Version Management** (defined in `pyproject.toml`):
 - `pixi run increment-version` - Increment patch version and create git tag
 
-Implementation in `scripts/increment_version.py` with `--dry-run` support for testing.
+### Data Loading Flow
 
-**Version Increment Script**
+**Web Server (HTTP/HTTPS):**
+1. neuron-search.js loads
+2. Attempts `fetch('data/neurons.json')`
+3. Success → Uses JSON data (optimal)
+4. neurons.js never downloaded
 
-The `increment_version.py` script automatically manages project versioning by:
+**Local Files (file://):**
+1. neuron-search.js loads
+2. Attempts `fetch('data/neurons.json')`
+3. Fails (CORS restriction)
+4. Dynamically loads `<script src="data/neurons.js">`
+5. Script tag bypasses CORS → Success
 
-1. **Reading current version**: Uses `git tag --list --sort=-version:refname` to find the latest semantic version tag
-2. **Incrementing patch version**: Increases patch by 1 (e.g., `v2.7.1` → `v2.7.2`)
-3. **Creating git tag**: Creates an annotated tag with descriptive message
+### CORS Bypass Mechanism
 
-**Version Format**
+- `fetch()` requests are subject to CORS policy (blocked on file://)
+- `<script>` tags are NOT subject to CORS (works on file://)
+- Dynamic script injection used as fallback
 
-- Expects/creates semantic versioning: `v{major}.{minor}.{patch}`
-- The `v` prefix is optional when reading, always added when creating
-- Handles missing patch numbers by defaulting to 0
+### Search Functionality
 
-**Safety Features**
+The search system searches in three places:
+1. **Neuron names** (e.g., "AN07B013")
+2. **Synonyms** (e.g., "Cachero 2010: aSP-j")
+3. **FlyWire types** (e.g., "CB3127")
 
-- Validates version format before processing
-- Warns about uncommitted changes but continues
-- Checks for duplicate tags to prevent conflicts
-- Does not auto-push tags (manual `git push origin <tag>` required)
-- Supports `--dry-run` mode for testing
+**Synonym Matching:**
+- Full text match: "cachero" matches "Cachero 2010: aSP-j"
+- Name after colon: "asp-j" matches "aSP-j" part
 
-**Example Output**
+### External API Access
 
-The version increment process analyzes the current version, calculates the new version, creates a git tag, and reports the successful increment.
+**Python Example:**
+```python
+import requests
 
-**Error Handling**
+data = requests.get('https://site.com/data/neurons.json').json()
+neuron_names = data['names']
+neurons = data['neurons']
 
-The script will exit with error code 1 if:
-- No valid semantic version tags are found
-- Git commands fail
-- Tag already exists
-- Version format is invalid
+for neuron in neurons:
+    if 'types' in neuron:
+        flywire = neuron['types'].get('flywire', [])
+        synonyms = neuron['types'].get('synonyms', [])
+```
 
-#### Task Usage Patterns
+**JavaScript Example:**
+```javascript
+const response = await fetch('https://site.com/data/neurons.json');
+const data = await response.json();
 
-**Development Workflow**:
-1. Setup environment: `pixi run setup-env` (first time)
-2. Development testing: `pixi run unit-test-verbose`
-3. Code quality: `pixi run format` and `pixi run check`
-4. Pre-commit testing: `pixi run test-verbose`
+const names = data.names;
+const neurons = data.neurons;
+```
 
-**Content Generation Workflow**:
-- Complete automation: `pixi run create-all-pages`
-- Manual steps: clean → fill → process → index
+**cURL Example:**
+```bash
+curl -s https://site.com/data/neurons.json | jq '.names'
+curl -s https://site.com/data/neurons.json | jq '.neurons[] | select(.types.flywire[]? == "CB3127")'
+```
 
-**Testing Workflow**:
-- Development: `pixi run unit-test` for fast feedback
-- Release preparation: `pixi run integration-test` and `pixi run test-coverage`
+### Generation Process
 
-#### Performance Notes
+Data files are generated automatically during build by `IndexGeneratorService.generate_neuron_search_js()`:
 
-- **Unit tests**: Complete in ~1 second
-- **Integration tests**: May take several seconds due to I/O
-- **Full test suite**: Typically < 10 seconds
-- **Page generation**: Varies based on dataset size
+1. Prepares neuron data structure from NeuPrint data
+2. Strips `types/` prefix from URLs
+3. Converts `flywire_types` string to `types.flywire` array
+4. Converts `synonyms` string to `types.synonyms` array
+5. Generates `output/data/neurons.json`
+6. Generates `output/data/neurons.js`
+7. Generates `output/static/js/neuron-search.js`
 
-#### Environment Requirements
+**File:** `src/neuview/services/index_generator_service.py`
 
-Most development tasks require the `dev` environment, which is automatically used by the configured tasks. Some tasks require authentication:
-- Set in `.env` file or environment variables
+### URL Handling
+
+**In Data (JSON/JS):**
+- URLs stored without `types/` prefix
+- Example: `"combined": "AN07B013.html"`
+
+**In JavaScript:**
+```javascript
+// Prefix added dynamically based on context
+this.urlPrefix = this.isNeuronPage ? '' : 'types/';
+targetUrl = this.urlPrefix + neuronEntry.urls.combined;
+
+// From index.html: 'types/AN07B013.html'
+// From neuron page: 'AN07B013.html'
+```
+
+### Testing
+
+**Test page:** `docs/neuron-data-test.html`
+- Tests JSON loading
+- Tests JS fallback loading
+- Shows data statistics
+- Provides debugging tools
+
+**Verify data source in browser console:**
+```javascript
+console.log(window.neuronSearch.dataSource);
+// Returns: 'json' or 'js-fallback'
+```
 
 ## Core Components
 
 ### PageGenerator
 
-The main orchestrator that coordinates page generation across all services.
+Main class responsible for generating HTML pages. Coordinates template rendering, data fetching, and file writing.
 
-**PageGenerator** (`src/neuview/page_generator.py`):
-- Core page generation orchestration
-- Automatic soma side detection and page creation
-- Service container integration
-- Key methods: `generate_page()`, `generate_index()`, `test_connection()`
+**Location:** `src/neuview/core/page_generator.py`
 
 ### PageGenerationOrchestrator
 
-Coordinates the complex page generation workflow through a multi-step process including request validation, data fetching, connectivity processing, visualization generation, template rendering, and output saving.
+Orchestrates the entire page generation process, managing parallelization and error handling.
 
-**PageGenerationOrchestrator** (`src/neuview/services/page_generation_orchestrator.py`):
-- Coordinates the complete page generation workflow
-- Handles request validation, data fetching, processing, and rendering
-- Manages service dependencies and error handling
+**Location:** `src/neuview/application/orchestrators/page_generation_orchestrator.py`
 
 ### NeuronType Class
 
-Core domain entity representing a neuron type with methods for cache key generation, neuron counting, and synapse statistics.
+Domain model representing a neuron type with all its properties and behaviors.
 
-**NeuronType** (`src/neuview/domain/neuron_type.py`):
-- Domain entity representing a neuron type
-- Properties: name, description, custom_query
-- Methods: `get_cache_key()`, `get_neuron_count()`, `get_synapse_stats()`
+**Location:** `src/neuview/domain/entities/neuron_type.py`
 
 ## Service Architecture
 
 ### Core Services
 
-The application is built around a comprehensive service architecture:
+**Data Services:**
+- `DatabaseQueryService` - NeuPrint queries
+- `ConnectivityQueryService` - Connectivity data
+- `ROIDataService` - Brain region data
 
-#### Data Services
-- **NeuPrintConnector**: Database connection and query execution
-- **DatabaseQueryService**: Structured query building and execution
-- **CacheService**: Multi-level caching with persistence
-- **DataProcessingService**: Data transformation and validation
-- **ROIDataService**: Dynamic ROI data fetching from Google Cloud Storage with caching
+**Analysis Services:**
+- `StatisticsService` - Statistical calculations
+- `CVCalculatorService` - Coefficient of variation
 
-#### Analysis Services
-- **PartnerAnalysisService**: Connectivity analysis and partner identification
-- **ROIAnalysisService**: Region of interest analysis and statistics
-- **ConnectivityCombinationService**: Automatic L/R hemisphere combination for connectivity
-- **ROICombinationService**: Automatic L/R hemisphere combination for ROI data
+**Content Services:**
+- `CitationService` - Citation generation
+- `ImageService` - Image handling
+- `IndexGeneratorService` - Index page and data file generation
 
-#### Content Services
-- **TemplateContextService**: Template data preparation and processing
-- **ResourceManagerService**: Static asset management
-- **NeuroglancerJSService**: Neuroglancer integration and URL generation
-- **URLGenerationService**: Dynamic URL creation
-- **CitationService**: Citation data management and HTML link generation
-- **CitationLoggingService**: Automatic tracking and logging of missing citations
-
-#### Infrastructure Services
-- **FileService**: File operations and path management
-- **ConfigurationService**: Configuration loading and validation
-- **LoggingService**: Structured logging and monitoring
+**Infrastructure Services:**
+- `CacheService` - Data caching
+- `ConfigurationService` - Configuration management
 
 ### Service Container Pattern
 
-Dependency injection using a service container with service registration and singleton management.
+Services are registered in a dependency injection container for loose coupling.
 
-See the `ServiceContainer` class in `src/neuview/services/page_generation_container.py` for the complete implementation including the `__init__`, `register`, and `get` methods.
-
-### Service Development Pattern
-
-Standard pattern for implementing new services with configuration injection, caching integration, error handling, input validation, and core processing logic.
-
-Refer to any service class in `src/neuview/services/` for examples of this pattern, such as `DatabaseQueryService` in `src/neuview/services/database_query_service.py` or `CacheService` in `src/neuview/services/cache_service.py`.
+**Location:** `src/neuview/infrastructure/container.py`
 
 ## Data Processing Pipeline
 
 ### Dataset Adapters
 
-Different datasets require different data processing approaches:
+Different datasets (CNS, Hemibrain, FAFB) require different handling. Adapters normalize the differences.
 
-**Dataset Adapters** (`src/neuview/services/dataset_adapters/`):
-- Base adapter pattern for dataset-specific processing
-- `DatasetAdapter` - Abstract base class with common interface
-- `CNSAdapter`, `HemibrainAdapter`, `FAFBAdapter` - Dataset-specific implementations
-- Key methods: `extract_soma_side()`, `normalize_columns()`, `categorize_rois()`
-- Factory pattern in `DatasetAdapterFactory` for automatic adapter selection
+**Base Adapter:** `src/neuview/infrastructure/adapters/base_adapter.py`
+
+**Implementations:**
+- `CNSAdapter` - For CNS datasets
+- `FafbAdapter` - For FAFB/FlyWire datasets
 
 ### Data Flow
 
-Raw NeuPrint Data → Dataset Adapter → Cache Layer → Service Processing → Template Rendering
-
-1. **Data Extraction**: NeuPrint queries return raw database results
-2. **Adaptation**: Dataset-specific adapters normalize the data
-3. **Caching**: Processed data is cached for performance
-4. **Analysis**: Services perform connectivity and ROI analysis with CV calculation
-5. **Rendering**: Template system generates final HTML
+1. **Query** - Fetch data from NeuPrint
+2. **Adapt** - Normalize dataset-specific differences
+3. **Process** - Calculate statistics, generate visualizations
+4. **Cache** - Store processed data
+5. **Render** - Generate HTML with templates
+6. **Write** - Output to file system
 
 ### Connectivity Data Processing with CV
 
-The connectivity processing pipeline includes statistical analysis including coefficient of variation (CV) calculation. See the connectivity query methods and CV calculation logic in `src/neuview/services/data_processing_service.py` and `src/neuview/services/connectivity_combination_service.py`.
+Connectivity tables include coefficient of variation (CV) to show variability in synapse counts.
 
-The partner data structure includes the calculated CV value for template rendering.
+**Formula:** `CV = (standard deviation / mean) × 100`
 
-### Automatic Page Generation System
-
-neuView features automatic page generation that eliminates the need for manual soma-side specification. The system intelligently analyzes neuron data and generates the optimal set of pages.
-
-#### Architecture Overview
-
-The automatic page generation system analyzes soma side distribution, determines which pages to generate based on data availability, and creates appropriate side-specific and combined pages. See the `SomaDetectionService` and its `generate_pages_with_auto_detection` method in the relevant service files.
-
-#### Detection Logic
-
-The system uses sophisticated logic to determine which pages to generate based on soma side distribution, counting sides with data, and handling unknown soma side counts. See the `_should_generate_combined_page` function implementation for the complete logic.
-
-#### Page Generation Scenarios
-
-**Scenario 1: Multi-hemisphere neuron type (e.g., Dm4)**
-- Data: 45 left neurons, 42 right neurons
-- Generated pages: `Dm4_L.html`, `Dm4_R.html`, `Dm4.html` (combined)
-- Rationale: Multiple hemispheres warrant both individual and combined views
-
-**Scenario 2: Single-hemisphere neuron type (e.g., LC10)**
-- Data: 0 left neurons, 23 right neurons
-- Generated pages: `LC10_R.html` only
-- Rationale: No combined page needed for single-hemisphere types
-
-**Scenario 3: Mixed data with unknowns**
-- Data: 15 left neurons, 8 unknown-side neurons
-- Generated pages: `NeuronType_L.html`, `NeuronType.html` (combined)
-- Rationale: Unknown neurons justify a combined view alongside specific side
-
-**Scenario 4: No soma side information**
-- Data: 30 neurons, all unknown sides
-- Generated pages: `NeuronType.html` (combined only)
-- Rationale: Without hemisphere data, only combined view is meaningful
-
-#### System Integration
-
-The automatic page generation system maintains backward compatibility while removing user-facing complexity. The `GeneratePageCommand` class has been simplified by removing the `soma_side` parameter, allowing the system to auto-detect appropriate pages to generate. See `src/neuview/models/page_generation.py` for the updated command structure.
-
-#### Performance Considerations
-
-- **Data Analysis**: Single query analyzes all soma sides simultaneously
-- **Parallel Generation**: Individual pages generated concurrently when possible
-- **Cache Efficiency**: Shared data fetching across multiple page generations
-- **Memory Management**: Automatic cleanup after page generation completes
-
-### ROI Query Strategies
-
-Different strategies for querying region of interest data:
-
-**ROI Query Strategies** (`src/neuview/services/roi_analysis_service.py`):
-- Strategy pattern for region-specific ROI queries
-- Methods: `query_central_brain_rois()`, `categorize_rois()`
-- Handles different brain region categorizations
-
-## Visualization System
-
-### Hexagon Grid Generator
-
-**HexagonGridGenerator** (`src/neuview/services/visualization/hexagon_grid_generator.py`):
-- Generates spatial visualizations for neuron distribution
-- Configurable hex size and spacing parameters
-- Key methods: `generate_region_hexagonal_grids()`, `generate_single_region_grid()`
-- Outputs SVG format for web display
-
-### Coordinate System
-
-**Coordinate Functions** (`src/neuview/services/visualization/coordinate_utils.py`):
-- Mathematical functions for hexagonal grid coordinate conversion
-- Key functions: `hex_to_axial()`, `axial_to_pixel()`
-- Handles hexagonal to Cartesian coordinate transformations
-
-### Color Mapping
-
-**Color Mapping Functions** (`src/neuview/services/visualization/color_utils.py`):
-- Dynamic color assignment based on data values
-- Key function: `get_color_for_value()`
-- Supports multiple color schemes (viridis, plasma)
-- Handles edge cases like constant values
+**Implementation:** `src/neuview/services/cv_calculator_service.py`
 
 ## Template System
 
 ### Template Architecture
 
-**Template Strategy Pattern** (`src/neuview/services/template_service.py`):
-- Jinja2-based template system with custom extensions
-- `TemplateStrategy` - Abstract base class for template handling
-- `JinjaTemplateStrategy` - Jinja2 implementation with custom filters
-- Key methods: `load_template()`, `render_template()`, `_setup_filters()`
-- Custom filters registered for number formatting and URL safety
+Templates are organized hierarchically with inheritance and includes.
 
-### Template Structure
+**Base Templates:**
+- `base.html.jinja` - Main page structure
+- `macros.html.jinja` - Reusable components
 
-**Template Organization** (`templates/` directory):
-- `base.html.jinja` - Base layout template
-- `neuron-page.html.jinja` - Individual neuron type pages
-- `index.html.jinja` - Main index with search functionality
-- `types.html.jinja` - Neuron type listing pages
-- `static/js/` - JavaScript template files (neuroglancer integration, page interactions)
-- `static/css/` - CSS template files with dynamic styling
+**Page Templates:**
+- `neuron_page.html.jinja` - Individual neuron pages
+- `index.html.jinja` - Landing page
+- `types.html.jinja` - Neuron type listing
+- `help.html.jinja` - Help page
+
+**Partial Templates:**
+- `sections/header.html.jinja` - Page header with search
+- `sections/footer.html.jinja` - Page footer
+- `sections/connectivity_table.html.jinja` - Connectivity tables
 
 ### Template Context
-
-**Template Context Management** (`src/neuview/services/template_context_service.py`):
-- Structured data preparation for template rendering
-- `TemplateContext` class organizing neuron, connectivity, ROI, and visualization data
-- Key method: `to_dict()` for template consumption
-- Handles data serialization and context validation
 
 ### Summary Statistics Preparation
 
@@ -457,51 +401,50 @@ To extend the system with new calculated statistics, add the calculation logic t
 
 ### Connectivity Table Template Processing
 
-**Connectivity Tables** (`templates/sections/connectivity_table.html.jinja`):
-- Handles CV display with proper fallbacks for coefficient of variation data
-- Safe fallback patterns using Jinja2 `get()` method with default values
-- Descriptive tooltips for CV column explaining statistical meaning
-- Consistent implementation across upstream and downstream tables
-- Custom filters for number and percentage formatting
+```python
+context = {
+    'neuron': neuron_type,
+    'config': configuration,
+    'statistics': stats,
+    'connectivity': conn_data,
+    'citations': citations
+}
+```
 
 ### Custom Template Filters
 
-**Template Filters** (`src/neuview/services/template_service.py`):
-- `format_number_filter()` - Formats numbers with precision and thousand separators (K, M suffixes)
-- `format_percentage()` - Handles percentage formatting with appropriate precision
-- `safe_url()` - URL encoding and sanitization for dynamic links
-- Registered automatically during Jinja2 environment setup
+**Location:** `src/neuview/templates/filters/`
+
+Custom Jinja2 filters for formatting data in templates.
 
 ## Performance & Caching
 
 ### Multi-Level Cache System
 
-neuView implements a sophisticated caching system with multiple levels:
-
-**CacheService** (`src/neuview/services/cache_service.py`):
-- Multi-level caching system with memory, file, and database backends
-- Key method: `get_cached_data()` with fallback chain across cache levels
-- Automatic cache population and eviction policies
-- Backend implementations in respective cache backend modules
+1. **Memory Cache** - In-process cache for current session
+2. **Persistent Cache** - SQLite database for cross-session caching
+3. **File Cache** - Generated HTML and static assets
 
 ### Cache Types
 
-- **Memory Cache**: In-memory LRU cache for immediate access
-- **File Cache**: Persistent file-based cache surviving process restarts
-- **Database Cache**: SQLite-based cache for complex queries
-- **HTTP Cache**: Response caching for NeuPrint API calls
+- **Query Cache** - NeuPrint query results
+- **Synapse Cache** - Connectivity statistics
+- **ROI Cache** - Brain region data
+- **Image Cache** - Neuroglancer screenshots
 
 ### Performance Optimizations
 
-Key optimizations implemented:
+- Parallel page generation with asyncio
+- Lazy loading of heavy data
+- Incremental regeneration (only changed pages)
+- Efficient template rendering
 
-- **Database Connection Pooling**: Reuse connections across requests
-- **Batch Query Processing**: Combine multiple queries into single requests
-- **Lazy Loading**: Load data only when needed
-- **Asynchronous Processing**: Non-blocking I/O for improved throughput
-- **Compressed Storage**: Gzip compression for cached data
+### Cache Management
 
-### Performance Monitoring
+**Clear cache:**
+```bash
+pixi run neuview build --clear-cache
+```
 
 **PerformanceMonitor** (`src/neuview/services/performance_monitor.py`):
 - Operation timing and metrics collection
@@ -584,52 +527,23 @@ Using type hints and validation:
 
 ## Testing Strategy
 
-### Overview
-
-neuView uses a comprehensive testing strategy with clear separation between unit and integration tests. Tests are organized by type and use pytest markers for selective execution.
-
 ### Test Categories
 
-#### Unit Tests (`@pytest.mark.unit`)
-Fast, isolated tests that focus on individual components without external dependencies.
+**Unit Tests** (`@pytest.mark.unit`):
+- Fast, isolated tests
+- No external dependencies
+- Mock all services
 
-**Characteristics:**
-- Fast execution (< 1 second total)
-- No file I/O operations
-- No external service dependencies
-- Test single methods/functions
-- Mock external dependencies when needed
-
-**Example:**
-```python
-@pytest.mark.unit
-class TestDatasetAdapterFactory:
-    """Unit tests for DatasetAdapterFactory."""
-
-    @pytest.mark.unit
-**Example Unit Test** (`test/test_dataset_adapters.py`):
-- `TestDatasetAdapterFactory.test_male_cns_alias_resolution()` - Tests adapter factory with dataset aliases
-- Verifies that "male-cns" resolves to correct CNSAdapter instance
-```
-
-#### Integration Tests (`@pytest.mark.integration`)
-End-to-end tests that verify component interactions and real-world scenarios.
-
-**Characteristics:**
-- Slower execution (may involve file I/O)
+**Integration Tests** (`@pytest.mark.integration`):
 - Test component interactions
-- Uses real configuration files
-- Tests end-to-end workflows
-- May use temporary files/resources
-
-**Example Integration Test** (`test/test_male_cns_integration.py`):
-- `TestMaleCNSIntegration.test_config_with_male_cns_creates_cns_adapter()` - End-to-end configuration testing
-- Creates temporary config files and tests full component integration
-- Validates that configuration properly creates expected adapter instances
+- May use real NeuPrint connection
+- Slower but more comprehensive
 
 ### Test Execution
 
-#### Test Execution Commands
+```bash
+# Run all tests
+pixi run test
 
 **Test execution tasks are defined in `pyproject.toml`:**
 - Unit tests: `pixi run unit-test` (fast feedback)
@@ -638,7 +552,15 @@ End-to-end tests that verify component interactions and real-world scenarios.
 - Coverage reports: `pixi run test-coverage`
 - Verbose output: Add `--verbose` suffix to any test command
 
-**Selective execution supports targeting specific files, classes, or methods using pytest syntax.**
+# Run only integration tests
+pixi run integration-test
+
+# Run with coverage
+pixi run test-coverage
+
+# Run specific test file
+pixi run pytest test/unit/test_neuron_type.py
+```
 
 ### Test Structure
 
@@ -785,11 +707,20 @@ See current utility scripts in `scripts/` directory for reference implementation
 
 ### Configuration Files
 
-**Configuration Structure** (`config.yaml` and `src/neuview/config/config.py`):
-- YAML-based configuration system with hierarchical structure
-- Key sections: neuprint, cache, templates, performance, visualization
-- Reference configuration examples in project root `config.yaml`
-- Configuration dataclasses define structure and validation rules
+**Main Config:** `config.yaml`
+```yaml
+neuprint:
+  server: neuprint.janelia.org
+  dataset: optic-lobe:v1.0
+  
+html:
+  title_prefix: "Optic Lobe"
+  github_repo: "https://github.com/..."
+  
+performance:
+  max_workers: 4
+  cache_enabled: true
+```
 
 ### Environment Variables
 
@@ -1516,27 +1447,23 @@ Example warning: "Warning: Unknown dataset 'unknown-dataset:latest', using CNS a
 
 ### FAFB Dataset Handling
 
-FAFB (FlyWire Adult Fly Brain) requires special handling due to data structure differences:
+FAFB (FlyWire) has different property names and behaviors:
 
-#### Soma Side Property Differences
+**Soma Side Property:**
+- Other datasets: `somaLocation` or `somaSide`
+- FAFB: `side` (values: "L", "R", "M")
 
-FAFB stores soma side information differently than other datasets:
+**Adapter:** `src/neuview/infrastructure/adapters/fafb_adapter.py`
 
-**Standard Datasets (CNS, Hemibrain)**:
-- Property: `somaSide`
-- Values: "L", "R", "M"
+### CNS, Hemibrain, and Optic-Lobe Datasets
 
-**FAFB Dataset**:
-- Property: `side` OR `somaSide`
-- Values: "LEFT", "RIGHT", "CENTER" or "left", "right", "center"
+Standard property names:
+- `somaLocation` or `somaSide`
+- ROI information from `roiInfo` property
 
-#### FAFB Adapter Implementation
+**Adapter:** `src/neuview/infrastructure/adapters/cns_adapter.py`
 
-**FAFBAdapter** (`src/neuview/services/dataset_adapters/fafb_adapter.py`):
-- Custom soma side extraction handling FAFB-specific property differences
-- `extract_soma_side()` method with fallback logic for `somaSide` vs `side` properties
-- Property value mapping: LEFT/RIGHT → L/R, CENTER/MIDDLE → C
-- Handles case variations and FAFB-specific nomenclature
+### Dataset Detection
 
 #### FAFB Query Modifications
 
@@ -2031,107 +1958,63 @@ The filtering implementation can be tested with:
 
 ### Common Issues
 
-#### NeuPrint Connection Failures
+**"No neuron types found"**
+- Check NeuPrint credentials
+- Verify dataset name in config.yaml
+- Check network connectivity
 
-**Symptoms**:
-- Connection timeout errors
-- Authentication failures
-- Dataset not found errors
+**"Template rendering failed"**
+- Check template syntax
+- Verify all required context variables
+- Look for missing filters or macros
 
-**Debugging**:
+**"Cache issues"**
+- Clear cache with `--clear-cache` flag
+- Check cache directory permissions
+- Verify disk space
+
+**Search not working:**
+- Check browser console for errors
+- Verify neurons.json and neurons.js were generated
+- Check data source: `window.neuronSearch.dataSource`
+
+### Debug Mode
+
+Enable verbose logging:
 ```bash
-# Test connection
-neuview test-connection
-
-# Check configuration
-neuview --verbose test-connection
-
-# Verify token
-echo $NEUPRINT_APPLICATION_CREDENTIALS
+pixi run neuview --verbose generate
 ```
 
-**Solutions**:
-- Verify NeuPrint token is valid and not expired
-- Check network connectivity to neuprint.janelia.org
-- Ensure dataset name matches exactly (case-sensitive)
-- Try different NeuPrint server endpoints
-
-#### Template Rendering Errors
-
-**Symptoms**:
-- Jinja2 template syntax errors
-- Missing template files
-- Context variable errors
-
-**Debugging**:
-```python
-def validate_template(template_path: str) -> Result[bool]:
-    """Validate template syntax and required variables."""
-    try:
-        env = Environment(loader=FileSystemLoader(os.path.dirname(template_path)))
-        template = env.get_template(os.path.basename(template_path))
-
-        # Test render with minimal context
-        template.render({})
-        return Result.success(True)
-    except Exception as e:
-        return Result.failure(f"Template error: {e}")
-```
-
-**Solutions**:
-- Check template syntax with Jinja2 linter
-- Verify all required template variables are provided
-- Check file permissions on template directory
-- Ensure template inheritance chain is correct
-
-#### Cache Issues
-
-**Symptoms**:
-- Stale data being served
-- Cache corruption errors
-- Excessive memory usage
-
-**Solutions**:
+Or set environment variable:
 ```bash
-# Clear all caches manually
-rm -rf output/.cache/
-
-# Check cache directory contents
-ls -la output/.cache/
-
-# Check cache file sizes
-du -sh output/.cache/*
+export NEUVIEW_LOG_LEVEL=DEBUG
 ```
 
-#### Performance Issues
+### Performance Issues
 
-**Symptoms**:
-- Slow page generation
-- High memory usage
-- Database timeouts
+**Slow generation:**
+- Enable caching
+- Use `--parallel` flag
+- Reduce `max_types` in discovery config
 
-**Investigation**:
-- Enable performance profiling: `NEUVIEW_PROFILE=1`
-- Check cache hit rates
-- Monitor database query performance
-- Review memory usage patterns
+**Large output size:**
+- Minimize HTML (default in production)
+- Compress images
+- Limit number of neuron types
 
-### Debugging Tools
+### Citation Issues
 
-#### Log Configuration
+**Missing citations:**
+- Verify citation format in source data
+- Check CitationService logs
+- Ensure proper DOI formatting
 
-Enable detailed logging:
+**Duplicate citations:**
+- Use citation deduplication
+- Check citation key generation
 
-```python
-import logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('debug.log'),
-        logging.StreamHandler()
-    ]
-)
+## File Organization
+
 ```
 
 #### Citation Logging
@@ -2235,54 +2118,40 @@ Citation logging is integrated into:
 
 ## Contributing
 
-### Code Style
-
-Follow these coding standards:
-
-- **PEP 8**: Python code style guide
-- **Type Hints**: Use type annotations for all public APIs
-- **Docstrings**: Google-style docstrings for all classes and functions
-- **Error Handling**: Use Result pattern for fallible operations
-- **Testing**: Minimum 90% test coverage for new code
-
-### Pull Request Process
-
-1. **Fork** the repository and create a feature branch
-2. **Implement** changes following coding standards
-3. **Test** thoroughly with unit and integration tests
-4. **Document** changes in relevant documentation files
-5. **Submit** pull request with clear description of changes
-
 ### Development Workflow
 
-#### Setting Up Development Environment
+1. Create feature branch from `main`
+2. Make changes with tests
+3. Run tests: `pixi run test`
+4. Format code: `pixi run format`
+5. Lint code: `pixi run lint`
+6. Submit pull request
 
-Clone the repository, install dependencies with pixi, create feature branches using git, and install pre-commit hooks for code quality.
+### Code Style
 
-#### Running Tests
+- Follow PEP 8
+- Use type hints
+- Write docstrings for public APIs
+- Keep functions focused and small
+- Prefer composition over inheritance
 
-Run various test suites including unit tests, coverage reporting, integration tests, and performance tests using the appropriate pixi run commands.
+### Testing Requirements
 
-### Adding New Services
+- Unit tests for new functions
+- Integration tests for new features
+- Maintain or improve coverage
+- All tests must pass
 
-When adding new services, follow this pattern:
+### Documentation
 
-1. **Define Interface**: Create abstract base class defining the service contract
-2. **Implement Service**: Create concrete implementation with proper error handling
-3. **Register Service**: Add to service container factory
-4. **Write Tests**: Comprehensive unit and integration tests
-5. **Update Documentation**: Add to this developer guide
+- Update user guide for user-facing changes
+- Update developer guide for architecture changes
+- Add inline comments for complex logic
+- Update configuration examples
 
-### Performance Considerations
+## Additional Resources
 
-When contributing code:
-
-- **Cache Appropriately**: Use existing cache layers for expensive operations
-- **Minimize Database Queries**: Batch queries when possible
-- **Handle Large Datasets**: Consider memory usage for large neuron types
-- **Profile Changes**: Use performance profiling to verify no regressions
-- **Optimize Critical Paths**: Focus on page generation performance
-
----
-
-This developer guide provides comprehensive coverage of neuView's architecture, implementation patterns, and development practices. For user-focused documentation, see the [User Guide](user-guide.md).
+- **GitHub Repository**: Project source code and issues
+- **NeuPrint Documentation**: https://neuprint.janelia.org/
+- **Jinja2 Documentation**: https://jinja.palletsprojects.com/
+- **pytest Documentation**: https://docs.pytest.org/
