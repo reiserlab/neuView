@@ -8,6 +8,7 @@ A comprehensive guide for users of the neuView neuron visualization platform.
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Basic Usage](#basic-usage)
+- [Advanced Features](#advanced-features)
 - [Generated Website Features](#generated-website-features)
 - [Search Functionality](#search-functionality)
 - [Dataset-Specific Features](#dataset-specific-features)
@@ -25,13 +26,16 @@ pixi install
 pixi run setup-env
 
 # Edit .env file with your NeuPrint token
-# NEUPRINT_APPLICATION_CREDENTIALS=your_token_here
+# NEUPRINT_TOKEN=your_token_here
 
 # Test connection
 pixi run neuview test-connection
 
-# Generate website
-pixi run neuview build
+# Generate pages for random neuron types
+pixi run neuview generate
+
+# Or use the complete workflow
+pixi run create-all-pages
 ```
 
 Your website will be in the `output/` directory. Open `output/index.html` in a browser.
@@ -65,7 +69,7 @@ Your website will be in the `output/` directory. Open `output/index.html` in a b
    
    This creates a `.env` file. Edit it to add your NeuPrint token:
    ```
-   NEUPRINT_APPLICATION_CREDENTIALS=your_token_here
+   NEUPRINT_TOKEN=your_token_here
    ```
 
 4. **Test connection:**
@@ -76,16 +80,19 @@ Your website will be in the `output/` directory. Open `output/index.html` in a b
 ### Setting Up Authentication
 
 **Option 1: Environment File (Recommended with pixi)**
-**Authentication Methods**:
-1. **Environment file**: Run `pixi run setup-env`, then edit `.env` with your token
-2. **Environment variable**: `export NEUPRINT_TOKEN="your-token-here"`
+**Authentication Steps**:
 
 1. Go to your NeuPrint server (e.g., https://neuprint.janelia.org)
 2. Click "Account" → "Auth Token"
 3. Copy the token
-4. Add to `.env` file or set as environment variable:
+4. Add to `.env` file:
    ```bash
-   export NEUPRINT_APPLICATION_CREDENTIALS="your_token_here"
+   NEUPRINT_TOKEN=your_token_here
+   ```
+   
+   Or set as environment variable:
+   ```bash
+   export NEUPRINT_TOKEN="your_token_here"
    ```
 
 ## Configuration
@@ -144,9 +151,9 @@ subsets:
     generate_index: true
 ```
 
-Use subsets with:
+Use the `extract-and-fill` script with subset configurations:
 ```bash
-pixi run neuview build --subset small-test
+pixi run extract-and-fill config.yaml subset-small
 ```
 
 ## Basic Usage
@@ -154,34 +161,35 @@ pixi run neuview build --subset small-test
 ### Essential Commands
 
 ```bash
-# Generate complete website
-pixi run neuview build
+# Generate page for a specific neuron type
+pixi run neuview generate --neuron-type Tm3
 
-# Generate with cache clearing
-pixi run neuview build --clear-cache
+# Generate pages for multiple random types (auto-discovery)
+pixi run neuview generate
 
 # Inspect a specific neuron type
-pixi run neuview inspect "Tm3"
+pixi run neuview inspect Tm3
 
-# Generate for specific neuron types
-pixi run neuview build --types "Tm3,Mi1,T4"
-
-# Use a subset from config
-pixi run neuview build --subset small-test
+# Generate complete website with all neurons
+pixi run create-all-pages
 
 # Verbose output for debugging
-pixi run neuview build --verbose
+pixi run neuview --verbose generate --neuron-type Tm3
 ```
 
 ### Command Options
 
-**`build` command:**
-- `--clear-cache` - Clear all caches before building
-- `--types <list>` - Comma-separated list of neuron types
-- `--subset <name>` - Use a predefined subset from config
-- `--parallel` - Enable parallel processing
-- `--verbose` - Detailed logging output
-- `--output <dir>` - Custom output directory
+**`generate` command:**
+- `--neuron-type, -n TEXT` - Specific neuron type to generate page for
+- `--output-dir TEXT` - Custom output directory
+- `--image-format [svg|png]` - Format for hexagon grid images (default: svg)
+- `--embed/--no-embed` - Embed images directly in HTML (default: no-embed)
+- `--minify/--no-minify` - Enable/disable HTML minification (default: minify)
+
+**Global options** (use before command):
+- `--verbose, -v` - Enable detailed logging output
+- `--config, -c TEXT` - Path to configuration file
+- `--version` - Show version and exit
 
 ### Neuron Type Inspection
 
@@ -572,7 +580,7 @@ Citation logs automatically rotate when they reach 1MB:
 
 **Authentication Problems**
 **Connection Troubleshooting Commands**:
-- Verify token: `echo $NEUPRINT_TOKEN`
+- Verify token is set: `echo $NEUPRINT_TOKEN`
 - Test connection: `pixi run neuview test-connection`
 - Check network connectivity
 
@@ -603,11 +611,9 @@ Citation logs automatically rotate when they reach 1MB:
 
 Enable detailed logging:
 
-**Debug Mode Setup**: Run `pixi run neuview --verbose generate -n Dm4`
-
-# Or set environment variable
-export NEUVIEW_LOG_LEVEL=DEBUG
-pixi run neuview build
+**Debug Mode Setup**:
+```bash
+pixi run neuview --verbose generate -n Dm4
 ```
 
 Check log output for:
@@ -765,10 +771,11 @@ For detailed command options and examples, see the developer guide.
 ### Performance Tips
 
 1. **Use Caching**: Cache provides up to 97.9% speed improvement on subsequent runs
-2. **Process in Batches**: Use queue system for multiple neuron types
+2. **Process in Batches**: Use queue system (`fill-queue` and `pop`) for multiple neuron types
 3. **Clean Cache Periodically**: Remove cache files with `rm -rf output/.cache/` when needed
-4. **Monitor Progress**: Use verbose mode for long-running operations
-5. **Optimize Configuration**: Adjust cache settings based on available memory
+4. **Monitor Progress**: Use `--verbose` flag for long-running operations
+5. **Parallel Processing**: Use `pixi run pop-all` for concurrent queue processing
+6. **Optimize Configuration**: Adjust cache settings based on available memory
 
 ### Data Citation
 
