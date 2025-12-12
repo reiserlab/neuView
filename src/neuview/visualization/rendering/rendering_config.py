@@ -188,7 +188,7 @@ class ScatterConfig:
 
     # File management
     scatter_dir: Optional[Path] = "output/scatter"
-    scatter_fname = "scatter.svg"
+    scatter_fname = ".svg"
 
     # Layout configuration
     margins: list = (60, 72, 64, 72)

@@ -6,24 +6,24 @@ architecture that maintains the same functionality and output.
 """
 
 import asyncio
-import click
-import sys
-from typing import Optional
 import logging
+import sys
 from pathlib import Path
+from typing import Optional
+
+import click
 
 from .commands import (
-    GeneratePageCommand,
-    TestConnectionCommand,
-    FillQueueCommand,
-    PopCommand,
     CreateListCommand,
+    FillQueueCommand,
+    GeneratePageCommand,
+    PopCommand,
+    TestConnectionCommand,
 )
+from .models import NeuronTypeName
 from .services import ServiceContainer
 from .services.neuron_discovery_service import InspectNeuronTypeCommand
-from .models import NeuronTypeName
 from .utils import get_git_version
-
 
 # Configure logging
 logging.basicConfig(
@@ -379,23 +379,32 @@ def create_list(ctx, output_dir: Optional[str], minify: bool):
 @main.command("create-scatter")
 @click.pass_context
 def create_scatter(ctx):
-    """Generate three SVG scatterplots of spatial metrics for optic lobe types."""
+    """Generate SVG scatterplots of spatial metrics for optic lobe types (combined and per hemisphere)."""
     services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
 
     async def run_create_scatter():
         await services.scatter_service.create_scatterplots()
 
-        # Print the three scatterplot files that should have been created
+        # Print all scatterplot files that should have been created
         scfg = services.scatter_service.scatter_config
         scatter_dir = Path(scfg.scatter_dir)
-        fname = scfg.scatter_fname
 
+        # Check combined plots (both hemispheres)
         for region in ("ME", "LO", "LOP"):
-            file_path = scatter_dir / f"{region}_{fname}"
+            file_path = scatter_dir / f"{region}.svg"
             if file_path.exists():
                 click.echo(f"✅ Created: {file_path}")
             else:
                 click.echo(f"⚠️ Expected but not found: {file_path}", err=True)
+
+        # Check hemisphere-specific plots
+        for side in ("L", "R"):
+            for region in ("ME", "LO", "LOP"):
+                file_path = scatter_dir / f"{region}_{side}.svg"
+                if file_path.exists():
+                    click.echo(f"✅ Created: {file_path}")
+                else:
+                    click.echo(f"⚠️ Expected but not found: {file_path}", err=True)
 
     asyncio.run(run_create_scatter())
 

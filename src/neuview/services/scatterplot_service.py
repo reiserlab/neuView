@@ -6,16 +6,17 @@ interactive scatterplot page with plots related to the spatial metrics per type.
 """
 
 import logging
+from math import isfinite, log10
 from pathlib import Path
-import pandas as pd
-from math import ceil, floor, log10, isfinite
-from ..result import Err
-from jinja2 import Environment, FileSystemLoader
-from ..config import Config
-from ..utils import get_templates_dir
 
-from .index_service import IndexService
+import pandas as pd
+from jinja2 import Environment, FileSystemLoader
+
+from ..config import Config
+from ..result import Err
+from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
+from .index_service import IndexService
 
 logger = logging.getLogger(__name__)
 
@@ -71,27 +72,32 @@ class ScatterplotService:
             # Generate scatterplot data for corrected neuron types
             plot_data = self._extract_plot_data(corrected_neuron_types)
 
-            # Within loop for side
-            side = "both"
+            # Generate plots for each side (both, L, R) and each region
+            for side in ["both", "L", "R"]:
+                for region in ["ME", "LO", "LOP"]:
+                    points = self._extract_points(plot_data, side=side, region=region)
+                    logger.info(f"Extracted {len(points)} points for {region}_{side}")
 
-            for region in ["ME", "LO", "LOP"]:
-                points = self._extract_points(plot_data, side=side, region=region)
+                    ctx = self._prepare(self.scatter_config, points, region=region)
 
-                ctx = self._prepare(
-                    self.scatter_config, points, region=region
-                )
+                    template_dir = get_templates_dir()
+                    template_env = Environment(loader=FileSystemLoader(template_dir))
+                    template = template_env.get_template(
+                        self.scatter_config.template_name
+                    )
+                    svg_content = template.render(**ctx)
 
-                template_dir = get_templates_dir()
-                template_env = Environment(loader=FileSystemLoader(template_dir))
-                template = template_env.get_template(self.scatter_config.template_name)
-                svg_content = template.render(**ctx)
+                    # Determine filename suffix based on side
+                    if side == "both":
+                        # Combined plots: ME.svg, LO.svg, LOP.svg
+                        svg_path = f"{self.plot_output_dir}/{region}.svg"
+                    else:
+                        # Hemisphere-specific plots: ME_L.svg, ME_R.svg, etc.
+                        svg_path = f"{self.plot_output_dir}/{region}_{side}.svg"
 
-                # Write the index file
-                svg_path = f"{self.plot_output_dir}/{region}_{self.scatter_config.scatter_fname}"
-
-                # If saving the images - check if they exist first
-                with open(svg_path, "w", encoding="utf-8") as f:
-                    f.write(svg_content)
+                    # Write the SVG file
+                    with open(svg_path, "w", encoding="utf-8") as f:
+                        f.write(svg_content)
 
             return
 
@@ -227,7 +233,18 @@ class ScatterplotService:
             # Pass threshold for syn % and syn #.
             if incl == 1:
                 name = rec.get("name", "unknown")
-                x = int(rec.get("total_count")/2) # Halve cell count to estimate neuron count per eye.
+
+                # Determine cell count based on side
+                if side == "both":
+                    # Halve cell count to estimate neuron count per eye
+                    x = int(rec.get("total_count") / 2)
+                elif side == "L":
+                    x = rec.get("left_count", 0)
+                elif side == "R":
+                    x = rec.get("right_count", 0)
+                else:
+                    x = int(rec.get("total_count") / 2)
+
                 y = (
                     rec.get("spatial_metrics", {})
                     .get(side, {})
@@ -295,7 +312,7 @@ class ScatterplotService:
         ymax = max(p["y"] for p in points)
 
         xmin = 1
-        ymin = 1 
+        ymin = 1
         xmax = 1000
         ymax = 1000
 
@@ -333,7 +350,7 @@ class ScatterplotService:
             p["type"] = f"{p['name']}"
             p["tooltip"] = (
                 f"{p['name']}\\n"
-                f" {int(p["x"])} cells\\n"
+                f" {int(p['x'])} cells\\n"
                 f" cell size: {p['y']:.2f}\\n"
                 f" coverage: {p['coverage']:.2f}"
             )
@@ -375,15 +392,9 @@ class ScatterplotService:
                 }
             )
 
-        xtick_data = [
-            {"t": t, "px": sx(t)}
-            for t in config.xticks
-        ]
+        xtick_data = [{"t": t, "px": sx(t)} for t in config.xticks]
 
-        ytick_data = [
-            {"t": t, "py": sy(t)}
-            for t in config.yticks
-        ]
+        ytick_data = [{"t": t, "py": sy(t)} for t in config.yticks]
 
         ctx = self._prepare_template_variables(
             points, guide_lines, config, region, xtick_data, ytick_data, cmin, cmax

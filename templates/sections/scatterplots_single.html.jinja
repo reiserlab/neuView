@@ -1,0 +1,19 @@
+{#  Scatterplots Row for Single Hemisphere -#}
+<div class="row">
+    {%- for region in ['ME','LO','LOP'] -%}
+        {%- if soma_side == 'left' -%}
+          {%- set svg_path = '../../output/scatter/' ~ region ~ '_L.svg' -%}
+        {%- elif soma_side == 'right' -%}
+          {%- set svg_path = '../../output/scatter/' ~ region ~ '_R.svg' -%}
+        {%- else -%}
+          {%- set svg_path = '../../output/scatter/' ~ region ~ '.svg' -%}
+        {%- endif -%}
+    <div class="col-md-4 col-sm-6 col-xs-12">
+      <div class="scatterplot-container">
+        <object data="{{- svg_path -}}#highlight={{ neuron_data.type | urlencode -}}" type="image/svg+xml" class="grid-image">
+          <img src="{{- svg_path -}}" alt="Scatterplot of spatial metrics for {{ region }}" />
+        </object>
+      </div>
+    </div>
+    {%- endfor -%}
+</div>
