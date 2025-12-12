@@ -139,6 +139,27 @@ task = "subset-small-no-index"
 [[tool.pixi.tasks.subset-small.depends-on]]
 task = "create-list"
 
+[tool.pixi.tasks.subset-medium-optic-no-index]
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "clean-output"
+
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "extract-and-fill"
+args = [ "config.yaml", "subset-medium-optic",]
+
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "pop-all"
+
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "create-scatter"
+
+[tool.pixi.tasks.subset-medium-optic]
+[[tool.pixi.tasks.subset-medium-optic.depends-on]]
+task = "subset-medium-optic-no-index"
+
+[[tool.pixi.tasks.subset-medium-optic.depends-on]]
+task = "create-list"
+
 [tool.pixi.tasks.increment-version]
 cmd = "python scripts/increment_version.py"
 
