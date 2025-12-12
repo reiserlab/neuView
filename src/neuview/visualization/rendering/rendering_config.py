@@ -203,9 +203,12 @@ class ScatterConfig:
 
     # Content configuration
     title: str = ""
-    xlabel: str = "Population size (cells per type per eye)"
-    ylabel: str = "Cell size (median columns per cell)"
-    legend_label: str = "Coverage factor (mean cells per column)"
+    xlabel: str = "Population size"
+    xlabel_hover: str = "cells per type per eye"
+    ylabel: str = "Cell size"
+    ylabel_hover: str = "median columns per cell"
+    legend_label: str = "Coverage factor"
+    legend_label_hover: str = "mean cells per column"
 
     # Data configuration
     min_max_data: Optional[Dict[str, Any]] = None
@@ -249,8 +252,11 @@ class ScatterConfig:
             "margin_left": self.left,
             "legend_w": self.legend_w,
             "xlabel": self.xlabel,
+            "xlabel_hover": self.xlabel_hover,
             "ylabel": self.ylabel,
+            "ylabel_hover": self.ylabel_hover,
             "legend_label": self.legend_label,
+            "legend_label_hover": self.legend_label_hover,
             "axis_gap_px": self.axis_gap_px,
             "plot_h": self.plot_h,
             "plot_w": self.plot_w,

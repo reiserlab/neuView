@@ -349,9 +349,9 @@ class ScatterplotService:
             p["line_width"] = config.marker_line_width
             p["type"] = f"{p['name']}"
             p["tooltip"] = (
-                f"{p['name']}\\n"
-                f" {int(p['x'])} cells\\n"
-                f" cell size: {p['y']:.2f}\\n"
+                f"{p['name']}\n"
+                f" {int(p['x'])} cells\n"
+                f" cell size: {p['y']:.2f}\n"
                 f" coverage: {p['coverage']:.2f}"
             )
 
@@ -431,8 +431,11 @@ class ScatterplotService:
             "guide_lines": guide_lines,
             "title": region,
             "xlabel": config.xlabel,
+            "xlabel_hover": config.xlabel_hover,
             "ylabel": config.ylabel,
+            "ylabel_hover": config.ylabel_hover,
             "legend_label": config.legend_label,
+            "legend_label_hover": config.legend_label_hover,
             "legend_w": config.legend_w,
         }
 
