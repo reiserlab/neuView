@@ -126,9 +126,8 @@ function highlightByName(name) {
     var c = g.querySelector('circle');
     if (!c) continue;
 
-    var dataTitle = (c.getAttribute('data-title') || '');
-    var haystack = (dataTitle).trim().toLowerCase();
-    if (!haystack || haystack.indexOf(needle) === -1) continue;
+    var dataType = (c.getAttribute('data-type') || '').trim().toLowerCase();
+    if (!dataType || dataType !== needle) continue;
 
     var rect = c.getBoundingClientRect();
     sT({
