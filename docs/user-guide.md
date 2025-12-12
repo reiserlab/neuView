@@ -104,7 +104,34 @@ html:
 performance:
   max_workers: 4
   cache_enabled: true
+
+scatter:
+  # Minimum column count threshold for data quality filtering
+  # Data points with cols_innervated <= this value will be excluded from scatter plots
+  # Set to null to disable this filter
+  min_col_count_threshold: null
 ```
+
+### Scatter Plot Configuration
+
+Configure scatter plot generation for optic lobe datasets:
+
+```yaml
+scatter:
+  min_col_count_threshold: 9.0  # Default threshold
+```
+
+**Configuration Options:**
+- `min_col_count_threshold`: Minimum number of columns a neuron type must innervate to be included in scatter plots
+  - Default: `9.0` (excludes types with ≤ 9 columns)
+  - Set to `null` to disable filtering and include all data points
+  - This filter helps exclude low-quality or sparse data from visualizations
+  - Can be overridden per-command using `--min-col-count` CLI option
+
+**Use Cases:**
+- **Strict quality control** (default 9.0): Only well-sampled types with sufficient column coverage
+- **Relaxed filtering** (e.g., 5.0): Include more types with moderate column coverage
+- **No filtering** (null): Include all types regardless of column count
 
 ### Dataset-Specific Configurations
 
@@ -166,6 +193,15 @@ pixi run neuview build --types "Tm3,Mi1,T4"
 # Use a subset from config
 pixi run neuview build --subset small-test
 
+# Generate scatter plots (for optic lobe datasets)
+pixi run neuview create-scatter
+
+# Generate scatter plots with custom quality threshold
+pixi run neuview create-scatter --min-col-count 5
+
+# Generate scatter plots without quality filtering
+pixi run neuview create-scatter --min-col-count -1
+
 # Verbose output for debugging
 pixi run neuview build --verbose
 ```
@@ -183,6 +219,16 @@ pixi run neuview build --verbose
 **`inspect` command:**
 - `neuview inspect <type>` - Show detailed information about a neuron type
 - Displays: neuron count, soma distribution, connectivity stats
+
+**`create-scatter` command:**
+- `neuview create-scatter` - Generate SVG scatter plots of spatial metrics for optic lobe types
+- `--min-col-count <value>` - Set minimum column count threshold for data quality filtering
+  - Default: 9.0 (excludes points with cols_innervated ≤ 9)
+  - Set to -1 to disable filtering
+  - Can also be configured in `config.yaml` under `scatter.min_col_count_threshold`
+- Generates plots for ME, LO, and LOP regions
+- Creates both combined (both hemispheres) and hemisphere-specific (L/R) plots
+- Output: `output/scatter/*.svg` files
 
 ## Generated Website Features
 

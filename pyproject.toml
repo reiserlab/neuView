@@ -49,6 +49,7 @@ version = "neuview --version"
 setup-env = "cp .env.example .env && echo 'Created .env file. Please edit it and add your NEUPRINT_TOKEN.'"
 fill-all = "neuview fill-queue --all"
 create-list = "neuview create-list"
+create-scatter = "neuview create-scatter"
 
 [tool.pytest.ini_options]
 testpaths = [ "test",]
@@ -78,6 +79,9 @@ task = "pop-all"
 task = "create-list"
 
 [[tool.pixi.tasks.create-all-pages.depends-on]]
+task = "create-scatter"
+
+[[tool.pixi.tasks.create-all-pages.depends-on]]
 task = "increment-version"
 
 [tool.pixi.tasks.extract-and-fill]
@@ -104,6 +108,9 @@ args = [ "",]
 [[tool.pixi.tasks.subset-medium-no-index.depends-on]]
 task = "pop-all"
 
+[[tool.pixi.tasks.subset-medium-no-index.depends-on]]
+task = "create-scatter"
+
 [tool.pixi.tasks.subset-medium]
 [[tool.pixi.tasks.subset-medium.depends-on]]
 task = "subset-medium-no-index"
@@ -122,11 +129,35 @@ args = [ "config.yaml", "subset-small",]
 [[tool.pixi.tasks.subset-small-no-index.depends-on]]
 task = "pop-all"
 
+[[tool.pixi.tasks.subset-small-no-index.depends-on]]
+task = "create-scatter"
+
 [tool.pixi.tasks.subset-small]
 [[tool.pixi.tasks.subset-small.depends-on]]
 task = "subset-small-no-index"
 
 [[tool.pixi.tasks.subset-small.depends-on]]
+task = "create-list"
+
+[tool.pixi.tasks.subset-medium-optic-no-index]
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "clean-output"
+
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "extract-and-fill"
+args = [ "config.yaml", "subset-medium-optic",]
+
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "pop-all"
+
+[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
+task = "create-scatter"
+
+[tool.pixi.tasks.subset-medium-optic]
+[[tool.pixi.tasks.subset-medium-optic.depends-on]]
+task = "subset-medium-optic-no-index"
+
+[[tool.pixi.tasks.subset-medium-optic.depends-on]]
 task = "create-list"
 
 [tool.pixi.tasks.increment-version]

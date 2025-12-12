@@ -40,6 +40,7 @@ class ServiceContainer:
         self._cache_service = None
         self._soma_detection_service = None
         self._neuron_statistics_service = None
+        self._scatter_service = None
 
         # Phase 3 managers
         self._template_manager = None
@@ -299,6 +300,17 @@ class ServiceContainer:
             return IndexService(self.config, self.page_generator)
 
         return self._get_or_create_service("index_service", create)
+
+    @property
+    def scatter_service(self):
+        """Get or create scatterplot service."""
+
+        def create():
+            from .scatterplot_service import ScatterplotService
+
+            return ScatterplotService()
+
+        return self._get_or_create_service("scatter_service", create)
 
     def cleanup(self):
         """Clean up services and resources."""

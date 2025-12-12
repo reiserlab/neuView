@@ -56,17 +56,17 @@ class IndexService:
                 return Err(f"Output directory does not exist: {output_dir}")
 
             # Discover neuron types from cache or file scanning
-            neuron_types, scan_time = self._discover_neuron_types(output_dir)
+            neuron_types, scan_time = self.discover_neuron_types(output_dir)
             if not neuron_types:
                 return Err("No neuron type HTML files found in output directory")
 
             # Initialize connector if needed for database lookups
-            connector = await self._initialize_connector_if_needed(
+            connector = await self.initialize_connector_if_needed(
                 neuron_types, output_dir
             )
 
             # Correct neuron names (convert filenames back to original names)
-            corrected_neuron_types, cache_performance = self._correct_neuron_names(
+            corrected_neuron_types, cache_performance = self.correct_neuron_names(
                 neuron_types, connector
             )
 
@@ -95,7 +95,7 @@ class IndexService:
             logger.error(f"Failed to create optimized index: {e}")
             return Err(f"Failed to create index: {str(e)}")
 
-    def _discover_neuron_types(self, output_dir: Path) -> tuple:
+    def discover_neuron_types(self, output_dir: Path) -> tuple:
         """Discover neuron types from queue file to ensure all are included."""
         neuron_types = defaultdict(set)
 
@@ -209,7 +209,7 @@ class IndexService:
                 )
                 return neuron_types, 0.0
 
-    async def _initialize_connector_if_needed(self, neuron_types, output_dir):
+    async def initialize_connector_if_needed(self, neuron_types, output_dir):
         """Initialize database connector only if needed for lookups."""
         # Pre-load ROI hierarchy from cache (no database queries if cached)
         roi_hierarchy_loaded = False
@@ -278,7 +278,7 @@ class IndexService:
 
         return connector
 
-    def _correct_neuron_names(self, neuron_types, connector):
+    def correct_neuron_names(self, neuron_types, connector):
         """Correct neuron names by converting filenames back to original names."""
         cached_data_lazy = (
             self.cache_manager.get_cached_data_lazy() if self.cache_manager else None

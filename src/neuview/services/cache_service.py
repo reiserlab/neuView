@@ -190,16 +190,15 @@ class CacheService:
                                 )
                                 if clean_name not in seen_names:
                                     seen_names.add(clean_name)
-                                    cleaned_roi_summary.append(
-                                        {
-                                            "name": clean_name,
-                                            "pre_percentage": roi["pre_percentage"],
-                                            "post_percentage": roi["post_percentage"],
-                                            "total_synapses": roi["pre"] + roi["post"],
-                                            "pre_synapses": roi["pre"],
-                                            "post_synapses": roi["post"],
-                                        }
-                                    )
+                                    entry = {
+                                        "name": clean_name,
+                                        "pre_percentage": roi["pre_percentage"],
+                                        "post_percentage": roi["post_percentage"],
+                                        "total_synapses": roi["pre"] + roi["post"],
+                                        "pre_synapses": roi["pre"],
+                                        "post_synapses": roi["post"],
+                                    }
+                                    cleaned_roi_summary.append(entry)
 
                         roi_summary = cleaned_roi_summary
 
@@ -229,8 +228,9 @@ class CacheService:
 
                         parent_rois = sorted(list(parent_rois_set))
 
-                        # Calculate spatial metrics for columns if column ROIs are present
-                        # Currently these are calculated from both L and R instances
+                        # Calculate spatial metrics for columns if column ROIs are present.
+                        # These metrics are calculated using synapses within the ROI from
+                        # both L and R instances.
                         for side in ["L", "R"]:
                             for region in ["ME", "LO", "LOP"]:
                                 str_pattern = f"{region}_{side}_col_"

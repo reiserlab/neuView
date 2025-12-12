@@ -22,6 +22,10 @@ discovery:
   # Randomize selection (true) or use alphabetical order (false)
   randomize: true
 
+# Scatter plot settings. It was 9
+scatter:
+  min_col_count_threshold: null
+
 html:
   title_prefix: "Male CNS"
   github_repo: "https://github.com/reiserlab/celltype-explorer-drosophila-male-cns"
@@ -48,6 +52,25 @@ subsets:
     - "'AOTU103m'"
     - '"KCa''b''-ap1"'
     - "'Acc. ti flexor MN'"
+  subset-medium-optic:
+    - "Cm5"
+    - "Dm8a"
+    - "Li30"
+    - "C2"
+    - "MeLo14"
+    - "TmY5a"
+    - "Y3"
+    - "dCal1"
+    - "LC17"
+    - "LoVP3"
+    - "MeVP62"
+    - "LT79"
+    - "vCal3"
+    - "LoVC23"
+    - "aMe30"
+    - "OLVC7"
+    - "AN27X013"
+    - "DNp30"
   subset-small:
     - "SAD103"
     - "Tm3"
