@@ -191,7 +191,7 @@ class ScatterConfig:
     scatter_fname = ".svg"
 
     # Layout configuration
-    margins: list = (60, 72, 64, 72)
+    margins: list = (60, 72, 64, 50)
     axis_gap_px: int = 10
 
     # Marker features
@@ -219,8 +219,8 @@ class ScatterConfig:
     margin_right = right
     margin_bottom = bottom
     margin_left = left
-    width = 460
-    height = 460
+    width = 480
+    height = 480
     plot_w = width - left - right
     plot_h = height - top - bottom
 

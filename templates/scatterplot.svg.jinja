@@ -162,45 +162,45 @@ if (document.readyState === 'loading') {
 //]]>
 </script>
 
-<!-- Plot area -->
+{#- Plot area -#}
 <g id="scatter" transform="translate({{ margin_left }}, {{ margin_top }})">
 
-  <!-- axis baselines -->
+  {#- axis baselines -#}
   <line class="axis-line" x1="0" y1="{{ plot_h }}" x2="{{ plot_w }}" y2="{{ plot_h }}" />
   <line class="axis-line" x1="0" y1="0" x2="0" y2="{{ plot_h }}" />
 
-  <!-- ticks (X) -->
-  {% for tick in xtick_data %}
+  {#- ticks (X) -#}
+  {%- for tick in xtick_data -%}
   <line class="tick-mark" x1="{{ tick.px }}" y1="{{ plot_h }}" x2="{{ tick.px }}" y2="{{ plot_h + 6 }}" />
   <text class="tick-label" x="{{ tick.px }}" y="{{ plot_h + 18 }}" text-anchor="middle">{{ tick.t }}</text>
-  {% endfor %}
+  {%- endfor -%}
 
-  <!-- ticks (Y) -->
-  {% for tick in ytick_data %}
+  {#- ticks (Y) -#}
+  {%- for tick in ytick_data -%}
   <line class="tick-mark" x1="0" y1="{{ tick.py }}" x2="-6" y2="{{ tick.py }}" />
-  <text class="tick-label" x="-8" y="{{ tick.py + 4 }}" text-anchor="end">{{ tick.t }}</text>
-  {% endfor %}
+  <text class="tick-label" x="-8" y="{{ tick.py }}" text-anchor="middle" transform="rotate(-90, -8, {{ tick.py }})">{{ tick.t }}</text>
+  {%- endfor -%}
 
-  <!-- guide lines -->
-  {% for g in guide_lines %}
+  {#- guide lines -#}
+  {%- for g in guide_lines -%}
   <line class="guide" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}" stroke-width="{{ g.w }}" />
-  {% endfor %}
+  {%- endfor -%}
 
-  <!-- markers -->
-  {% for p in points %}
+  {#- markers -#}
+  {%- for p in points -%}
   <g class="marker" transform="translate({{ p.sx }}, {{ p.sy }})" onmouseover="sT(event)" onmouseout="ht(event)">
     <circle r="{{ p.r }}" data-base-r="{{ p.r }}" class="dot" data-title='{{ p.tooltip | tojson }}' fill="{{ p.color }}" stroke="#000" stroke-width="{{ p.line_width }}" data-base-sw="{{ p.line_width }}" data-type="{{ p.type }}"></circle>
   </g>
-  {% endfor %}
+  {%- endfor -%}
 </g>
 
-<!-- Axis labels -->
+{#- Axis labels -#}
 <text class="axis-label" text-anchor="middle" x="{{ margin_left + plot_w/2 }}" y="{{ margin_top + plot_h + 40 }}" data-tooltip='{{ xlabel_hover | tojson }}' onmouseover="sT(event)" onmouseout="ht(event)">{{ xlabel }}</text>
-<text class="axis-label" text-anchor="middle" transform="translate(20, {{ margin_top + plot_h/2 }}) rotate(-90)" data-tooltip='{{ ylabel_hover | tojson }}' onmouseover="sT(event)" onmouseout="ht(event)">{{ ylabel }}</text>
+<text class="axis-label" text-anchor="middle" transform="translate(25, {{ margin_top + plot_h/2 }}) rotate(-90)" data-tooltip='{{ ylabel_hover | tojson }}' onmouseover="sT(event)" onmouseout="ht(event)">{{ ylabel }}</text>
 
-<text class="title" text-anchor="end" dominant-baseline="hanging" x="{{ plot_w + 70 }}" y="{{ 60 }}">{{ title }}</text>
+<text class="title" text-anchor="end" dominant-baseline="hanging" x="{{ plot_w + 50 }}" y="{{ 60 }}">{{ title }}</text>
 
-<!-- Legend -->
+{#- Legend -#}
 <g transform="translate({{ margin_left + plot_w + 12 }}, {{ margin_top }})">
   <defs>
     <linearGradient id="covGradV" x1="0" y1="0" x2="0" y2="1">
@@ -214,7 +214,7 @@ if (document.readyState === 'loading') {
   <text class="legend-label" x="16" y="{{ plot_h - 2 }}" text-anchor="start">{{ '%.0f' % cmin }}</text>
 </g>
 
-<!-- Tooltip -->
+{#- Tooltip -#}
 <g id="tooltip" class="tooltip-box" opacity="0">
   <rect id="tooltip-rect" class="tooltip-rect" />
   <g id="tooltip-text-group" />

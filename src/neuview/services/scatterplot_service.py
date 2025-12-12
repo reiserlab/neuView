@@ -78,7 +78,9 @@ class ScatterplotService:
                     points = self._extract_points(plot_data, side=side, region=region)
                     logger.info(f"Extracted {len(points)} points for {region}_{side}")
 
-                    ctx = self._prepare(self.scatter_config, points, region=region)
+                    ctx = self._prepare(
+                        self.scatter_config, points, region=region, side=side
+                    )
 
                     template_dir = get_templates_dir()
                     template_env = Environment(loader=FileSystemLoader(template_dir))
@@ -302,6 +304,7 @@ class ScatterplotService:
         config,
         points,
         region=None,
+        side="both",
     ):
         """Compute pixel positions for an SVG scatter plot (color by coverage)."""
 
@@ -397,13 +400,30 @@ class ScatterplotService:
         ytick_data = [{"t": t, "py": sy(t)} for t in config.yticks]
 
         ctx = self._prepare_template_variables(
-            points, guide_lines, config, region, xtick_data, ytick_data, cmin, cmax
+            points,
+            guide_lines,
+            config,
+            region,
+            side,
+            xtick_data,
+            ytick_data,
+            cmin,
+            cmax,
         )
 
         return ctx
 
     def _prepare_template_variables(
-        self, points, guide_lines, config, region, xtick_data, ytick_data, cmin, cmax
+        self,
+        points,
+        guide_lines,
+        config,
+        region,
+        side,
+        xtick_data,
+        ytick_data,
+        cmin,
+        cmax,
     ):
         """Prepare variables for template rendering.
         Args:
@@ -429,7 +449,7 @@ class ScatterplotService:
             "xtick_data": xtick_data,
             "ytick_data": ytick_data,
             "guide_lines": guide_lines,
-            "title": region,
+            "title": region if side == "both" else f"{region} ({side})",
             "xlabel": config.xlabel,
             "xlabel_hover": config.xlabel_hover,
             "ylabel": config.ylabel,
