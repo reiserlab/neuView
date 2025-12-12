@@ -269,97 +269,61 @@ function updateLayer(layer, regionId) {
   updateLegendThresholds(L, regionId);
   setActiveLayerControl(regionId, L);
 }
-
 //]]>
 </script>
 
 {#-- Background --#}
-<rect
-        width="{{ width + 40 }}"
-        height="{{ height }}"
-        fill="#f8f9fa"
-        stroke="none"
-    />
+<rect width="{{ width + 40 }}" height="{{ height }}" fill="#f8f9fa" stroke="none" />
 
 {#-- Plot Name, Region Name, Neuron Name, and Layer Scrollbar --#}
-<text
-        x="5"
-        y="15"
-        text-anchor="start"
-        font-family="Arial, sans-serif"
-        font-size="12"
-        fill="#CCCCCC"
-    >{{ plot_desc }}</text>
-<text
-        x="5"
-        y="28"
-        text-anchor="start"
-        font-family="Arial, sans-serif"
-        font-size="10"
-        fill="#CCCCCC"
-    >{{ region_desc }}</text>
-  <text
-        x="5"
-        y="41"
-        text-anchor="start"
-        font-family="Arial, sans-serif"
-        font-size="10"
-        fill="#CCCCCC"
-    >{{ neuron_desc }}</text>
+<text x="5" y="15" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#CCCCCC">{{ plot_desc }}</text>
+<text x="5" y="28" text-anchor="start" font-family="Arial, sans-serif" font-size="10" fill="#CCCCCC">{{ region_desc }}</text>
+<text x="5" y="41" text-anchor="start" font-family="Arial, sans-serif" font-size="10" fill="#CCCCCC">{{ neuron_desc }}</text>
 
 {#-- Hexagon Path Definition --#}
-{% set hex_path = "M" + hex_points|join(" L") + " Z" %}
+{%- set hex_path = "M" + hex_points|join(" L") + " Z" -%}
 
 {#-- Layer buttons --#}
-{% set square = 8 %}
-{% set gap = 0 %}
+{%- set square = 8 -%}
+{%- set gap = 0 -%}
 
-{% if hexagons[0].region == 'ME' %}
-{% set n_layers = 10 %}
-{% elif hexagons[0].region == 'LO' %}
-{% set n_layers = 7 %}
-{% elif hexagons[0].region == 'LOP' %}
-{% set n_layers = 4 %}
-{% else %}
-{% set n_layers = 10 %}
-{% endif %}
+{%- if hexagons[0].region == 'ME' -%}
+{%- set n_layers = 10 -%}
+{%- elif hexagons[0].region == 'LO' -%}
+{%- set n_layers = 7 -%}
+{%- elif hexagons[0].region == 'LOP' -%}
+{%- set n_layers = 4 -%}
+{%- else -%}
+{%- set n_layers = 10 -%}
+{%- endif -%}
 
-{% set all_button_width = square * 3 %}
-{% set layer_button_width = square * 5 %}
-{% set all_button_height = square * n_layers %}
-{% set layer_button_height = square %}
+{%- set all_button_width = square * 3 -%}
+{%- set layer_button_width = square * 5 -%}
+{%- set all_button_height = square * n_layers -%}
+{%- set layer_button_height = square -%}
 
 
 <g id="layerControls-{{ hexagons[0].region }}">
   {#-- Row 0: "All" --#}
-  <g
-            transform="translate({{ layer_control_x - square * 2.5 }}, {{ layer_control_y }})"
-            onclick="updateLayer(0, '{{ hexagons[0].region }}')"
-        >
+  <g transform="translate({{ layer_control_x - square * 2.5 }}, {{ layer_control_y }})" onclick="updateLayer(0, '{{ hexagons[0].region }}')">
     <rect width="{{ square * 3 }}" height="{{ square * n_layers }}" rx="2" ry="2" class="ls active" data-layer="0" fill="#fff" />
-    <text
-                x="-{{ square * n_layers / 2 }}"
-                y="{{ 12 }}"
-                class="lsr"
-                transform="rotate(-90 0 0 )"
-            >{{ hexagons[0].region }}</text>
+    <text x="-{{ square * n_layers / 2 }}" y="{{ 12 }}" class="lsr" transform="rotate(-90 0 0 )">{{ hexagons[0].region }}</text>
   </g>
 
   {#-- Rows 1..10 --#}
-  {% for i in range(1, n_layers+1) %}
-  <g
-            transform="translate({{ layer_control_x }}, {{ layer_control_y + (square + gap) * (i-1) }})"
-            onclick="updateLayer({{ i }}, '{{ hexagons[0].region }}')"
-            class="active"
-        >
+  {%- for i in range(1, n_layers+1) -%}
+  <g {#
+    -#}transform="translate({{ layer_control_x }}, {{ layer_control_y + (square + gap) * (i-1) }})" {#
+    -#}onclick="updateLayer({{ i }}, '{{ hexagons[0].region }}')" {#
+    -#}class="active">
     <rect width="{{ square * 5 }}" height="{{ square }}" rx="2" ry="2" class="ls inactive" data-layer="{{ i }}" fill="#ffffff" />
-    <text
-                x="{{ square * 2 }}"
-                y="{{ square/2 }}"
-                class="lsl inactive"
-            >{% if hexagons[0].region == "LO" and i == 5 -%} 5A {% elif hexagons[0].region == "LO" and i == 6 %}5B{% elif hexagons[0].region== "LO" and i == 7 %}6{% else %}{{ i }}{% endif %}</text>
+    <text x="{{ square * 2 }}" y="{{ square/2 }}" class="lsl inactive">
+        {%- if hexagons[0].region == "LO" and i == 5 -%} 5A
+        {%- elif hexagons[0].region == "LO" and i == 6 -%}5B
+        {%- elif hexagons[0].region== "LO" and i == 7 -%}6
+        {%- else -%}{{ i }}{%- endif -%}</text>
   </g>
-  {% endfor %}
+  {%- endfor -%}
 </g>
 
 {#-- Hexagons --#}
@@ -372,9 +336,9 @@ function updateLayer(layer, regionId) {
 #}<path d="{{ hex_path }}" {#
     -#}fill="{{ hex_data.color }}" {#
     -#}default-fill="{{ hex_data.color }}" {#
-    -#}layer-colors='{% if hex_data.layer_colors is defined %}{% if hex_data.metric_type == "synapse_density" %}{{ hex_data.layer_colors | synapses_to_colors(hex_data.region) | tojson }}{% elif hex_data.metric_type == "cell_count" %}{{ hex_data.layer_colors | neurons_to_colors(hex_data.region) | tojson }}{% else %}{{ hex_data.layer_colors | tojson }}{% endif %}{% else %}{}{% endif %}' {#
-    -#}tooltip-layers='{% if hex_data.tooltip_layers is defined %}{{ hex_data.tooltip_layers | tojson }}{% else %}{}{% endif %}' {#
-    -#}base-title='{% if hex_data.tooltip is defined %}{{ hex_data.tooltip | tojson }}{% else %}""{% endif %}' {#
+    -#}layer-colors='{%- if hex_data.layer_colors is defined -%}{%- if hex_data.metric_type == "synapse_density" -%}{{ hex_data.layer_colors | synapses_to_colors(hex_data.region) | tojson }}{%- elif hex_data.metric_type == "cell_count" -%}{{ hex_data.layer_colors | neurons_to_colors(hex_data.region) | tojson }}{%- else -%}{{ hex_data.layer_colors | tojson }}{%- endif -%}{%- else -%}{}{%- endif -%}' {#
+    -#}tooltip-layers='{%- if hex_data.tooltip_layers is defined -%}{{ hex_data.tooltip_layers | tojson }}{%- else -%}{}{%- endif -%}' {#
+    -#}base-title='{%- if hex_data.tooltip is defined -%}{{ hex_data.tooltip | tojson }}{%- else -%}""{%- endif -%}' {#
     -#}stroke="none" opacity="0.8" style="cursor: pointer;" onmouseover="sT(evt)" onmouseout="ht(); rT(evt);" >{#
     -#}<title>{{ hex_data.tooltip }}</title>{#
 #}</path>{#
@@ -383,22 +347,22 @@ function updateLayer(layer, regionId) {
 </g>
 
 {#-- Legend (only if there's actual data) -- -#}
-{% if data_hexagons %}
+{%- if data_hexagons -%}
     {#-- We store both threshold sets on the legend group as JSON -- -#}
-    <g
-        id="legend-{{ hexagons[0].region }}"
-        data-base-thresholds='{{ thresholds | tojson }}'
-        data-layer-thresholds='{{ layer_thresholds | tojson }}'
-    >
-        <text
-            x="{{ legend_title_x }}"
-            y="{{ legend_title_y }}"
-            font-family="Helvetica, Arial, 'Liberation Sans', 'Nimbus Sans', 'DejaVu Sans', sans-serif"
-            font-size="8"
-            font-weight="bold"
-            text-anchor="middle"
-            transform="rotate(-90 {{ legend_title_x }} {{ legend_title_y }})"
-        >{{ legend_title }}</text>
+    <g {#
+        -#}id="legend-{{ hexagons[0].region }}" {#
+        -#}data-base-thresholds='{{ thresholds | tojson }}' {#
+        -#}data-layer-thresholds='{{ layer_thresholds | tojson }}' {#
+    -#}>
+        <text {#
+            -#}x="{{ legend_title_x }}" {#
+            -#}y="{{ legend_title_y }}" {#
+            -#}font-family="Helvetica, Arial, 'Liberation Sans', 'Nimbus Sans', 'DejaVu Sans', sans-serif" {#
+            -#}font-size="8" {#
+            -#}font-weight="bold" {#
+            -#}text-anchor="middle" {#
+            -#}transform="rotate(-90 {{ legend_title_x }} {{ legend_title_y }})" {#
+        -#}>{{ legend_title }}</text>
 
         {#-- Color Legend Rectangles (5 bins) -- -#}
         {%- for i, color in enumerate(colors) -%}
@@ -434,7 +398,7 @@ function updateLayer(layer, regionId) {
         -#}>{{ threshold|round(0)|int }}</text>
         {%- endfor -%}
     </g>
-{% endif %}
+{%- endif -%}
 
 {#-- Tooltip (rendered last to appear on top) --#}
 <g id="tooltip" class="tooltip-box" opacity="0">
