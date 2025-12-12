@@ -377,10 +377,26 @@ def create_list(ctx, output_dir: Optional[str], minify: bool):
 
 
 @main.command("create-scatter")
+@click.option(
+    "--min-col-count",
+    type=float,
+    default=None,
+    help="Minimum column count threshold for data quality filtering. Points with cols_innervated <= this value will be excluded. Set to -1 to disable filtering.",
+)
 @click.pass_context
-def create_scatter(ctx):
+def create_scatter(ctx, min_col_count):
     """Generate SVG scatterplots of spatial metrics for optic lobe types (combined and per hemisphere)."""
     services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
+
+    # Override threshold if specified via CLI
+    if min_col_count is not None:
+        if min_col_count < 0:
+            # Disable filtering
+            services.scatter_service.scatter_config.min_col_count_threshold = None
+        else:
+            services.scatter_service.scatter_config.min_col_count_threshold = (
+                min_col_count
+            )
 
     async def run_create_scatter():
         await services.scatter_service.create_scatterplots()

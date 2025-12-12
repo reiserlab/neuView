@@ -214,6 +214,12 @@ class ScatterConfig:
     min_max_data: Optional[Dict[str, Any]] = None
     thresholds: Optional[Dict[str, Any]] = None
 
+    # Data quality filtering
+    # Minimum column count threshold for including data points in scatter plots.
+    # Points with cols_innervated <= this value will be excluded.
+    # Set to None to disable this filter.
+    min_col_count_threshold: Optional[float] = None
+
     top, right, bottom, left = margins
     margin_top = top
     margin_right = right

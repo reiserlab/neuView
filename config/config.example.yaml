@@ -10,5 +10,8 @@ output:
 neuroglancer:
   base_url: "https://clio-ng.janelia.org/"
 
+scatter:
+  min_col_count_threshold: null
+
 html:
   title_prefix: "Neuron Type Report"

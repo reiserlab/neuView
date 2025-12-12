@@ -26,7 +26,9 @@ class ScatterplotService:
 
     def __init__(self):
         self.config = Config.load("config.yaml")
-        self.scatter_config = ScatterConfig()
+        self.scatter_config = ScatterConfig(
+            min_col_count_threshold=self.config.scatter.min_col_count_threshold
+        )
 
         if isinstance(self.scatter_config.scatter_dir, str):
             self.plot_output_dir = self.scatter_config.scatter_dir
@@ -221,6 +223,10 @@ class ScatterplotService:
         """
         Collate the data points required to make the spatial
         metric scatterplots.
+
+        Applies data quality filtering based on the min_col_count_threshold
+        configuration parameter. Points with cols_innervated at or below this
+        threshold are excluded from the plot.
         """
         pts = []
         for rec in plot_data:
@@ -278,10 +284,17 @@ class ScatterplotService:
                 if x <= 0 or y <= 0:
                     continue
 
-                # Optional data quality filter from prior script
-                if col_count is not None:
+                # Data quality filter: exclude points with low column counts
+                # This threshold can be configured via scatter_config.min_col_count_threshold
+                if (
+                    col_count is not None
+                    and self.scatter_config.min_col_count_threshold is not None
+                ):
                     try:
-                        if float(col_count) <= 9:
+                        if (
+                            float(col_count)
+                            <= self.scatter_config.min_col_count_threshold
+                        ):
                             continue
                     except Exception:
                         pass
