@@ -814,17 +814,31 @@ class NeuPrintConnector:
             elif "dimorphism" in neurons_df.columns:
                 dimorphism = first_row.get("dimorphism")
 
+            # Synonyms: take the first non-NaN value across all rows.
+            # Using first_row alone misses values when row 0's synonyms column
+            # is NaN due to a join, even though later rows carry the value.
             synonyms = None
-            if "synonyms_y" in neurons_df.columns:
-                synonyms = first_row.get("synonyms_y")
-            elif "synonyms" in neurons_df.columns:
-                synonyms = first_row.get("synonyms")
+            for col_name in ("synonyms_y", "synonyms"):
+                if col_name in neurons_df.columns:
+                    non_null = neurons_df[col_name].dropna()
+                    if not non_null.empty:
+                        synonyms = non_null.iloc[0]
+                    break
 
+            # FlyWire types: combine all unique non-NaN values across rows
+            # (mirrors template_context_service._extract_flywire_types).
+            # Per-cell flywireType matches commonly differ across rows, so the
+            # first-row-only approach previously dropped names like "MTe05" when
+            # row 0 was NaN, breaking AKA-name search.
             flywire_types = None
-            if "flywireType_y" in neurons_df.columns:
-                flywire_types = first_row.get("flywireType_y")
-            elif "flywireType" in neurons_df.columns:
-                flywire_types = first_row.get("flywireType")
+            for col_name in ("flywireType_y", "flywireType"):
+                if col_name in neurons_df.columns:
+                    unique_types = neurons_df[col_name].dropna().unique()
+                    if len(unique_types) > 0:
+                        flywire_types = ", ".join(
+                            sorted(set(str(t) for t in unique_types))
+                        )
+                    break
 
             soma_neuromere = None
             if "somaNeuromere_y" in neurons_df.columns:
@@ -857,10 +871,6 @@ class NeuPrintConnector:
                 cell_superclass = None
             if pd.isna(dimorphism):
                 dimorphism = None
-            if pd.isna(synonyms):
-                synonyms = None
-            if pd.isna(flywire_types):
-                flywire_types = None
             if pd.isna(soma_neuromere):
                 soma_neuromere = None
             if pd.isna(truman_hl):
@@ -915,7 +925,7 @@ class NeuPrintConnector:
             "nt_analysis": nt_analysis,
             "dimorphism": dimorphism,
             "synonyms": synonyms,
-            "flywireType": flywire_types,
+            "flywire_types": flywire_types,
             "somaNeuromere": soma_neuromere,
             "trumanHl": truman_hl,
             "left_upstream_connections": left_upstream_connections,
