@@ -56,13 +56,6 @@ class HtmlConfig:
 
 
 @dataclass
-class ScatterPlotConfig:
-    """Scatter plot configuration."""
-
-    min_col_count_threshold: Optional[float] = 9.0
-
-
-@dataclass
 class Config:
     """Main configuration class."""
 
@@ -71,7 +64,6 @@ class Config:
     discovery: DiscoveryConfig
     neuroglancer: NeuroglancerConfig
     html: HtmlConfig
-    scatter: ScatterPlotConfig = field(default_factory=ScatterPlotConfig)
 
     @classmethod
     def load(cls, config_path: str) -> "Config":
@@ -102,7 +94,6 @@ class Config:
         discovery_config = DiscoveryConfig(**data.get("discovery", {}))
         neuroglancer_config = NeuroglancerConfig(**data.get("neuroglancer", {}))
         html_config = HtmlConfig(**data.get("html", {}))
-        scatter_config = ScatterPlotConfig(**data.get("scatter", {}))
 
         return cls(
             neuprint=neuprint_config,
@@ -110,7 +101,6 @@ class Config:
             discovery=discovery_config,
             neuroglancer=neuroglancer_config,
             html=html_config,
-            scatter=scatter_config,
         )
 
     def get_neuprint_token(self) -> str:
@@ -148,7 +138,6 @@ class Config:
 
         discovery_config = DiscoveryConfig()
         html_config = HtmlConfig()
-        scatter_config = ScatterPlotConfig()
 
         return cls(
             neuprint=neuprint_config,
@@ -156,7 +145,6 @@ class Config:
             discovery=discovery_config,
             neuroglancer=NeuroglancerConfig(),
             html=html_config,
-            scatter=scatter_config,
         )
 
     @classmethod
@@ -170,7 +158,6 @@ class Config:
 
         discovery_config = DiscoveryConfig()
         html_config = HtmlConfig()
-        scatter_config = ScatterPlotConfig()
 
         return cls(
             neuprint=neuprint_config,
@@ -178,7 +165,6 @@ class Config:
             discovery=discovery_config,
             neuroglancer=NeuroglancerConfig(),
             html=html_config,
-            scatter=scatter_config,
         )
 
     @classmethod
@@ -202,12 +188,10 @@ class Config:
         discovery_config = DiscoveryConfig(**config_dict.get("discovery", {}))
         neuroglancer_config = NeuroglancerConfig(**config_dict.get("neuroglancer", {}))
         html_config = HtmlConfig(**config_dict.get("html", {}))
-        scatter_config = ScatterPlotConfig(**config_dict.get("scatter", {}))
         return cls(
             neuprint=neuprint_config,
             output=output_config,
             discovery=discovery_config,
             neuroglancer=neuroglancer_config,
             html=html_config,
-            scatter=scatter_config,
         )

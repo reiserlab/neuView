@@ -23,9 +23,6 @@ discovery:
   # Randomize selection (true) or use alphabetical order (false)
   randomize: true
 
-scatter:
-  min_col_count_threshold: null
-
 html:
   title_prefix: "Neuron Type Report"
 
