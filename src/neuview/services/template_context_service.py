@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from ..utils import get_git_version
+from ..utils import extract_first_non_null, extract_unique_joined, get_git_version
 from .statistics_calculator import (
     CombinedStatisticsCalculator,
     SideStatisticsCalculator,
@@ -167,11 +167,13 @@ class TemplateContextService:
                 "processed_flywire_types": processed_flywire_types,
             }
 
-        # Process synonyms
-        synonyms_raw = self._extract_column_value(
-            neurons_df, ["synonyms_y", "synonyms"]
+        # Synonyms are a celltype-level attribute, so any non-null row
+        # carries the canonical value. FlyWire IDs are per-cell and may
+        # legitimately differ across rows, so we aggregate them.
+        synonyms_raw = extract_first_non_null(
+            neurons_df, ("synonyms_y", "synonyms")
         )
-        if pd.notna(synonyms_raw):
+        if synonyms_raw is not None:
             processed_synonyms = self.text_utils.process_synonyms(
                 str(synonyms_raw),
                 self.citations,
@@ -179,8 +181,9 @@ class TemplateContextService:
                 str(self.page_generator.output_dir),
             )
 
-        # Process flywireType - collect all unique values
-        flywire_type_raw = self._extract_flywire_types(neurons_df)
+        flywire_type_raw = extract_unique_joined(
+            neurons_df, ("flywireType_y", "flywireType")
+        )
         if flywire_type_raw:
             processed_flywire_types = self.text_utils.process_flywire_types(
                 flywire_type_raw, neuron_type
@@ -190,41 +193,6 @@ class TemplateContextService:
             "processed_synonyms": processed_synonyms,
             "processed_flywire_types": processed_flywire_types,
         }
-
-    def _extract_column_value(self, df: pd.DataFrame, column_names: list) -> Any:
-        """Extract value from first available column in the DataFrame.
-
-        Args:
-            df: DataFrame to search
-            column_names: List of column names to try in order
-
-        Returns:
-            Value from first available column, or None if none found
-        """
-        for col_name in column_names:
-            if col_name in df.columns:
-                return df[col_name].iloc[0] if not df.empty else None
-        return None
-
-    def _extract_flywire_types(self, df: pd.DataFrame) -> Optional[str]:
-        """Extract and combine all unique flywire types from DataFrame.
-
-        Args:
-            df: DataFrame containing neuron data
-
-        Returns:
-            Comma-separated string of unique flywire types, or None if none found
-        """
-        flywire_columns = ["flywireType_y", "flywireType"]
-
-        for col_name in flywire_columns:
-            if col_name in df.columns:
-                # Get all unique flywireType values, excluding NaN
-                unique_types = df[col_name].dropna().unique()
-                if len(unique_types) > 0:
-                    return ", ".join(sorted(set(str(t) for t in unique_types)))
-
-        return None
 
     def _get_youtube_url(self, neuron_type: str, soma_side: str) -> Optional[str]:
         """Get YouTube URL for neuron type if available.

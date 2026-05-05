@@ -20,6 +20,7 @@ from neuprint import Client, NeuronCriteria, fetch_neurons
 from .cache import NeuronTypeCacheManager
 from .config import Config, DiscoveryConfig
 from .dataset_adapters import get_dataset_adapter
+from .utils import extract_first_non_null, extract_unique_joined
 
 # Set up logger for performance monitoring
 logger = logging.getLogger(__name__)
@@ -814,31 +815,17 @@ class NeuPrintConnector:
             elif "dimorphism" in neurons_df.columns:
                 dimorphism = first_row.get("dimorphism")
 
-            # Synonyms: take the first non-NaN value across all rows.
-            # Using first_row alone misses values when row 0's synonyms column
-            # is NaN due to a join, even though later rows carry the value.
-            synonyms = None
-            for col_name in ("synonyms_y", "synonyms"):
-                if col_name in neurons_df.columns:
-                    non_null = neurons_df[col_name].dropna()
-                    if not non_null.empty:
-                        synonyms = non_null.iloc[0]
-                    break
-
-            # FlyWire types: combine all unique non-NaN values across rows
-            # (mirrors template_context_service._extract_flywire_types).
-            # Per-cell flywireType matches commonly differ across rows, so the
-            # first-row-only approach previously dropped names like "MTe05" when
-            # row 0 was NaN, breaking AKA-name search.
-            flywire_types = None
-            for col_name in ("flywireType_y", "flywireType"):
-                if col_name in neurons_df.columns:
-                    unique_types = neurons_df[col_name].dropna().unique()
-                    if len(unique_types) > 0:
-                        flywire_types = ", ".join(
-                            sorted(set(str(t) for t in unique_types))
-                        )
-                    break
+            # Synonyms are a celltype-level attribute, so any non-null row
+            # carries the canonical value. FlyWire IDs are per-cell and may
+            # legitimately differ across rows, so we aggregate them. Using
+            # first_row for either field drops the value when row 0's column
+            # is NaN due to a join.
+            synonyms = extract_first_non_null(
+                neurons_df, ("synonyms_y", "synonyms")
+            )
+            flywire_types = extract_unique_joined(
+                neurons_df, ("flywireType_y", "flywireType")
+            )
 
             soma_neuromere = None
             if "somaNeuromere_y" in neurons_df.columns:
