@@ -13,6 +13,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .utils import atomic_write
+
 logger = logging.getLogger(__name__)
 
 
@@ -233,7 +235,7 @@ class NeuronTypeCacheManager:
                 "cache_version": "1.0",
             }
 
-            with open(self._roi_hierarchy_cache_path, "w", encoding="utf-8") as f:
+            with atomic_write(self._roi_hierarchy_cache_path) as f:
                 json.dump(cache_data, f, indent=2, ensure_ascii=False)
 
             logger.debug(

@@ -5,6 +5,7 @@ This package contains utility functions and formatters that were extracted
 from the main PageGenerator class to improve code organization and reusability.
 """
 
+from .atomic_write import atomic_write
 from .formatters import (
     NumberFormatter,
     PercentageFormatter,
@@ -32,6 +33,7 @@ __all__ = [
     "MathematicalFormatter",
     "HTMLUtils",
     "TextUtils",
+    "atomic_write",
     "get_git_version",
     "get_git_describe",
     "get_version_info",

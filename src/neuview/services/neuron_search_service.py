@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ..utils import atomic_write
+
 from jinja2 import Environment
 
 logger = logging.getLogger(__name__)
@@ -199,8 +201,7 @@ class NeuronSearchService:
         # Ensure output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Write content to file
-        with open(output_path, "w", encoding="utf-8") as f:
+        with atomic_write(output_path) as f:
             f.write(content)
 
         logger.debug(f"Written neuron search JavaScript to: {output_path}")
