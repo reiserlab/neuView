@@ -172,23 +172,6 @@ class ScatterplotService:
                 ):
                     sm = cache_data.spatial_metrics
 
-                # ---- set incl_scatter ----
-                sides_to_update = ("both", "L", "R")
-                for region in ("ME", "LO", "LOP"):
-                    for side_key in sides_to_update:
-                        if isinstance(sm, dict):
-                            if side_key not in sm or sm[side_key] is None:
-                                sm[side_key] = {}
-                            side_dict = sm[side_key]
-                            if region not in side_dict or side_dict[region] is None:
-                                side_dict[region] = {}
-                            region_dict = side_dict[region]
-                            if isinstance(region_dict, dict):
-                                if (region_dict.get("cols_innervated") or 0) > 0:
-                                    region_dict["incl_scatter"] = 1
-                                else:
-                                    region_dict["incl_scatter"] = None
-
                 entry["spatial_metrics"] = sm
 
                 logger.debug(f"Used cached data for {neuron_name}")
@@ -221,16 +204,14 @@ class ScatterplotService:
         """
         pts = []
         for rec in plot_data:
-            incl = (
+            cols_innervated = (
                 rec.get("spatial_metrics", {})
                 .get(side, {})
                 .get(region, {})
-                .get("incl_scatter")
+                .get("cols_innervated")
             )
 
-            # Only include types that have "incl_scatter" == 1.
-            # Pass threshold for syn % and syn #.
-            if incl == 1:
+            if cols_innervated is not None and cols_innervated > 0:
                 name = rec.get("name", "unknown")
 
                 # Determine cell count based on side
