@@ -5,7 +5,7 @@ This package contains utility functions and formatters that were extracted
 from the main PageGenerator class to improve code organization and reusability.
 """
 
-from .df_utils import extract_first_non_null, extract_unique_joined
+from .df_utils import extract_first_non_null, extract_unique_joined, extract_unique_list
 from .formatters import (
     NumberFormatter,
     PercentageFormatter,
@@ -35,6 +35,7 @@ __all__ = [
     "TextUtils",
     "extract_first_non_null",
     "extract_unique_joined",
+    "extract_unique_list",
     "get_git_version",
     "get_git_describe",
     "get_version_info",

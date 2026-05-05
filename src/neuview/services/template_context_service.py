@@ -170,9 +170,7 @@ class TemplateContextService:
         # Synonyms are a celltype-level attribute, so any non-null row
         # carries the canonical value. FlyWire IDs are per-cell and may
         # legitimately differ across rows, so we aggregate them.
-        synonyms_raw = extract_first_non_null(
-            neurons_df, ("synonyms_y", "synonyms")
-        )
+        synonyms_raw = extract_first_non_null(neurons_df, ("synonyms_y", "synonyms"))
         if synonyms_raw is not None:
             processed_synonyms = self.text_utils.process_synonyms(
                 str(synonyms_raw),
