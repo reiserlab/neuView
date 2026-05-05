@@ -3230,7 +3230,7 @@ packages:
 - pypi: ./
   name: neuview
   version: 2.7.10
-  sha256: 6aa31ac146aeb733a78e2d09c4748c7028bb1b3451b79d9f1b5be0776506a428
+  sha256: ff498b9c88ac37a6775d9362bdc4fac29c9cbecf2c31ddb22981a468edd3b7e1
   requires_dist:
   - click>=8.0.0
   - jinja2>=3.0.0
@@ -3245,6 +3245,11 @@ packages:
   - minify-html>=0.16.4,<0.17
   - cst-lsp>=0.1.3,<0.2
   - gitpython>=3.1.0
+  - pyprojroot>=0.3.0,<0.4
+  - psutil>=7.1.0,<8
+  - semver>=3.0.4,<4
+  - numpy>=1.26
+  - pillow>=10.0
   requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/4c/39/8a320264a84404c74cc7e79715de85d6130fa07a0898f67fb5cd5bd79908/numpy-2.4.4-cp314-cp314-macosx_11_0_arm64.whl
   name: numpy
