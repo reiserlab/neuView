@@ -12,7 +12,6 @@ from pathlib import Path
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
-from ..config import Config
 from ..result import Err
 from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
@@ -24,8 +23,9 @@ logger = logging.getLogger(__name__)
 class ScatterplotService:
     """Service for creating scatterplots with markers for all available neuron types."""
 
-    def __init__(self):
-        self.config = Config.load("config.yaml")
+    def __init__(self, config, cache_manager=None):
+        self.config = config
+        self.cache_manager = cache_manager
         self.scatter_config = ScatterConfig()
 
         if isinstance(self.scatter_config.scatter_dir, str):
@@ -33,17 +33,12 @@ class ScatterplotService:
             plot_dir = Path(self.plot_output_dir)
             plot_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize cache manager for neuron type data
-        self.cache_manager = None
         if (
             self.config
             and hasattr(self.config, "output")
             and hasattr(self.config.output, "directory")
         ):
             self.output_dir = self.config.output.directory
-            from ..cache import create_cache_manager
-
-            self.cache_manager = create_cache_manager(self.output_dir)
 
     async def create_scatterplots(self):
         """Create scatterplots of spatial metrics for optic lobe neuron types."""
