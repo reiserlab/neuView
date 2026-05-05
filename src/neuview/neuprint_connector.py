@@ -20,7 +20,7 @@ from neuprint import Client, NeuronCriteria, fetch_neurons
 from .cache import NeuronTypeCacheManager
 from .config import Config, DiscoveryConfig
 from .dataset_adapters import get_dataset_adapter
-from .utils import extract_first_non_null, extract_unique_joined
+from .utils import extract_first_non_null, extract_unique_joined, extract_unique_list
 
 # Set up logger for performance monitoring
 logger = logging.getLogger(__name__)
@@ -754,7 +754,7 @@ class NeuPrintConnector:
         truman_hl = None
 
         if total_count > 0:
-            # Celltype-level attributes: any non-null row carries the canonical
+            # Celltype-invariant attributes: any non-null row carries the canonical
             # value. extract_first_non_null skips a NaN row 0 when a left-join
             # leaves the joined column empty for that row.
             consensus_nt = extract_first_non_null(
@@ -772,34 +772,31 @@ class NeuPrintConnector:
                 ("celltypeTotalNtPredictions_y", "celltypeTotalNtPredictions"),
             )
 
-            cell_class = extract_first_non_null(
-                neurons_df, ("cellClass_y", "cellClass")
-            )
-            cell_subclass = extract_first_non_null(
-                neurons_df, ("cellSubclass_y", "cellSubclass")
-            )
-            cell_superclass = extract_first_non_null(
-                neurons_df, ("cellSuperclass_y", "cellSuperclass")
-            )
-
             dimorphism = extract_first_non_null(
                 neurons_df, ("dimorphism_y", "dimorphism")
             )
-            synonyms = extract_first_non_null(
-                neurons_df, ("synonyms_y", "synonyms")
-            )
+            synonyms = extract_first_non_null(neurons_df, ("synonyms_y", "synonyms"))
 
-            # FlyWire IDs are per-cell and may legitimately differ across rows,
-            # so aggregate them rather than picking one.
-            flywire_types = extract_unique_joined(
-                neurons_df, ("flywireType_y", "flywireType")
+            # Per-cell attributes that legitimately vary within a celltype.
+            # An empirical check of male-cns:v0.9 showed cellClass / cellSubclass /
+            # cellSuperclass / somaNeuromere / trumanHl all carry distinct values
+            # across cells of many celltypes, so we aggregate rather than pick
+            # one row's value (which is non-deterministic under join ordering).
+            cell_class = extract_unique_list(neurons_df, ("cellClass_y", "cellClass"))
+            cell_subclass = extract_unique_list(
+                neurons_df, ("cellSubclass_y", "cellSubclass")
             )
-
-            soma_neuromere = extract_first_non_null(
+            cell_superclass = extract_unique_list(
+                neurons_df, ("cellSuperclass_y", "cellSuperclass")
+            )
+            soma_neuromere = extract_unique_list(
                 neurons_df, ("somaNeuromere_y", "somaNeuromere")
             )
-            truman_hl = extract_first_non_null(
-                neurons_df, ("trumanHl_y", "trumanHl")
+            truman_hl = extract_unique_list(neurons_df, ("trumanHl_y", "trumanHl"))
+
+            # FlyWire IDs are per-cell and aggregated as a display string.
+            flywire_types = extract_unique_joined(
+                neurons_df, ("flywireType_y", "flywireType")
             )
 
         # Calculate neurotransmitter analysis
