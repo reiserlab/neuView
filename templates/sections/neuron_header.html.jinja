@@ -17,17 +17,17 @@
                 </span>
                 {%- if soma_side == 'all' or soma_side == 'combined' -%}
                     {%- if complete_summary.somaNeuromere -%}
-                        <span title="Soma Neuromere" class="soma-neuromere">[{{ complete_summary.somaNeuromere }}]</span>
+                        <span title="Soma Neuromere" class="soma-neuromere">[{{ complete_summary.somaNeuromere | join(', ') }}]</span>
                     {%- endif -%}
                     {%- if complete_summary.trumanHl -%}
-                        <span title="Truman hemilineage" class="truman-hl">{{ '{' }}{{ complete_summary.trumanHl }}{{ '}' }}</span>
+                        <span title="Truman hemilineage" class="truman-hl">{{ '{' }}{{ complete_summary.trumanHl | join(', ') }}{{ '}' }}</span>
                     {%- endif -%}
                 {%- else -%}
                     {%- if summary.somaNeuromere -%}
-                        <span title="Soma Neuromere" class="soma-neuromere">[{{ summary.somaNeuromere }}]</span>
+                        <span title="Soma Neuromere" class="soma-neuromere">[{{ summary.somaNeuromere | join(', ') }}]</span>
                     {%- endif -%}
                     {%- if summary.trumanHl -%}
-                        <span title="Truman hemilineage" class="truman-hl">{{ '{' }}{{ summary.trumanHl }}{{ '}' }}</span>
+                        <span title="Truman hemilineage" class="truman-hl">{{ '{' }}{{ summary.trumanHl | join(', ') }}{{ '}' }}</span>
                     {%- endif -%}
                 {%- endif -%}
                 <a href="{{- neuprint_url -}}" target="_blank" class="external-link" title="Open {{ neuron_type }} in new neuPrint window">&#x29c9;</a>
