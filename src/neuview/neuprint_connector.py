@@ -744,14 +744,14 @@ class NeuPrintConnector:
         celltype_predicted_nt = None
         celltype_predicted_nt_confidence = None
         celltype_total_nt_predictions = None
-        cell_class = None
-        cell_subclass = None
-        cell_superclass = None
+        cell_classes = None
+        cell_subclasses = None
+        cell_superclasses = None
         dimorphism = None
         synonyms = None
         flywire_types = None
-        soma_neuromere = None
-        truman_hl = None
+        soma_neuromeres = None
+        truman_hemilineages = None
 
         if total_count > 0:
             # Celltype-invariant attributes: any non-null row carries the canonical
@@ -782,17 +782,21 @@ class NeuPrintConnector:
             # cellSuperclass / somaNeuromere / trumanHl all carry distinct values
             # across cells of many celltypes, so we aggregate rather than pick
             # one row's value (which is non-deterministic under join ordering).
-            cell_class = extract_unique_list(neurons_df, ("cellClass_y", "cellClass"))
-            cell_subclass = extract_unique_list(
+            cell_classes = extract_unique_list(
+                neurons_df, ("cellClass_y", "cellClass")
+            )
+            cell_subclasses = extract_unique_list(
                 neurons_df, ("cellSubclass_y", "cellSubclass")
             )
-            cell_superclass = extract_unique_list(
+            cell_superclasses = extract_unique_list(
                 neurons_df, ("cellSuperclass_y", "cellSuperclass")
             )
-            soma_neuromere = extract_unique_list(
+            soma_neuromeres = extract_unique_list(
                 neurons_df, ("somaNeuromere_y", "somaNeuromere")
             )
-            truman_hl = extract_unique_list(neurons_df, ("trumanHl_y", "trumanHl"))
+            truman_hemilineages = extract_unique_list(
+                neurons_df, ("trumanHl_y", "trumanHl")
+            )
 
             # FlyWire IDs are per-cell and aggregated as a display string.
             flywire_types = extract_unique_joined(
@@ -842,15 +846,15 @@ class NeuPrintConnector:
             "celltype_predicted_nt": celltype_predicted_nt,
             "celltype_predicted_nt_confidence": celltype_predicted_nt_confidence,
             "celltype_total_nt_predictions": celltype_total_nt_predictions,
-            "cell_class": cell_class,
-            "cell_subclass": cell_subclass,
-            "cell_superclass": cell_superclass,
+            "cell_classes": cell_classes,
+            "cell_subclasses": cell_subclasses,
+            "cell_superclasses": cell_superclasses,
             "nt_analysis": nt_analysis,
             "dimorphism": dimorphism,
             "synonyms": synonyms,
             "flywire_types": flywire_types,
-            "somaNeuromere": soma_neuromere,
-            "trumanHl": truman_hl,
+            "soma_neuromeres": soma_neuromeres,
+            "truman_hemilineages": truman_hemilineages,
             "left_upstream_connections": left_upstream_connections,
             "left_downstream_connections": left_downstream_connections,
             "right_upstream_connections": right_upstream_connections,

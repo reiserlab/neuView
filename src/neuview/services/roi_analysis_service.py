@@ -135,7 +135,7 @@ class ROIAnalysisService:
         subclass_options = set()
         dimorphism_options = set()
         soma_neuromere_options = set()
-        truman_hl_options = set()
+        truman_hemilineage_options = set()
 
         for entry in index_data:
             # Collect ROIs from roi_summary
@@ -170,11 +170,11 @@ class ROIAnalysisService:
             # Class hierarchy + soma neuromere + truman hl are lists since
             # cells in the same celltype may carry different values.
             list_field_targets = (
-                ("cell_superclass", superclass_options),
-                ("cell_class", class_options),
-                ("cell_subclass", subclass_options),
-                ("soma_neuromere", soma_neuromere_options),
-                ("truman_hl", truman_hl_options),
+                ("cell_superclasses", superclass_options),
+                ("cell_classes", class_options),
+                ("cell_subclasses", subclass_options),
+                ("soma_neuromeres", soma_neuromere_options),
+                ("truman_hemilineages", truman_hemilineage_options),
             )
             for key, target in list_field_targets:
                 for value in entry.get(key) or []:
@@ -202,7 +202,7 @@ class ROIAnalysisService:
             "subclasses": sorted(subclass_options),
             "dimorphisms": sorted(dimorphism_options),
             "soma_neuromeres": sorted(soma_neuromere_options),
-            "truman_hls": sorted(truman_hl_options),
+            "truman_hemilineages": sorted(truman_hemilineage_options),
         }
 
     def calculate_cell_count_ranges(

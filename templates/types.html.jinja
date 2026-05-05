@@ -144,8 +144,8 @@
                 <label for="truman-hl-filter" class="filter-label">Truman hemilineage:</label>
                 <select id="truman-hl-filter" class="filter-dropdown">
                     <option value="all">Any Truman HL</option>
-                    {% if filter_options.truman_hls %}
-                        {% for truman_hl in filter_options.truman_hls %}
+                    {% if filter_options.truman_hemilineages %}
+                        {% for truman_hl in filter_options.truman_hemilineages %}
                         <option value="{{ truman_hl }}">{{ truman_hl }}</option>
                         {% endfor %}
                     {% endif %}
@@ -189,17 +189,17 @@
             data-parent-roi="{% if neuron.parent_rois %}{{ neuron.parent_rois|join(',') }}{% endif %}"
                 data-nt="{{ neuron.consensus_nt if neuron.consensus_nt else (neuron.celltype_predicted_nt if neuron.celltype_predicted_nt else "") }}"
                 {# class/subclass/superclass/soma-neuromere/truman-hl are lists; pipe-joined for unambiguous JS splitting. #}
-                data-class="{{ neuron.cell_class | join('|') if neuron.cell_class else "" }}"
-                data-subclass="{{ neuron.cell_subclass | join('|') if neuron.cell_subclass else "" }}"
-                data-superclass="{{ neuron.cell_superclass | join('|') if neuron.cell_superclass else "" }}"
+                data-class="{{ neuron.cell_classes | join('|') if neuron.cell_classes else "" }}"
+                data-subclass="{{ neuron.cell_subclasses | join('|') if neuron.cell_subclasses else "" }}"
+                data-superclass="{{ neuron.cell_superclasses | join('|') if neuron.cell_superclasses else "" }}"
                 data-cell-count="{{ neuron.total_count if neuron.total_count else 0 }}"
                 data-left-count="{{ neuron.left_count if neuron.left_count else 0 }}"
                 data-right-count="{{ neuron.right_count if neuron.right_count else 0 }}"
                 data-middle-count="{{ neuron.middle_count if neuron.middle_count else 0 }}"
                 data-undefined-count="{{ neuron.undefined_count if neuron.undefined_count else 0 }}"
                 data-dimorphism="{{ neuron.dimorphism if neuron.dimorphism else "" }}"
-                data-soma-neuromere="{{ neuron.soma_neuromere | join('|') if neuron.soma_neuromere else "" }}"
-                data-truman-hl="{{ neuron.truman_hl | join('|') if neuron.truman_hl else "" }}"
+                data-soma-neuromere="{{ neuron.soma_neuromeres | join('|') if neuron.soma_neuromeres else "" }}"
+                data-truman-hl="{{ neuron.truman_hemilineages | join('|') if neuron.truman_hemilineages else "" }}"
                 data-synonyms="{{ neuron.synonyms if neuron.synonyms else "" }}"
                 data-flywire-types="{{ neuron.flywire_types if neuron.flywire_types else "" }}"
                 data-processed-synonyms="{% if neuron.processed_synonyms and neuron.processed_synonyms|length > 0 %}{{ neuron.processed_synonyms.keys() | list | join(',') }}{% endif %}"
@@ -282,15 +282,15 @@
                             <span class="view-indicator middle" title="soma side middle only">only M</span>
                             {% endif %}
 
-                            {% for sc in neuron.cell_superclass or [] %}
+                            {% for sc in neuron.cell_superclasses or [] %}
                             <span class="class-tag superclass-tag">{{ sc }}</span>
                             {% endfor %}
 
-                            {% for cc in neuron.cell_class or [] %}
+                            {% for cc in neuron.cell_classes or [] %}
                             <span class="class-tag class-tag">{{ cc }}</span>
                             {% endfor %}
 
-                            {% for sub in neuron.cell_subclass or [] %}
+                            {% for sub in neuron.cell_subclasses or [] %}
                             <span class="class-tag subclass-tag">{{ sub }}</span>
                             {% endfor %}
 
@@ -304,11 +304,11 @@
                             <span class="dimorphism-tag">{{ neuron.dimorphism }}</span>
                             {% endif %}
 
-                            {% for sn in neuron.soma_neuromere or [] %}
+                            {% for sn in neuron.soma_neuromeres or [] %}
                             <span class="soma-neuromere-tag">{{ sn }}</span>
                             {% endfor %}
 
-                            {% for hl in neuron.truman_hl or [] %}
+                            {% for hl in neuron.truman_hemilineages or [] %}
                             <span class="truman-hl-tag">{{ hl }}</span>
                             {% endfor %}
 
