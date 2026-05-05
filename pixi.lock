@@ -3998,7 +3998,7 @@ packages:
 - pypi: ./
   name: neuview
   version: 2.7.10
-  sha256: 4c4321cc04ee257241e273290d14525ab8f2a7ec5d59b0a5fe286cfb4ae2825e
+  sha256: 1318a795db2bae149ffdc78a6e479c3471bc70c7ea607522456ff08483a9b1c8
   requires_dist:
   - click>=8.0.0
   - jinja2>=3.0.0
@@ -4013,8 +4013,12 @@ packages:
   - minify-html>=0.16.4,<0.17
   - cst-lsp>=0.1.3,<0.2
   - gitpython>=3.1.0
+  - pyprojroot>=0.3.0,<0.4
+  - psutil>=7.1.0,<8
+  - semver>=3.0.4,<4
+  - numpy>=1.26
+  - pillow>=10.0
   requires_python: '>=3.11'
-  editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.3.5-py314h2b28147_0.conda
   sha256: 4fa3b8b80dd848a70f679b31d74d6fb28f9c4de9cd81086aa8e10256e9de20d1
   md5: 6d2cff81447b8fe424645d7dd3bde8bf

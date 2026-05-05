@@ -75,15 +75,6 @@ create-list = "neuview create-list"
 create-scatter = "neuview create-scatter"
 increment-version = "python scripts/increment_version.py"
 
-
-
-[[tool.pixi.tasks.fill-type.args]]
-arg = "neuron_type"
-default = ""
-
-[[tool.pixi.tasks.create-all-pages.depends-on]]
-task = "create-scatter"
-
 [tool.pixi.tasks.extract-and-fill]
 cmd = "python scripts/extract_and_fill.py {{ config_file }} {{ subset_category }}"
 args = [
@@ -92,7 +83,7 @@ args = [
 ]
 
 [tool.pixi.tasks.create-all-pages]
-depends-on = ["clean-output", "fill-all", "pop-all", "create-list", "increment-version"]
+depends-on = ["clean-output", "fill-all", "pop-all", "create-list", "increment-version", "create-scatter"]
 
 [tool.pixi.tasks.subset-medium-no-index]
 depends-on = [
@@ -100,10 +91,8 @@ depends-on = [
     "extract-and-fill",
     { task = "fill-type", args = [""] },
     "pop-all",
+    "create-scatter",
 ]
-
-[[tool.pixi.tasks.subset-medium-no-index.depends-on]]
-task = "create-scatter"
 
 [tool.pixi.tasks.subset-medium]
 depends-on = ["subset-medium-no-index", "create-list"]
@@ -113,10 +102,8 @@ depends-on = [
     "clean-output",
     { task = "extract-and-fill", args = ["config.yaml", "subset-small"] },
     "pop-all",
+    "create-scatter",
 ]
-
-[[tool.pixi.tasks.subset-small-no-index.depends-on]]
-task = "create-scatter"
 
 [tool.pixi.tasks.subset-medium-optic-no-index]
 
