@@ -2991,3 +2991,9 @@ table.dataTable#roi-table tbody > tr > td:first-child {
         height: 20px;
     }
 }
+
+.plume dl dt.highlight,
+.plume dl dd.highlight {
+    background-color: rgba(180, 180, 180, 0.1);
+    border-left: solid 4px var(--pm-primary-color);
+}
