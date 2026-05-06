@@ -10,6 +10,11 @@ from typing import Dict, List, Union, Any, Optional
 
 logger = logging.getLogger(__name__)
 
+# Soma-side values that mean "no side assigned". Upstream sources sometimes
+# emit "na", "U", "unknown", etc. instead of producing a missing value, so we
+# treat them all the same as None and return all sides.
+_NO_SIDE_MARKERS = frozenset({"", "na", "nan", "none", "null", "unknown", "u"})
+
 
 class PartnerAnalysisService:
     """
@@ -103,16 +108,17 @@ class PartnerAnalysisService:
         dmap = connected_bids[direction] or {}
 
         # Handle soma side filtering
-        if soma_side in ("L", "R"):
+        if soma_side in ("L", "R", "M", "C", "center"):
             return self._get_side_specific_body_ids(partner_name, soma_side, dmap)
-        elif soma_side in ("M", "C", "center"):
-            # Handle middle soma side (CNS) or center soma side (FAFB)
-            return self._get_side_specific_body_ids(partner_name, soma_side, dmap)
-        elif soma_side is None or soma_side == "":
+        normalized = (
+            soma_side.strip().lower() if isinstance(soma_side, str) else soma_side
+        )
+        if soma_side is None or normalized in _NO_SIDE_MARKERS:
             return self._get_all_sides_body_ids(partner_name, dmap)
-        else:
-            logger.warning(f"Unknown soma side: {soma_side}")
-            return []
+        logger.debug(
+            f"Unrecognized soma side {soma_side!r}; returning all sides"
+        )
+        return self._get_all_sides_body_ids(partner_name, dmap)
 
     def _parse_partner_data(
         self, partner_data: Union[Dict[str, Any], str]
