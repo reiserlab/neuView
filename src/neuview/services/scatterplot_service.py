@@ -81,6 +81,11 @@ class ScatterplotService:
                     ctx = self._prepare(
                         self.scatter_config, points, region=region, side=side
                     )
+                    if ctx is None:
+                        logger.info(
+                            f"Skipping {region}_{side}: no points to plot"
+                        )
+                        continue
 
                     template_dir = get_templates_dir()
                     template_env = Environment(loader=FileSystemLoader(template_dir))
@@ -187,7 +192,7 @@ class ScatterplotService:
                                 side_dict[region] = {}
                             region_dict = side_dict[region]
                             if isinstance(region_dict, dict):
-                                if region_dict["cols_innervated"] > 0:
+                                if (region_dict.get("cols_innervated") or 0) > 0:
                                     region_dict["incl_scatter"] = 1
                                 else:
                                     region_dict["incl_scatter"] = None
