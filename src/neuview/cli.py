@@ -383,28 +383,24 @@ def create_scatter(ctx):
     services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
 
     async def run_create_scatter():
-        await services.scatter_service.create_scatterplots()
+        result = await services.scatter_service.create_scatterplots()
+        if result.is_err():
+            click.echo(f"❌ Error: {result.unwrap_err()}", err=True)
+            sys.exit(1)
 
-        # Print all scatterplot files that should have been created
-        scfg = services.scatter_service.scatter_config
-        scatter_dir = Path(scfg.scatter_dir)
+        scatter_dir = Path(services.scatter_service.scatter_config.scatter_dir)
+        expected = [scatter_dir / f"{region}.svg" for region in ("ME", "LO", "LOP")]
+        expected += [
+            scatter_dir / f"{region}_{side}.svg"
+            for side in ("L", "R")
+            for region in ("ME", "LO", "LOP")
+        ]
 
-        # Check combined plots (both hemispheres)
-        for region in ("ME", "LO", "LOP"):
-            file_path = scatter_dir / f"{region}.svg"
+        for file_path in expected:
             if file_path.exists():
                 click.echo(f"✅ Created: {file_path}")
             else:
                 click.echo(f"⚠️ Expected but not found: {file_path}", err=True)
-
-        # Check hemisphere-specific plots
-        for side in ("L", "R"):
-            for region in ("ME", "LO", "LOP"):
-                file_path = scatter_dir / f"{region}_{side}.svg"
-                if file_path.exists():
-                    click.echo(f"✅ Created: {file_path}")
-                else:
-                    click.echo(f"⚠️ Expected but not found: {file_path}", err=True)
 
     asyncio.run(run_create_scatter())
 

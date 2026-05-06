@@ -13,7 +13,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
 from ..config import Config
-from ..result import Err
+from ..result import Err, Ok, Result
 from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
 from .index_service import IndexService
@@ -45,7 +45,7 @@ class ScatterplotService:
 
             self.cache_manager = create_cache_manager(self.output_dir)
 
-    async def create_scatterplots(self):
+    async def create_scatterplots(self) -> Result[list[Path], str]:
         """Create scatterplots of spatial metrics for optic lobe neuron types."""
 
         try:
@@ -72,6 +72,7 @@ class ScatterplotService:
             # Generate scatterplot data for corrected neuron types
             plot_data = self._extract_plot_data(corrected_neuron_types)
 
+            written: list[Path] = []
             # Generate plots for each side (both, L, R) and each region
             for side in ["both", "L", "R"]:
                 for region in ["ME", "LO", "LOP"]:
@@ -89,23 +90,19 @@ class ScatterplotService:
                     )
                     svg_content = template.render(**ctx)
 
-                    # Determine filename suffix based on side
                     if side == "both":
-                        # Combined plots: ME.svg, LO.svg, LOP.svg
-                        svg_path = f"{self.plot_output_dir}/{region}.svg"
+                        svg_path = Path(self.plot_output_dir) / f"{region}.svg"
                     else:
-                        # Hemisphere-specific plots: ME_L.svg, ME_R.svg, etc.
-                        svg_path = f"{self.plot_output_dir}/{region}_{side}.svg"
+                        svg_path = Path(self.plot_output_dir) / f"{region}_{side}.svg"
 
-                    # Write the SVG file
-                    with open(svg_path, "w", encoding="utf-8") as f:
-                        f.write(svg_content)
+                    svg_path.write_text(svg_content, encoding="utf-8")
+                    written.append(svg_path)
 
-            return
+            return Ok(written)
 
         except Exception as e:
             logger.error(f"Failed to create scatterplots: {e}")
-            return Err(f"Failed to create scatterplots: {str(e)}")
+            return Err(f"Failed to create scatterplots: {e}")
 
     def _extract_plot_data(self, neuron_types):
         """Generate plot data from list of neuron types."""
