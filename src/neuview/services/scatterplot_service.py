@@ -78,9 +78,7 @@ class ScatterplotService:
                         self.scatter_config, points, region=region, side=side
                     )
                     if ctx is None:
-                        logger.info(
-                            f"Skipping {region}_{side}: no points to plot"
-                        )
+                        logger.info(f"Skipping {region}_{side}: no points to plot")
                         continue
 
                     template_dir = get_templates_dir()
@@ -204,14 +202,14 @@ class ScatterplotService:
         """
         pts = []
         for rec in plot_data:
-            cols_innervated = (
-                rec.get("spatial_metrics", {})
-                .get(side, {})
-                .get(region, {})
-                .get("cols_innervated")
-            )
+            # Read the (side, region) cell defensively — any level may be
+            # absent or None when the cache build skipped the spatial calc.
+            cell = ((rec.get("spatial_metrics") or {}).get(side) or {}).get(
+                region
+            ) or {}
+            incl_scatter = 1 if (cell.get("cols_innervated") or 0) > 0 else None
 
-            if cols_innervated is not None and cols_innervated > 0:
+            if incl_scatter == 1:
                 name = rec.get("name", "unknown")
 
                 # Determine cell count based on side
@@ -225,24 +223,9 @@ class ScatterplotService:
                 else:
                     x = int(rec.get("total_count") / 2)
 
-                y = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cell_size")
-                )
-                c = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("coverage")
-                )
-                col_count = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cols_innervated")
-                )
+                y = cell.get("cell_size")
+                c = cell.get("coverage")
+                col_count = cell.get("cols_innervated")
 
                 # require x,y positive for log scales
                 if x is None or y is None or c is None:

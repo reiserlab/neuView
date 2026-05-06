@@ -66,25 +66,35 @@ def cache():
     """Tm5: only ME ingested (L, R) — sparse spatial_metrics, the case
     that exercises the back-write of `{}` placeholders.
     Mi9: full coverage on all 9 (side, region) cells."""
-    return _LazyCache({
-        "Tm5": _CacheData(
-            neuron_type="Tm5",
-            spatial_metrics={
-                "L": {"ME": {"cols_innervated": 12, "coverage": 1.4, "cell_size": 0.7}},
-                "R": {"ME": {"cols_innervated": 11, "coverage": 1.3, "cell_size": 0.7}},
-            },
-        ),
-        "Mi9": _CacheData(
-            neuron_type="Mi9",
-            spatial_metrics={
-                side: {
-                    region: {"cols_innervated": 30, "coverage": 1.1, "cell_size": 1.0}
-                    for region in ("ME", "LO", "LOP")
-                }
-                for side in ("L", "R", "both")
-            },
-        ),
-    })
+    return _LazyCache(
+        {
+            "Tm5": _CacheData(
+                neuron_type="Tm5",
+                spatial_metrics={
+                    "L": {
+                        "ME": {"cols_innervated": 12, "coverage": 1.4, "cell_size": 0.7}
+                    },
+                    "R": {
+                        "ME": {"cols_innervated": 11, "coverage": 1.3, "cell_size": 0.7}
+                    },
+                },
+            ),
+            "Mi9": _CacheData(
+                neuron_type="Mi9",
+                spatial_metrics={
+                    side: {
+                        region: {
+                            "cols_innervated": 30,
+                            "coverage": 1.1,
+                            "cell_size": 1.0,
+                        }
+                        for region in ("ME", "LO", "LOP")
+                    }
+                    for side in ("L", "R", "both")
+                },
+            ),
+        }
+    )
 
 
 class TestScatterplotServiceCacheImmutability:
