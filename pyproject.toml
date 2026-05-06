@@ -1,34 +1,54 @@
 [project]
-dependencies = [ "click>=8.0.0", "jinja2>=3.0.0", "pyyaml>=6.0", "requests>=2.28.0", "pandas>=1.5.0", "neuprint-python>=0.4.0", "toml>=0.10.0", "python-dotenv>=1.0.0", "pycairo>=1.20.0", "cairosvg>=2.5.0", "minify-html>=0.16.4,<0.17", "cst-lsp>=0.1.3,<0.2", "gitpython>=3.1.0",]
 name = "neuview"
-requires-python = ">= 3.11"
 version = "2.7.10"
-[[project.authors]]
-name = "Frank Loesche"
-email = "loeschef@janelia.hhmi.org"
-
-[build-system]
-build-backend = "hatchling.build"
-requires = [ "hatchling",]
+requires-python = ">= 3.11"
+authors = [
+    { name = "Frank Loesche", email = "loeschef@janelia.hhmi.org" },
+    { name = "Laura Burnett", email = "burnettl@janelia.hhmi.org" }
+]
+dependencies = [
+    "click>=8.0.0",
+    "jinja2>=3.0.0",
+    "pyyaml>=6.0",
+    "requests>=2.28.0",
+    "pandas>=1.5.0",
+    "neuprint-python>=0.4.0",
+    "toml>=0.10.0",
+    "python-dotenv>=1.0.0",
+    "pycairo>=1.20.0",
+    "cairosvg>=2.5.0",
+    "minify-html>=0.16.4,<0.17",
+    "cst-lsp>=0.1.3,<0.2",
+    "gitpython>=3.1.0",
+    "pyprojroot>=0.3.0,<0.4",
+    "psutil>=7.1.0,<8",
+    "semver>=3.0.4,<4",
+    "numpy>=1.26",
+    "pillow>=10.0",
+]
 
 [project.scripts]
 neuview = "neuview.cli:main"
 
-[tool.pixi.workspace]
-channels = [ "conda-forge",]
-platforms = [ "linux-64", "win-64", "osx-64", "osx-arm64",]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]
+
+# Pixi resolves these from conda-forge instead of PyPI. Two kinds of entries:
+#   - Project deps also listed in [project.dependencies] (pycairo/cairosvg for
+#     C extensions, pyprojroot/psutil/semver for stable conda-forge builds) —
+#     the conda package satisfies the project requirement.
+#   - Tools not part of the package itself: pip, parallel, python-lsp-server,
+#     ruff.
+# Anything imported under src/ MUST be in [project.dependencies] so wheels and
+# non-pixi installs (uv, pip) carry correct metadata.
 [tool.pixi.dependencies]
 python = ">=3.11"
-click = "*"
-jinja2 = "*"
-pyyaml = "*"
-requests = "*"
-pandas = "*"
-toml = "*"
 pip = "*"
-python-dotenv = "*"
-gitpython = ">=3.1.45,<4"
 pycairo = "*"
 cairosvg = "*"
 parallel = ">=20200322,<20250623"
@@ -38,8 +58,11 @@ pyprojroot = ">=0.3.0,<0.4"
 psutil = ">=7.1.0,<8"
 semver = ">=3.0.4,<4"
 
+[tool.pixi.pypi-dependencies]
+neuview = { path = ".", editable = true }
+
 [tool.pixi.environments]
-dev = [ "dev",]
+dev = ["dev"]
 
 [tool.pixi.tasks]
 clean-output = "rm -rf output/"
@@ -50,96 +73,53 @@ setup-env = "cp .env.example .env && echo 'Created .env file. Please edit it and
 fill-all = "neuview fill-queue --all"
 create-list = "neuview create-list"
 create-scatter = "neuview create-scatter"
+increment-version = "python scripts/increment_version.py"
 
-[tool.pytest.ini_options]
-testpaths = [ "test",]
-python_files = [ "test_*.py", "*_test.py",]
-python_classes = [ "Test*",]
-python_functions = [ "test_*",]
-addopts = [ "-v", "--tb=short", "--strict-markers", "--disable-warnings",]
-markers = [ "slow: marks tests as slow (deselect with '-m \"not slow\"')", "integration: marks tests as integration tests", "unit: marks tests as unit tests", "asyncio: marks tests as async tests",]
 
-[tool.pixi.tasks.fill-type]
-cmd = "neuview fill-queue{{ ' -n ' ~ neuron_type if neuron_type != '' else '' }}"
+
 [[tool.pixi.tasks.fill-type.args]]
 arg = "neuron_type"
 default = ""
 
-[tool.pixi.tasks.create-all-pages]
-[[tool.pixi.tasks.create-all-pages.depends-on]]
-task = "clean-output"
-
-[[tool.pixi.tasks.create-all-pages.depends-on]]
-task = "fill-all"
-
-[[tool.pixi.tasks.create-all-pages.depends-on]]
-task = "pop-all"
-
-[[tool.pixi.tasks.create-all-pages.depends-on]]
-task = "create-list"
-
 [[tool.pixi.tasks.create-all-pages.depends-on]]
 task = "create-scatter"
 
-[[tool.pixi.tasks.create-all-pages.depends-on]]
-task = "increment-version"
-
 [tool.pixi.tasks.extract-and-fill]
 cmd = "python scripts/extract_and_fill.py {{ config_file }} {{ subset_category }}"
-[[tool.pixi.tasks.extract-and-fill.args]]
-arg = "config_file"
-default = "config.yaml"
+args = [
+    { arg = "config_file", default = "config.yaml" },
+    { arg = "subset_category", default = "subset-medium" },
+]
 
-[[tool.pixi.tasks.extract-and-fill.args]]
-arg = "subset_category"
-default = "subset-medium"
+[tool.pixi.tasks.create-all-pages]
+depends-on = ["clean-output", "fill-all", "pop-all", "create-list", "increment-version"]
 
 [tool.pixi.tasks.subset-medium-no-index]
-[[tool.pixi.tasks.subset-medium-no-index.depends-on]]
-task = "clean-output"
-
-[[tool.pixi.tasks.subset-medium-no-index.depends-on]]
-task = "extract-and-fill"
-
-[[tool.pixi.tasks.subset-medium-no-index.depends-on]]
-task = "fill-type"
-args = [ "",]
-
-[[tool.pixi.tasks.subset-medium-no-index.depends-on]]
-task = "pop-all"
+depends-on = [
+    "clean-output",
+    "extract-and-fill",
+    { task = "fill-type", args = [""] },
+    "pop-all",
+]
 
 [[tool.pixi.tasks.subset-medium-no-index.depends-on]]
 task = "create-scatter"
 
 [tool.pixi.tasks.subset-medium]
-[[tool.pixi.tasks.subset-medium.depends-on]]
-task = "subset-medium-no-index"
-
-[[tool.pixi.tasks.subset-medium.depends-on]]
-task = "create-list"
+depends-on = ["subset-medium-no-index", "create-list"]
 
 [tool.pixi.tasks.subset-small-no-index]
-[[tool.pixi.tasks.subset-small-no-index.depends-on]]
-task = "clean-output"
-
-[[tool.pixi.tasks.subset-small-no-index.depends-on]]
-task = "extract-and-fill"
-args = [ "config.yaml", "subset-small",]
-
-[[tool.pixi.tasks.subset-small-no-index.depends-on]]
-task = "pop-all"
+depends-on = [
+    "clean-output",
+    { task = "extract-and-fill", args = ["config.yaml", "subset-small"] },
+    "pop-all",
+]
 
 [[tool.pixi.tasks.subset-small-no-index.depends-on]]
 task = "create-scatter"
 
-[tool.pixi.tasks.subset-small]
-[[tool.pixi.tasks.subset-small.depends-on]]
-task = "subset-small-no-index"
-
-[[tool.pixi.tasks.subset-small.depends-on]]
-task = "create-list"
-
 [tool.pixi.tasks.subset-medium-optic-no-index]
+
 [[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
 task = "clean-output"
 
@@ -154,6 +134,7 @@ task = "pop-all"
 task = "create-scatter"
 
 [tool.pixi.tasks.subset-medium-optic]
+
 [[tool.pixi.tasks.subset-medium-optic.depends-on]]
 task = "subset-medium-optic-no-index"
 
@@ -164,6 +145,7 @@ task = "create-list"
 # Live-runtime trigger for issue #2 in secret/00_refactor_issue_78.md.
 # LAL048 only innervates LO_R columns, so 8 of the 9 (side, region) plots
 # get zero points and `_prepare` crashes on `min()` over an empty sequence.
+
 [[tool.pixi.tasks.issue-78-part-2-2.depends-on]]
 task = "clean-output"
 
@@ -177,12 +159,12 @@ task = "pop-all"
 [[tool.pixi.tasks.issue-78-part-2-2.depends-on]]
 task = "create-scatter"
 
-[tool.pixi.tasks.increment-version]
-cmd = "python scripts/increment_version.py"
+[tool.pixi.tasks.fill-type]
+cmd = "neuview fill-queue{{ ' -n ' ~ neuron_type if neuron_type != '' else '' }}"
+args = [{ arg = "neuron_type", default = "" }]
 
-[tool.pixi.pypi-dependencies.neuview]
-path = "."
-editable = true
+[tool.pixi.tasks.subset-small]
+depends-on = ["subset-small-no-index", "create-list"]
 
 [tool.pixi.feature.dev.dependencies]
 pytest = "*"
@@ -199,3 +181,16 @@ integration-test = "pytest -m integration test/"
 integration-test-verbose = "pytest -m integration -v test/"
 format = "ruff format src/ test/"
 check = "ruff check src/ test/"
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--tb=short", "--strict-markers", "--disable-warnings"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "asyncio: marks tests as async tests",
+]
