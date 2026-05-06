@@ -75,6 +75,10 @@ create-list = "neuview create-list"
 create-scatter = "neuview create-scatter"
 increment-version = "python scripts/increment_version.py"
 
+[tool.pixi.tasks.fill-type]
+cmd = "neuview fill-queue{{ ' -n ' ~ neuron_type if neuron_type != '' else '' }}"
+args = [{ arg = "neuron_type", default = "" }]
+
 [tool.pixi.tasks.extract-and-fill]
 cmd = "python scripts/extract_and_fill.py {{ config_file }} {{ subset_category }}"
 args = [
@@ -83,7 +87,14 @@ args = [
 ]
 
 [tool.pixi.tasks.create-all-pages]
-depends-on = ["clean-output", "fill-all", "pop-all", "create-list", "increment-version", "create-scatter"]
+depends-on = [
+    "clean-output",
+    "fill-all",
+    "pop-all",
+    "create-scatter",
+    "create-list",
+    "increment-version",
+]
 
 [tool.pixi.tasks.subset-medium-no-index]
 depends-on = [
@@ -105,35 +116,30 @@ depends-on = [
     "create-scatter",
 ]
 
-[tool.pixi.tasks.subset-medium-optic-no-index]
-
-[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
-task = "clean-output"
-
-[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
-task = "extract-and-fill"
-args = [ "config.yaml", "subset-medium-optic",]
-
-[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
-task = "pop-all"
-
-[[tool.pixi.tasks.subset-medium-optic-no-index.depends-on]]
-task = "create-scatter"
-
-[tool.pixi.tasks.subset-medium-optic]
-
-[[tool.pixi.tasks.subset-medium-optic.depends-on]]
-task = "subset-medium-optic-no-index"
-
-[[tool.pixi.tasks.subset-medium-optic.depends-on]]
-task = "create-list"
-
-[tool.pixi.tasks.fill-type]
-cmd = "neuview fill-queue{{ ' -n ' ~ neuron_type if neuron_type != '' else '' }}"
-args = [{ arg = "neuron_type", default = "" }]
-
 [tool.pixi.tasks.subset-small]
 depends-on = ["subset-small-no-index", "create-list"]
+
+[tool.pixi.tasks.subset-medium-optic-no-index]
+depends-on = [
+    "clean-output",
+    { task = "extract-and-fill", args = ["config.yaml", "subset-medium-optic"] },
+    "pop-all",
+    "create-scatter",
+]
+
+[tool.pixi.tasks.subset-medium-optic]
+depends-on = ["subset-medium-optic-no-index", "create-list"]
+
+# Live-runtime trigger for issue #2 in secret/00_refactor_issue_78.md.
+# LAL048 only innervates LO_R columns, so 8 of the 9 (side, region) plots
+# get zero points and `_prepare` crashes on `min()` over an empty sequence.
+[tool.pixi.tasks.issue-78-part-2-2]
+depends-on = [
+    "clean-output",
+    { task = "fill-type", args = ["LAL048"] },
+    "pop-all",
+    "create-scatter",
+]
 
 [tool.pixi.feature.dev.dependencies]
 pytest = "*"
