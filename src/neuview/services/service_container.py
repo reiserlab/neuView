@@ -308,7 +308,7 @@ class ServiceContainer:
         def create():
             from .scatterplot_service import ScatterplotService
 
-            return ScatterplotService()
+            return ScatterplotService(self.config, self.cache_manager)
 
         return self._get_or_create_service("scatter_service", create)
 
