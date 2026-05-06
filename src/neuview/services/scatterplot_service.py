@@ -73,6 +73,9 @@ class ScatterplotService:
             plot_data = self._extract_plot_data(corrected_neuron_types)
 
             # Generate plots for each side (both, L, R) and each region
+            template_env = Environment(loader=FileSystemLoader(get_templates_dir()))
+            template = template_env.get_template(self.scatter_config.template_name)
+
             for side in ["both", "L", "R"]:
                 for region in ["ME", "LO", "LOP"]:
                     points = self._extract_points(plot_data, side=side, region=region)
@@ -82,11 +85,6 @@ class ScatterplotService:
                         self.scatter_config, points, region=region, side=side
                     )
 
-                    template_dir = get_templates_dir()
-                    template_env = Environment(loader=FileSystemLoader(template_dir))
-                    template = template_env.get_template(
-                        self.scatter_config.template_name
-                    )
                     svg_content = template.render(**ctx)
 
                     # Determine filename suffix based on side
