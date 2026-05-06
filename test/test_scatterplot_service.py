@@ -1,30 +1,23 @@
 """Regression tests for ScatterplotService.
 
-Covers bug #2 from secret/00_refactor_issue_78.md: ``_prepare`` calls
-``min()/max()`` on a generator over ``points`` and crashes with
-``ValueError`` whenever ``points`` is empty (line 304-307 of
-src/neuview/services/scatterplot_service.py). The same crash repeats on
-``coverages = [p['coverage'] for p in points]`` at line 316.
+Covers two bugs from secret/00_refactor_issue_78.md:
 
-A real-runtime trigger is a subset whose neurons don't innervate the
-target ``(side, region)`` slot - e.g. a single-type subset of
-``LAL048`` (only ``LO_R`` columns), where the very first plot
-``(both, ME)`` ends up with zero points.
+- Bug #1: ``_extract_plot_data`` raises ``KeyError`` / ``TypeError`` when
+  the cached ``spatial_metrics`` is missing, ``{}``, or contains ``None``
+  for ``cols_innervated`` (line 190 pre-fix). The cache build at
+  ``cache_service.py`` skips the spatial calc block whenever
+  ``roi_counts_df`` is empty/missing or the connector is unavailable, so
+  these states are reachable in practice. After the fix (use
+  ``.get("cols_innervated", 0)``) every uninnervated cell is marked
+  ``incl_scatter=None`` and the function never raises.
 
-After the fix (delete dead lines 304-307, early-return on empty points,
-have caller skip writing the SVG) these tests pass.
-
-Covers bug #1 from secret/00_refactor_issue_78.md: the line at
-src/neuview/services/scatterplot_service.py:190
-
-    if region_dict["cols_innervated"] > 0:
-
-crashes whenever the cached spatial_metrics is missing or contains None
-for cols_innervated. This happens whenever the cache build at
-src/neuview/services/cache_service.py skipped the spatial calc block
-(empty roi_counts_df, missing page_generator, missing connector, or an
-exception). After the fix (use .get("cols_innervated", 0)) the function
-must mark every uninnervated cell with incl_scatter=None and never raise.
+- Bug #2: ``_prepare`` calls ``min()/max()`` on a generator over
+  ``points`` and crashes with ``ValueError`` whenever ``points`` is
+  empty (line 304-307 pre-fix). A real-runtime trigger is a subset
+  whose neurons don't innervate every ``(side, region)`` slot -- e.g.
+  ``LAL048`` (only ``LO_R`` columns), where 7 of 9 plots end up with
+  zero points. After the fix (early-return on empty points, have caller
+  skip writing the SVG) these tests pass.
 """
 
 import os
@@ -41,52 +34,9 @@ from neuview.visualization.rendering.rendering_config import (  # noqa: E402
 )
 
 
-def _make_service():
-    """Build a ScatterplotService without running its filesystem-touching __init__."""
-    svc = ScatterplotService.__new__(ScatterplotService)
-    svc.scatter_config = ScatterConfig()
-    return svc
-
-
-@pytest.mark.parametrize(
-    "side, region",
-    [
-        ("both", "ME"),
-        ("both", "LO"),
-        ("both", "LOP"),
-        ("L", "ME"),
-        ("R", "LOP"),
-    ],
-)
-def test_prepare_handles_empty_points(side, region):
-    """``_prepare`` must not crash when ``_extract_points`` returns ``[]``.
-
-    Pre-fix: ``ValueError: min() arg is an empty sequence`` from line 304.
-    Post-fix: returns successfully (return value shape is up to the fix --
-    this test only asserts no exception).
-    """
-    svc = _make_service()
-
-    svc._prepare(svc.scatter_config, [], region=region, side=side)
-
-
-def test_prepare_handles_single_point():
-    """Sanity: one valid point should still render (no degenerate-range crash).
-
-    Guards against a fix that over-zealously rejects non-empty inputs.
-    """
-    svc = _make_service()
-    points = [
-        {
-            "name": "LAL048",
-            "x": 10.0,
-            "y": 1.0,
-            "coverage": 1.0,
-            "col_count": 2,
-        }
-    ]
-
-    svc._prepare(svc.scatter_config, points, region="LO", side="R")
+# ---------------------------------------------------------------------------
+# Shared fixtures
+# ---------------------------------------------------------------------------
 
 
 class _StubLazy:
@@ -122,12 +72,6 @@ def _fake_cache_data(spatial_metrics):
     )
 
 
-def _make_service(cache_mgr):
-    svc = ScatterplotService.__new__(ScatterplotService)
-    svc.cache_manager = cache_mgr
-    return svc
-
-
 def _full_none_metrics():
     return {
         side: {
@@ -140,6 +84,21 @@ def _full_none_metrics():
         }
         for side in ("L", "R", "both")
     }
+
+
+def _make_service(cache_mgr=None, scatter_config=None):
+    """Build a ScatterplotService without running its filesystem-touching __init__."""
+    svc = ScatterplotService.__new__(ScatterplotService)
+    if cache_mgr is not None:
+        svc.cache_manager = cache_mgr
+    if scatter_config is not None:
+        svc.scatter_config = scatter_config
+    return svc
+
+
+# ---------------------------------------------------------------------------
+# Bug #1: _extract_plot_data on missing / None spatial_metrics
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -157,7 +116,7 @@ def test_extract_plot_data_handles_missing_spatial_metrics(label, spatial_metric
     Post-fix: every (side, region) cell is marked incl_scatter = None.
     """
     cache_mgr = _StubCacheMgr({"TestType": _fake_cache_data(spatial_metrics)})
-    svc = _make_service(cache_mgr)
+    svc = _make_service(cache_mgr=cache_mgr)
 
     plot_data = svc._extract_plot_data(["TestType"])
 
@@ -185,7 +144,7 @@ def test_extract_plot_data_marks_innervated_cells():
         for side in ("L", "R", "both")
     }
     cache_mgr = _StubCacheMgr({"TypeC": _fake_cache_data(sm)})
-    svc = _make_service(cache_mgr)
+    svc = _make_service(cache_mgr=cache_mgr)
 
     plot_data = svc._extract_plot_data(["TypeC"])
 
@@ -194,3 +153,49 @@ def test_extract_plot_data_marks_innervated_cells():
     assert out["L"]["LO"]["incl_scatter"] is None
     assert out["R"]["ME"]["incl_scatter"] is None
     assert out["both"]["ME"]["incl_scatter"] is None
+
+
+# ---------------------------------------------------------------------------
+# Bug #2: _prepare on empty points
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "side, region",
+    [
+        ("both", "ME"),
+        ("both", "LO"),
+        ("both", "LOP"),
+        ("L", "ME"),
+        ("R", "LOP"),
+    ],
+)
+def test_prepare_handles_empty_points(side, region):
+    """``_prepare`` must not crash when ``_extract_points`` returns ``[]``.
+
+    Pre-fix: ``ValueError: min() arg is an empty sequence`` from line 304.
+    Post-fix: returns successfully (return value shape is up to the fix --
+    this test only asserts no exception).
+    """
+    svc = _make_service(scatter_config=ScatterConfig())
+
+    svc._prepare(svc.scatter_config, [], region=region, side=side)
+
+
+def test_prepare_handles_single_point():
+    """Sanity: one valid point should still render (no degenerate-range crash).
+
+    Guards against a fix that over-zealously rejects non-empty inputs.
+    """
+    svc = _make_service(scatter_config=ScatterConfig())
+    points = [
+        {
+            "name": "LAL048",
+            "x": 10.0,
+            "y": 1.0,
+            "coverage": 1.0,
+            "col_count": 2,
+        }
+    ]
+
+    svc._prepare(svc.scatter_config, points, region="LO", side="R")
