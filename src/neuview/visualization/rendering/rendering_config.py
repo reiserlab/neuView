@@ -5,7 +5,7 @@ This module defines the configuration structures used by the rendering system
 to control output format, layout parameters, and rendering behavior.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -188,11 +188,13 @@ class ScatterConfig:
 
     # File management
     scatter_dir: Optional[Path] = "output/scatter"
-    scatter_fname = ".svg"
 
-    # Layout configuration
-    margins: list = (60, 72, 64, 50)
+    # Layout configuration — margins ordered (top, right, bottom, left)
+    margins: tuple[int, int, int, int] = (60, 72, 64, 50)
+    width: int = 480
+    height: int = 480
     axis_gap_px: int = 10
+    legend_w: int = 12
 
     # Marker features
     marker_size: int = 4
@@ -210,28 +212,25 @@ class ScatterConfig:
     legend_label: str = "Coverage factor"
     legend_label_hover: str = "mean cells per column"
 
+    # Tick marks
+    xticks: list[int] = field(default_factory=lambda: [1, 10, 100, 1000])
+    yticks: list[int] = field(default_factory=lambda: [1, 10, 100, 1000])
+
     # Data configuration
     min_max_data: Optional[Dict[str, Any]] = None
     thresholds: Optional[Dict[str, Any]] = None
 
-    top, right, bottom, left = margins
-    margin_top = top
-    margin_right = right
-    margin_bottom = bottom
-    margin_left = left
-    width = 480
-    height = 480
-    plot_w = width - left - right
-    plot_h = height - top - bottom
-
-    side_px = min(plot_w, plot_h)
-    plot_w = side_px
-    plot_h = side_px
-
-    xticks = [1, 10, 100, 1000]
-    yticks = [1, 10, 100, 1000]
-
-    legend_w = 12
+    def __post_init__(self):
+        (
+            self.margin_top,
+            self.margin_right,
+            self.margin_bottom,
+            self.margin_left,
+        ) = self.margins
+        plot_w = self.width - self.margin_left - self.margin_right
+        plot_h = self.height - self.margin_top - self.margin_bottom
+        # Square plot area so ME/LO/LOP plots line up across pages.
+        self.plot_w = self.plot_h = min(plot_w, plot_h)
 
     def get_template_path(self) -> Optional[Path]:
         """Get the full path to the template file."""
@@ -246,10 +245,10 @@ class ScatterConfig:
             "xticks": self.xticks,
             "yticks": self.yticks,
             "marker_size": self.marker_size,
-            "margin_top": self.top,
-            "margin_right": self.right,
-            "margin_bottom": self.bottom,
-            "margin_left": self.left,
+            "margin_top": self.margin_top,
+            "margin_right": self.margin_right,
+            "margin_bottom": self.margin_bottom,
+            "margin_left": self.margin_left,
             "legend_w": self.legend_w,
             "xlabel": self.xlabel,
             "xlabel_hover": self.xlabel_hover,
