@@ -6,6 +6,7 @@ from the main PageGenerator class to improve code organization and reusability.
 """
 
 from .atomic_write import atomic_write
+from .df_utils import extract_first_non_null, extract_unique_joined, extract_unique_list
 from .formatters import (
     NumberFormatter,
     PercentageFormatter,
@@ -34,6 +35,9 @@ __all__ = [
     "HTMLUtils",
     "TextUtils",
     "atomic_write",
+    "extract_first_non_null",
+    "extract_unique_joined",
+    "extract_unique_list",
     "get_git_version",
     "get_git_describe",
     "get_version_info",

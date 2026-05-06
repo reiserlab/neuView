@@ -135,7 +135,7 @@ class ROIAnalysisService:
         subclass_options = set()
         dimorphism_options = set()
         soma_neuromere_options = set()
-        truman_hl_options = set()
+        truman_hemilineage_options = set()
 
         for entry in index_data:
             # Collect ROIs from roi_summary
@@ -167,25 +167,23 @@ class ROIAnalysisService:
             ):
                 nt_options.add(entry["celltype_predicted_nt"].strip())
 
-            # Collect class hierarchy
-            if entry.get("cell_superclass") and entry["cell_superclass"].strip():
-                superclass_options.add(entry["cell_superclass"].strip())
-            if entry.get("cell_class") and entry["cell_class"].strip():
-                class_options.add(entry["cell_class"].strip())
-            if entry.get("cell_subclass") and entry["cell_subclass"].strip():
-                subclass_options.add(entry["cell_subclass"].strip())
+            # Class hierarchy + soma neuromere + truman hl are lists since
+            # cells in the same celltype may carry different values.
+            list_field_targets = (
+                ("cell_superclasses", superclass_options),
+                ("cell_classes", class_options),
+                ("cell_subclasses", subclass_options),
+                ("soma_neuromeres", soma_neuromere_options),
+                ("truman_hemilineages", truman_hemilineage_options),
+            )
+            for key, target in list_field_targets:
+                for value in entry.get(key) or []:
+                    if value and value.strip():
+                        target.add(value.strip())
 
             # Collect dimorphism
             if entry.get("dimorphism") and entry["dimorphism"].strip():
                 dimorphism_options.add(entry["dimorphism"].strip())
-
-            # Collect soma neuromere
-            if entry.get("soma_neuromere") and entry["soma_neuromere"].strip():
-                soma_neuromere_options.add(entry["soma_neuromere"].strip())
-
-            # Collect truman hl
-            if entry.get("truman_hl") and entry["truman_hl"].strip():
-                truman_hl_options.add(entry["truman_hl"].strip())
 
         # Sort filter options
         sorted_roi_options = sorted(roi_options)
@@ -204,7 +202,7 @@ class ROIAnalysisService:
             "subclasses": sorted(subclass_options),
             "dimorphisms": sorted(dimorphism_options),
             "soma_neuromeres": sorted(soma_neuromere_options),
-            "truman_hls": sorted(truman_hl_options),
+            "truman_hemilineages": sorted(truman_hemilineage_options),
         }
 
     def calculate_cell_count_ranges(
