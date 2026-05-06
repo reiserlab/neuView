@@ -144,8 +144,8 @@
                 <label for="truman-hl-filter" class="filter-label">Truman hemilineage:</label>
                 <select id="truman-hl-filter" class="filter-dropdown">
                     <option value="all">Any Truman HL</option>
-                    {% if filter_options.truman_hls %}
-                        {% for truman_hl in filter_options.truman_hls %}
+                    {% if filter_options.truman_hemilineages %}
+                        {% for truman_hl in filter_options.truman_hemilineages %}
                         <option value="{{ truman_hl }}">{{ truman_hl }}</option>
                         {% endfor %}
                     {% endif %}
@@ -188,17 +188,18 @@
             data-rois="{% if neuron.roi_summary %}{{ neuron.roi_summary|map(attribute='name')|join(',') }}{% endif %}"
             data-parent-roi="{% if neuron.parent_rois %}{{ neuron.parent_rois|join(',') }}{% endif %}"
                 data-nt="{{ neuron.consensus_nt if neuron.consensus_nt else (neuron.celltype_predicted_nt if neuron.celltype_predicted_nt else "") }}"
-                data-class="{{ neuron.cell_class if neuron.cell_class else "" }}"
-                data-subclass="{{ neuron.cell_subclass if neuron.cell_subclass else "" }}"
-                data-superclass="{{ neuron.cell_superclass if neuron.cell_superclass else "" }}"
+                {# class/subclass/superclass/soma-neuromere/truman-hl are lists; pipe-joined for unambiguous JS splitting. #}
+                data-class="{{ neuron.cell_classes | join('|') if neuron.cell_classes else "" }}"
+                data-subclass="{{ neuron.cell_subclasses | join('|') if neuron.cell_subclasses else "" }}"
+                data-superclass="{{ neuron.cell_superclasses | join('|') if neuron.cell_superclasses else "" }}"
                 data-cell-count="{{ neuron.total_count if neuron.total_count else 0 }}"
                 data-left-count="{{ neuron.left_count if neuron.left_count else 0 }}"
                 data-right-count="{{ neuron.right_count if neuron.right_count else 0 }}"
                 data-middle-count="{{ neuron.middle_count if neuron.middle_count else 0 }}"
                 data-undefined-count="{{ neuron.undefined_count if neuron.undefined_count else 0 }}"
                 data-dimorphism="{{ neuron.dimorphism if neuron.dimorphism else "" }}"
-                data-soma-neuromere="{{ neuron.soma_neuromere if neuron.soma_neuromere else "" }}"
-                data-truman-hl="{{ neuron.truman_hl if neuron.truman_hl else "" }}"
+                data-soma-neuromere="{{ neuron.soma_neuromeres | join('|') if neuron.soma_neuromeres else "" }}"
+                data-truman-hl="{{ neuron.truman_hemilineages | join('|') if neuron.truman_hemilineages else "" }}"
                 data-synonyms="{{ neuron.synonyms if neuron.synonyms else "" }}"
                 data-flywire-types="{{ neuron.flywire_types if neuron.flywire_types else "" }}"
                 data-processed-synonyms="{% if neuron.processed_synonyms and neuron.processed_synonyms|length > 0 %}{{ neuron.processed_synonyms.keys() | list | join(',') }}{% endif %}"
@@ -281,17 +282,17 @@
                             <span class="view-indicator middle" title="soma side middle only">only M</span>
                             {% endif %}
 
-                            {% if neuron.cell_superclass %}
-                            <span class="class-tag superclass-tag">{{ neuron.cell_superclass }}</span>
-                            {% endif %}
+                            {% for sc in neuron.cell_superclasses or [] %}
+                            <span class="class-tag superclass-tag">{{ sc }}</span>
+                            {% endfor %}
 
-                            {% if neuron.cell_class %}
-                            <span class="class-tag class-tag">{{ neuron.cell_class }}</span>
-                            {% endif %}
+                            {% for cc in neuron.cell_classes or [] %}
+                            <span class="class-tag class-tag">{{ cc }}</span>
+                            {% endfor %}
 
-                            {% if neuron.cell_subclass %}
-                            <span class="class-tag subclass-tag">{{ neuron.cell_subclass }}</span>
-                            {% endif %}
+                            {% for sub in neuron.cell_subclasses or [] %}
+                            <span class="class-tag subclass-tag">{{ sub }}</span>
+                            {% endfor %}
 
                             {% if neuron.consensus_nt %}
                             <span class="nt-tag">{{ neuron.consensus_nt }}</span>
@@ -303,13 +304,13 @@
                             <span class="dimorphism-tag">{{ neuron.dimorphism }}</span>
                             {% endif %}
 
-                            {% if neuron.soma_neuromere %}
-                            <span class="soma-neuromere-tag">{{ neuron.soma_neuromere }}</span>
-                            {% endif %}
+                            {% for sn in neuron.soma_neuromeres or [] %}
+                            <span class="soma-neuromere-tag">{{ sn }}</span>
+                            {% endfor %}
 
-                            {% if neuron.truman_hl %}
-                            <span class="truman-hl-tag">{{ neuron.truman_hl }}</span>
-                            {% endif %}
+                            {% for hl in neuron.truman_hemilineages or [] %}
+                            <span class="truman-hl-tag">{{ hl }}</span>
+                            {% endfor %}
 
 
                             {% if neuron.total_count and neuron.total_count > 0 %}
@@ -942,15 +943,23 @@
                 {# Check neurotransmitter filter #}
                 const matchesNt = selectedNt === "all" || cardWrapper.data("nt") === selectedNt;
 
+                {# class/subclass/superclass/soma-neuromere/truman-hl data attrs are
+                   pipe-separated lists; match if the selection appears anywhere. #}
+                const dataValuesIncludes = (attr, selection) => {
+                    const raw = cardWrapper.data(attr);
+                    if (!raw) return false;
+                    return String(raw).split("|").includes(selection);
+                };
+
                 {# Check superclass filter #}
                 const matchesSuperclass =
-                    selectedSuperclass === "all" || cardWrapper.data("superclass") === selectedSuperclass;
+                    selectedSuperclass === "all" || dataValuesIncludes("superclass", selectedSuperclass);
 
                 {# Check class filter #}
-                const matchesClass = selectedClass === "all" || cardWrapper.data("class") === selectedClass;
+                const matchesClass = selectedClass === "all" || dataValuesIncludes("class", selectedClass);
 
                 {# Check subclass filter #}
-                const matchesSubclass = selectedSubclass === "all" || cardWrapper.data("subclass") === selectedSubclass;
+                const matchesSubclass = selectedSubclass === "all" || dataValuesIncludes("subclass", selectedSubclass);
 
                 {# Check dimorphism filter #}
                 const matchesDimorphism =
@@ -958,11 +967,11 @@
 
                 {# Check soma neuromere filter #}
                 const matchesSomaNeuromere =
-                    selectedSomaNeuromere === "all" || cardWrapper.data("soma-neuromere") === selectedSomaNeuromere;
+                    selectedSomaNeuromere === "all" || dataValuesIncludes("soma-neuromere", selectedSomaNeuromere);
 
                 {# Check truman hl filter #}
                 const matchesTrumanHl =
-                    selectedTrumanHl === "all" || cardWrapper.data("truman-hl") === selectedTrumanHl;
+                    selectedTrumanHl === "all" || dataValuesIncludes("truman-hl", selectedTrumanHl);
 
                 {# Check cell count filter #}
                 const matchesCellCount = (() => {

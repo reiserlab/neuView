@@ -387,14 +387,14 @@ class IndexService:
                 "celltype_predicted_nt": None,
                 "celltype_predicted_nt_confidence": None,
                 "celltype_total_nt_predictions": None,
-                "cell_class": None,
-                "cell_subclass": None,
-                "cell_superclass": None,
+                "cell_classes": None,
+                "cell_subclasses": None,
+                "cell_superclasses": None,
                 "dimorphism": None,
                 "synonyms": None,
                 "flywire_types": None,
-                "soma_neuromere": None,
-                "truman_hl": None,
+                "soma_neuromeres": None,
+                "truman_hemilineages": None,
                 "processed_synonyms": {},
                 "processed_flywire_types": {},
             }
@@ -444,14 +444,14 @@ class IndexService:
                 entry["celltype_total_nt_predictions"] = (
                     cache_data.celltype_total_nt_predictions
                 )
-                entry["cell_class"] = cache_data.cell_class
-                entry["cell_subclass"] = cache_data.cell_subclass
-                entry["cell_superclass"] = cache_data.cell_superclass
+                entry["cell_classes"] = cache_data.cell_classes
+                entry["cell_subclasses"] = cache_data.cell_subclasses
+                entry["cell_superclasses"] = cache_data.cell_superclasses
                 entry["dimorphism"] = cache_data.dimorphism
                 entry["synonyms"] = cache_data.synonyms
                 entry["flywire_types"] = cache_data.flywire_types
-                entry["soma_neuromere"] = cache_data.soma_neuromere
-                entry["truman_hl"] = cache_data.truman_hl
+                entry["soma_neuromeres"] = cache_data.soma_neuromeres
+                entry["truman_hemilineages"] = cache_data.truman_hemilineages
 
                 # Process synonyms and flywire types for structured template rendering
                 if cache_data.synonyms:
