@@ -81,6 +81,11 @@ class ScatterplotService:
                     ctx = self._prepare(
                         self.scatter_config, points, region=region, side=side
                     )
+                    if ctx is None:
+                        logger.info(
+                            f"Skipping {region}_{side}: no points to plot"
+                        )
+                        continue
 
                     template_dir = get_templates_dir()
                     template_env = Environment(loader=FileSystemLoader(template_dir))
@@ -279,18 +284,18 @@ class ScatterplotService:
         region=None,
         side="both",
     ):
-        """Compute pixel positions for an SVG scatter plot (color by coverage)."""
+        """Compute pixel positions for an SVG scatter plot (color by coverage).
 
-        # Range depends on values of "points"
-        xmin = min(p["x"] for p in points)
-        xmax = max(p["x"] for p in points)
-        ymin = min(p["y"] for p in points)
-        ymax = max(p["y"] for p in points)
+        Returns None when ``points`` is empty so the caller can skip rendering
+        instead of crashing on ``min()`` over an empty sequence.
+        """
 
-        xmin = 1
-        ymin = 1
-        xmax = 1000
-        ymax = 1000
+        if not points:
+            return None
+
+        # Fixed range so ME/LO/LOP and L/R plots are directly comparable.
+        xmin, xmax = 1, 1000
+        ymin, ymax = 1, 1000
 
         # coverage color scaling with 98th percentile clipping
         coverages = [p["coverage"] for p in points]
