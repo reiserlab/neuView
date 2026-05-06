@@ -187,7 +187,7 @@ class ScatterplotService:
                                 side_dict[region] = {}
                             region_dict = side_dict[region]
                             if isinstance(region_dict, dict):
-                                if region_dict["cols_innervated"] > 0:
+                                if (region_dict.get("cols_innervated") or 0) > 0:
                                     region_dict["incl_scatter"] = 1
                                 else:
                                     region_dict["incl_scatter"] = None
