@@ -159,7 +159,7 @@
             <div class="pm-stacked pm-bg-light pm-padded">
               <p>
                 <span class="synonym-tag">Published Synonyms</span>
-                <strong>Published Synonyms:</strong> Alternative names or aliases from the literature. See the neuron’s
+                <strong>Published Synonyms:</strong> Alternative names or aliases from the literature. See the neuron's
                 page for details on sources.
               </p>
             </div>
@@ -172,7 +172,7 @@
 
             <h4>Side Filter</h4>
             <p>
-              Two lateral classifications are considered for the side assignment in the dataset. One considers the location of the soma relative to the midline (`somaSide`). If the soma is missing from the reconstruction, the dendritic arbors can be used to determine the side (`rootSide`). In both cases, the majority of neurons are either considered "left" or "right", with a smaller subset classified as "middle". If a
+              Two lateral classifications are considered for the side assignment in the dataset. One considers the location of the soma relative to the midline (<code>somaSide</code>). If the soma is missing from the reconstruction, the dendritic arbors can be used to determine the side (<code>rootSide</code>). In both cases, the majority of neurons are either considered "left" or "right", with a smaller subset classified as "middle". If a
               neuron is not assigned in the dataset, we classify it as "undefined".
             </p>
             <div class="pm-stacked pm-bg-light pm-padded">
@@ -359,8 +359,8 @@
               Combined upstream and downstream connections, with breakdowns and log ratios where applicable.
               Here, connections are the number of anatomical synapses between neurons. Technically, this number comes from the number of connected
               <em>synapse</em>s, which are combined to form <em>SynapseSet</em>s and assigned to <em>Neuron</em>s within the neuprint database.
-              It is possible that a single pre-synapse of a target cell can contain multiple anatomical synaptic contacts (downstream connections)
-              and so cells can have more downstream connections than pre-synapses.<br/>
+              A single pre-synaptic site (T-bar) can form multiple anatomical synaptic contacts with different post-synaptic partners. Each such 
+              contact counts as one downstream connection, so a neuron's number of downstream connections can exceed its number of pre-synaptic sites.<br/>
               For combined pages the breakdown shows the total number of connections assigned to each hemisphere and their ratio.
               Whereas for unilateral pages the breakdown shows the number of upstream and downstream connections across all neurons of the type assigned to that side.
             </p>
@@ -583,14 +583,14 @@
             <dd>The number of synaptic connections. Higher counts indicate denser connectivity. neuView uses the properties from the neurons in the database.</dd>
 
             <dt>Post-synaptic Sites</dt>
-            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners. In the neuPrint data model, this is the `Neuron.post` property.</dd>
+            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners. In the neuPrint data model, this is the <code>Neuron.post</code> property.</dd>
 
             <dt>Pre-synaptic Sites (T-bars)</dt>
-            <dd>Presynaptic release sites where a neuron outputs signals, also called t-bars. In the neuprint data model, this is the `Neuron.pre` property.</dd>
+            <dd>Presynaptic release sites where a neuron outputs signals, also called t-bars. In the neuprint data model, this is the <code>Neuron.pre</code> property.</dd>
 
             <dt id="terminology-connections">Connections</dt>
-            <dd>Input `upstream` connections are conceptually similar to post-synaptic sites while one presynaptic site can connect to multiple `downstream` postsynaptic partners.
-            We calculate the number of connections by identifying the connecting neurons and then use the `weight` property from the `ConnectsTo` edge between the neurons.</dd>
+            <dd>Input <code>upstream</code> connections are conceptually similar to post-synaptic sites while one presynaptic site can connect to multiple <code>downstream</code> postsynaptic partners.
+            We calculate the number of connections by identifying the connecting neurons and then use the <code>weight</code> property from the <code>ConnectsTo</code> edge between the neurons.</dd>
 
             <dt class="highlight">Connections vs. Synapses</dt>
             <dd class="highlight">The numeric difference between post-synaptic sites and input connections stems from the difference in how the numbers are retrieved (see <a href="#terminology-synapse-count">Synapse Count</a> and <a href="#terminology-connections">Connections</a> above). A single presynaptic site (t-bar) can form multiple connections to different postsynaptic partners. Therefore, the number of output connections can be greater than the number of presynaptic sites.</dd>
