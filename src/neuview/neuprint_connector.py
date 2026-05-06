@@ -782,9 +782,7 @@ class NeuPrintConnector:
             # cellSuperclass / somaNeuromere / trumanHl all carry distinct values
             # across cells of many celltypes, so we aggregate rather than pick
             # one row's value (which is non-deterministic under join ordering).
-            cell_classes = extract_unique_list(
-                neurons_df, ("cellClass_y", "cellClass")
-            )
+            cell_classes = extract_unique_list(neurons_df, ("cellClass_y", "cellClass"))
             cell_subclasses = extract_unique_list(
                 neurons_df, ("cellSubclass_y", "cellSubclass")
             )

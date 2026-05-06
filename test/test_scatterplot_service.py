@@ -2,17 +2,21 @@
 
 Covers two bugs from secret/00_refactor_issue_78.md:
 
-- Bug #1: ``_extract_plot_data`` raises ``KeyError`` / ``TypeError`` when
-  the cached ``spatial_metrics`` is missing, ``{}``, or contains ``None``
-  for ``cols_innervated`` (line 190 pre-fix). The cache build at
+- Bug #1: ``_extract_plot_data`` raised ``KeyError`` / ``TypeError`` when
+  the cached ``spatial_metrics`` was missing, ``{}``, or contained
+  ``None`` for ``cols_innervated``. The cache build at
   ``cache_service.py`` skips the spatial calc block whenever
   ``roi_counts_df`` is empty/missing or the connector is unavailable, so
-  these states are reachable in practice. After the fix (use
-  ``.get("cols_innervated", 0)``) every uninnervated cell is marked
-  ``incl_scatter=None`` and the function never raises.
+  these states are reachable in practice. The fix (issue #4 cleaner
+  variant) drops the back-write of ``incl_scatter`` onto the cache
+  entirely and computes it locally inside ``_extract_points`` using
+  ``(cols_innervated or 0) > 0`` with defensive ``None``-tolerant
+  navigation, so no path through ``_extract_plot_data`` /
+  ``_extract_points`` raises and uninnervated cells contribute no
+  points.
 
-- Bug #2: ``_prepare`` calls ``min()/max()`` on a generator over
-  ``points`` and crashes with ``ValueError`` whenever ``points`` is
+- Bug #2: ``_prepare`` called ``min()/max()`` on a generator over
+  ``points`` and crashed with ``ValueError`` whenever ``points`` was
   empty (line 304-307 pre-fix). A real-runtime trigger is a subset
   whose neurons don't innervate every ``(side, region)`` slot -- e.g.
   ``LAL048`` (only ``LO_R`` columns), where 7 of 9 plots end up with
@@ -110,10 +114,13 @@ def _make_service(cache_mgr=None, scatter_config=None):
     ],
 )
 def test_extract_plot_data_handles_missing_spatial_metrics(label, spatial_metrics):
-    """_extract_plot_data must not crash when spatial_metrics is absent or partial.
+    """The full extract pipeline must not crash on absent / partial spatial_metrics.
 
-    Pre-fix: raises KeyError (paths A) or TypeError (path B) from line 190.
-    Post-fix: every (side, region) cell is marked incl_scatter = None.
+    Pre-fix: ``_extract_plot_data`` raised KeyError (paths A) or
+    TypeError (path B). Post-fix: ``_extract_plot_data`` returns the raw
+    cached structure unmodified and ``_extract_points`` filters
+    uninnervated cells out, yielding zero points for every (side,
+    region).
     """
     cache_mgr = _StubCacheMgr({"TestType": _fake_cache_data(spatial_metrics)})
     svc = _make_service(cache_mgr=cache_mgr)
@@ -121,17 +128,16 @@ def test_extract_plot_data_handles_missing_spatial_metrics(label, spatial_metric
     plot_data = svc._extract_plot_data(["TestType"])
 
     assert len(plot_data) == 1
-    sm = plot_data[0]["spatial_metrics"]
     for side in ("L", "R", "both"):
         for region in ("ME", "LO", "LOP"):
-            assert sm[side][region].get("incl_scatter") is None, (
-                f"{label}: ({side}, {region}) should be incl_scatter=None, "
-                f"got {sm[side][region]}"
+            points = svc._extract_points(plot_data, side=side, region=region)
+            assert points == [], (
+                f"{label}: ({side}, {region}) should produce no points, got {points}"
             )
 
 
-def test_extract_plot_data_marks_innervated_cells():
-    """Cells with cols_innervated > 0 are marked incl_scatter = 1; others = None."""
+def test_extract_points_includes_innervated_cells():
+    """Cells with cols_innervated > 0 produce points; others are skipped."""
     sm = {
         side: {
             region: {
@@ -148,11 +154,10 @@ def test_extract_plot_data_marks_innervated_cells():
 
     plot_data = svc._extract_plot_data(["TypeC"])
 
-    out = plot_data[0]["spatial_metrics"]
-    assert out["L"]["ME"]["incl_scatter"] == 1
-    assert out["L"]["LO"]["incl_scatter"] is None
-    assert out["R"]["ME"]["incl_scatter"] is None
-    assert out["both"]["ME"]["incl_scatter"] is None
+    assert len(svc._extract_points(plot_data, side="L", region="ME")) == 1
+    assert svc._extract_points(plot_data, side="L", region="LO") == []
+    assert svc._extract_points(plot_data, side="R", region="ME") == []
+    assert svc._extract_points(plot_data, side="both", region="ME") == []
 
 
 # ---------------------------------------------------------------------------

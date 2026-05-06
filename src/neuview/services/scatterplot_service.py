@@ -77,9 +77,7 @@ class ScatterplotService:
                         self.scatter_config, points, region=region, side=side
                     )
                     if ctx is None:
-                        logger.info(
-                            f"Skipping {region}_{side}: no points to plot"
-                        )
+                        logger.info(f"Skipping {region}_{side}: no points to plot")
                         continue
 
                     template_dir = get_templates_dir()
@@ -175,23 +173,6 @@ class ScatterplotService:
                 ):
                     sm = cache_data.spatial_metrics
 
-                # ---- set incl_scatter ----
-                sides_to_update = ("both", "L", "R")
-                for region in ("ME", "LO", "LOP"):
-                    for side_key in sides_to_update:
-                        if isinstance(sm, dict):
-                            if side_key not in sm or sm[side_key] is None:
-                                sm[side_key] = {}
-                            side_dict = sm[side_key]
-                            if region not in side_dict or side_dict[region] is None:
-                                side_dict[region] = {}
-                            region_dict = side_dict[region]
-                            if isinstance(region_dict, dict):
-                                if (region_dict.get("cols_innervated") or 0) > 0:
-                                    region_dict["incl_scatter"] = 1
-                                else:
-                                    region_dict["incl_scatter"] = None
-
                 entry["spatial_metrics"] = sm
 
                 logger.debug(f"Used cached data for {neuron_name}")
@@ -224,16 +205,14 @@ class ScatterplotService:
         """
         pts = []
         for rec in plot_data:
-            incl = (
-                rec.get("spatial_metrics", {})
-                .get(side, {})
-                .get(region, {})
-                .get("incl_scatter")
-            )
+            # Read the (side, region) cell defensively — any level may be
+            # absent or None when the cache build skipped the spatial calc.
+            cell = ((rec.get("spatial_metrics") or {}).get(side) or {}).get(
+                region
+            ) or {}
+            incl_scatter = 1 if (cell.get("cols_innervated") or 0) > 0 else None
 
-            # Only include types that have "incl_scatter" == 1.
-            # Pass threshold for syn % and syn #.
-            if incl == 1:
+            if incl_scatter == 1:
                 name = rec.get("name", "unknown")
 
                 # Determine cell count based on side
@@ -247,24 +226,9 @@ class ScatterplotService:
                 else:
                     x = int(rec.get("total_count") / 2)
 
-                y = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cell_size")
-                )
-                c = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("coverage")
-                )
-                col_count = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cols_innervated")
-                )
+                y = cell.get("cell_size")
+                c = cell.get("coverage")
+                col_count = cell.get("cols_innervated")
 
                 # require x,y positive for log scales
                 if x is None or y is None or c is None:
