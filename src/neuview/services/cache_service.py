@@ -14,6 +14,8 @@ from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
+from ..utils import atomic_write
+
 from ..commands import GeneratePageCommand
 from ..models import (
     BodyId,
@@ -545,7 +547,7 @@ class CacheService:
                 "region_map": serializable_region_map,
             }
 
-            with open(cache_file, "w") as f:
+            with atomic_write(cache_file) as f:
                 json.dump(data, f)
 
             logger.info(f"Saved {len(all_columns)} columns to persistent cache")
