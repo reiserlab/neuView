@@ -300,16 +300,38 @@ class ScatterplotService:
     ):
         """Compute pixel positions for an SVG scatter plot (color by coverage)."""
 
-        # Range depends on values of "points"
-        xmin = min(p["x"] for p in points)
-        xmax = max(p["x"] for p in points)
-        ymin = min(p["y"] for p in points)
-        ymax = max(p["y"] for p in points)
+        # Fixed axis range — see ScatterConfig.axis_min / axis_max.
+        xmin = ymin = config.axis_min
+        xmax = ymax = config.axis_max
 
-        xmin = 1
-        ymin = 1
-        xmax = 1000
-        ymax = 1000
+        # Skip points outside the fixed range (would otherwise render past the
+        # inner plot box and look like a rendering bug). Warn once per plot.
+        in_range, out_of_range = [], []
+        for p in points:
+            if xmin <= p["x"] <= xmax and ymin <= p["y"] <= ymax:
+                in_range.append(p)
+            else:
+                out_of_range.append(p)
+
+        if out_of_range:
+            names = ", ".join(p["name"] for p in out_of_range[:10])
+            tail = (
+                f" (+{len(out_of_range) - 10} more)"
+                if len(out_of_range) > 10
+                else ""
+            )
+            logger.warning(
+                "%s/%s scatter: %d point(s) outside axis range [%g, %g] skipped: %s%s",
+                region,
+                side,
+                len(out_of_range),
+                xmin,
+                xmax,
+                names,
+                tail,
+            )
+
+        points = in_range
 
         # coverage color scaling with 98th percentile clipping
         coverages = [p["coverage"] for p in points]
