@@ -12,7 +12,6 @@ from pathlib import Path
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
-from ..config import Config
 from ..result import Err, Ok, Result
 from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
@@ -213,16 +212,19 @@ class ScatterplotService:
             if incl_scatter == 1:
                 name = rec.get("name", "unknown")
 
-                # Determine cell count based on side
-                if side == "both":
-                    # Halve cell count to estimate neuron count per eye
-                    x = int(rec.get("total_count") / 2)
-                elif side == "L":
+                # Determine cell count based on side. `side` is always
+                # one of {"both", "L", "R"} per the caller's loop in
+                # create_scatterplots.
+                if side == "L":
                     x = rec.get("left_count", 0)
                 elif side == "R":
                     x = rec.get("right_count", 0)
                 else:
-                    x = int(rec.get("total_count") / 2)
+                    # Mean of the two hemispheres for the "per eye"
+                    # estimate; uses left/right_count directly so we
+                    # don't assume L/R symmetry and don't crash when
+                    # total_count is missing.
+                    x = (rec.get("left_count", 0) + rec.get("right_count", 0)) / 2
 
                 y = cell.get("cell_size")
                 c = cell.get("coverage")
