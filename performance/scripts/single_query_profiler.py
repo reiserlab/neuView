@@ -12,13 +12,12 @@ Usage:
 """
 
 import time
-import argparse
 import sys
 import os
 import statistics
-from typing import Optional, Any, Dict, List
-from pathlib import Path
+from typing import Any, Dict
 
+import click
 import yaml
 from neuprint import Client
 from dotenv import load_dotenv
@@ -235,75 +234,91 @@ def validate_query(query: str) -> bool:
     return True
 
 
-def main():
-    """Main CLI function."""
-    parser = argparse.ArgumentParser(
-        description="Profile a single NeuPrint query",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+@click.command(
+    help="Profile a single NeuPrint query",
+    epilog="""\
+\b
 Examples:
   # Using config file
   python single_query_profiler.py --config config.yaml --query "MATCH (n:Neuron) RETURN count(n)"
 
+\b
   # Using query file
   python single_query_profiler.py --config config.yaml --query-file my_query.cypher --runs 5
 
+\b
   # Direct connection
   python single_query_profiler.py --server neuprint.janelia.org --dataset "hemibrain:v1.2.1" --query "MATCH (n:Neuron) WHERE n.type = 'T4' RETURN n.bodyId LIMIT 10"
-        """,
-    )
-
-    # Connection options
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--config", "-c", help="Path to config YAML file")
-    group.add_argument("--server", help="NeuPrint server URL")
-
-    parser.add_argument(
-        "--dataset", "-d", help="Dataset name (required if using --server)"
-    )
-    parser.add_argument("--token", "-t", help="NeuPrint authentication token")
-
-    # Query options
-    query_group = parser.add_mutually_exclusive_group(required=True)
-    query_group.add_argument("--query", "-q", help="Cypher query to execute")
-    query_group.add_argument("--query-file", "-f", help="File containing Cypher query")
-
-    # Profiling options
-    parser.add_argument(
-        "--runs",
-        "-r",
-        type=int,
-        default=1,
-        help="Number of times to run the query (default: 1)",
-    )
-    parser.add_argument("--description", help="Description of the query")
-    parser.add_argument(
-        "--no-validation", action="store_true", help="Skip query validation"
-    )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
-
-    args = parser.parse_args()
+""",
+)
+@click.option(
+    "--config",
+    "-c",
+    "config_path",
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to config YAML file (mutually exclusive with --server)",
+)
+@click.option(
+    "--server",
+    help="NeuPrint server URL (mutually exclusive with --config)",
+)
+@click.option("--dataset", "-d", help="Dataset name (required if using --server)")
+@click.option("--token", "-t", help="NeuPrint authentication token")
+@click.option(
+    "--query",
+    "-q",
+    help="Cypher query to execute (mutually exclusive with --query-file)",
+)
+@click.option(
+    "--query-file",
+    "-f",
+    type=click.Path(exists=True, dir_okay=False),
+    help="File containing Cypher query (mutually exclusive with --query)",
+)
+@click.option(
+    "--runs",
+    "-r",
+    type=click.IntRange(min=1),
+    default=1,
+    show_default=True,
+    help="Number of times to run the query",
+)
+@click.option("--description", help="Description of the query")
+@click.option("--no-validation", is_flag=True, help="Skip query validation")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+def main(
+    config_path: str,
+    server: str,
+    dataset: str,
+    token: str,
+    query: str,
+    query_file: str,
+    runs: int,
+    description: str,
+    no_validation: bool,
+    verbose: bool,
+):
+    """Main CLI function."""
+    # Enforce mutual exclusivity (click has no built-in mutex group).
+    if bool(config_path) == bool(server):
+        raise click.UsageError("Specify exactly one of --config or --server")
+    if bool(query) == bool(query_file):
+        raise click.UsageError("Specify exactly one of --query or --query-file")
 
     # Load environment variables
     load_dotenv()
 
     try:
         # Get connection parameters
-        if args.config:
-            if not os.path.exists(args.config):
-                print(f"Error: Config file '{args.config}' not found.")
-                sys.exit(1)
-            config = load_config(args.config)
+        if config_path:
+            config = load_config(config_path)
             server = config["server"]
             dataset = config["dataset"]
             token = config["token"]
         else:
-            if not args.dataset:
-                print("Error: --dataset is required when using --server")
-                sys.exit(1)
-            server = args.server
-            dataset = args.dataset
-            token = args.token or os.getenv("NEUPRINT_TOKEN")
+            if not dataset:
+                raise click.UsageError("--dataset is required when using --server")
+            token = token or os.getenv("NEUPRINT_TOKEN")
 
         # Validate connection parameters
         if not server or not dataset:
@@ -316,28 +331,20 @@ Examples:
             sys.exit(1)
 
         # Get query
-        if args.query_file:
-            query = load_query_file(args.query_file)
-            description = args.description or f"Query from {args.query_file}"
-        else:
-            query = args.query
-            description = args.description
+        if query_file:
+            query = load_query_file(query_file)
+            description = description or f"Query from {query_file}"
 
         # Validate query
-        if not args.no_validation:
+        if not no_validation:
             if not validate_query(query):
                 print("Query execution cancelled.")
                 sys.exit(1)
 
-        # Validate runs
-        if args.runs < 1:
-            print("Error: Number of runs must be at least 1")
-            sys.exit(1)
-
-        if args.runs > 20:
+        # Confirm large run counts
+        if runs > 20:
             print("Warning: Large number of runs may take a long time")
-            response = input(f"Run query {args.runs} times? (y/N): ")
-            if response.lower().strip() not in ["y", "yes"]:
+            if not click.confirm(f"Run query {runs} times?", default=False):
                 sys.exit(1)
 
         # Create profiler and run
@@ -347,22 +354,24 @@ Examples:
         print(f"Server: {server}")
         print(f"Dataset: {dataset}")
 
-        results = profiler.profile_query(query, args.runs, description)
+        results = profiler.profile_query(query, runs, description)
 
         print(f"\n{'=' * 60}")
         print("PROFILING COMPLETE")
         print(f"{'=' * 60}")
 
-        if args.verbose and results["times"]:
+        if verbose and results["times"]:
             print(f"Individual times: {[f'{t:.3f}s' for t in results['times']]}")
             print(f"Individual result counts: {results['result_counts']}")
 
     except KeyboardInterrupt:
         print("\n\nProfiler interrupted by user.")
         sys.exit(1)
+    except click.UsageError:
+        raise
     except Exception as e:
         print(f"Error: {e}")
-        if args.verbose:
+        if verbose:
             import traceback
 
             traceback.print_exc()
