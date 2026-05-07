@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
-from ..config import Config
+from ..commands import CreateScatterCommand
 from ..result import Err, Ok, Result
 from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
@@ -41,8 +41,11 @@ class ScatterplotService:
         ):
             self.output_dir = self.config.output.directory
 
-    async def create_scatterplots(self) -> Result[list[Path], str]:
+    async def create_scatterplots(
+        self, command: CreateScatterCommand
+    ) -> Result[list[Path], str]:
         """Create scatterplots of spatial metrics for optic lobe neuron types."""
+        logger.debug(f"create_scatterplots requested at {command.requested_at}")
 
         try:
             page_generator = (
