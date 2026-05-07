@@ -91,7 +91,7 @@ def _full_none_metrics():
 
 
 def _make_service(cache_mgr=None, scatter_config=None):
-    """Build a ScatterplotService without running its filesystem-touching __init__."""
+    """Build a ScatterplotService without running __init__ (avoids needing a real Config)."""
     svc = ScatterplotService.__new__(ScatterplotService)
     if cache_mgr is not None:
         svc.cache_manager = cache_mgr
