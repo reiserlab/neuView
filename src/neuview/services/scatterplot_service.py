@@ -338,6 +338,9 @@ class ScatterplotService:
 
         points = in_range
 
+        if not points:
+            return None
+
         # coverage color scaling with 98th percentile clipping
         coverages = [p["coverage"] for p in points]
         cmin = min(coverages)
