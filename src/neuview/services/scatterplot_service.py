@@ -277,9 +277,7 @@ class ScatterplotService:
         if out_of_range:
             names = ", ".join(p["name"] for p in out_of_range[:10])
             tail = (
-                f" (+{len(out_of_range) - 10} more)"
-                if len(out_of_range) > 10
-                else ""
+                f" (+{len(out_of_range) - 10} more)" if len(out_of_range) > 10 else ""
             )
             logger.warning(
                 "%s/%s scatter: %d point(s) outside axis range [%g, %g] skipped: %s%s",

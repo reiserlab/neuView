@@ -142,9 +142,6 @@ depends-on = [
     "create-scatter",
 ]
 
-[tool.pixi.tasks.create-all-pages]
-depends-on = ["clean-output", "fill-all", "pop-all", "create-list", "increment-version", "create-scatter"]
-
 [tool.pixi.feature.dev.dependencies]
 pytest = "*"
 pytest-cov = "*"
