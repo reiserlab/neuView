@@ -220,11 +220,14 @@ class ScatterplotService:
                 elif side == "R":
                     x = rec.get("right_count", 0)
                 else:
-                    # Mean of the two hemispheres for the "per eye"
-                    # estimate; uses left/right_count directly so we
-                    # don't assume L/R symmetry and don't crash when
-                    # total_count is missing.
-                    x = (rec.get("left_count", 0) + rec.get("right_count", 0)) / 2
+                    # "Per eye" estimate: average of the two hemispheres
+                    # plus midline cells counted whole (they have no
+                    # contralateral twin to halve against). Keeps
+                    # midline-only types visible instead of plotting them
+                    # at x=0 and silently dropping them on the log scale.
+                    x = (
+                        rec.get("left_count", 0) + rec.get("right_count", 0)
+                    ) / 2 + rec.get("middle_count", 0)
 
                 y = cell.get("cell_size")
                 c = cell.get("coverage")
