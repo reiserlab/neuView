@@ -115,9 +115,7 @@ class PartnerAnalysisService:
         )
         if soma_side is None or normalized in _NO_SIDE_MARKERS:
             return self._get_all_sides_body_ids(partner_name, dmap)
-        logger.debug(
-            f"Unrecognized soma side {soma_side!r}; returning all sides"
-        )
+        logger.debug(f"Unrecognized soma side {soma_side!r}; returning all sides")
         return self._get_all_sides_body_ids(partner_name, dmap)
 
     def _parse_partner_data(
