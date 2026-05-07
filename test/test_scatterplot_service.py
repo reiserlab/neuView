@@ -204,3 +204,47 @@ def test_prepare_handles_single_point():
     ]
 
     svc._prepare(svc.scatter_config, points, region="LO", side="R")
+
+
+# ---------------------------------------------------------------------------
+# Issue #9 follow-up: middle_count handling on the "both" plot
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "label, left, right, middle, expected_x",
+    [
+        # (L+R)/2 + M = 0 + 20 = 20. Pre-option-B this was 0 (skipped).
+        ("midline_only", 0, 0, 20, 20.0),
+        # (10+10)/2 + 5 = 15. Pre-option-B this was 10 (M ignored).
+        ("mixed_with_midline", 10, 10, 5, 15.0),
+        # (10+10)/2 + 0 = 10. Unchanged by option B.
+        ("no_midline", 10, 10, 0, 10.0),
+    ],
+)
+def test_extract_points_both_plot_includes_middle_count(
+    label, left, right, middle, expected_x
+):
+    """Midline cells contribute to the 'both' plot at full count.
+
+    Without this, midline-only types vanish at x=0 and silently drop off
+    the log scale — the option-B fix to issue #9.
+    """
+    sm = {
+        "both": {"ME": {"cols_innervated": 5, "coverage": 1.0, "cell_size": 2.0}},
+    }
+    cache_data = SimpleNamespace(
+        total_count=left + right + middle,
+        soma_side_counts={"left": left, "right": right, "middle": middle},
+        spatial_metrics=sm,
+    )
+    cache_mgr = _StubCacheMgr({label: cache_data})
+    svc = _make_service(cache_mgr=cache_mgr)
+
+    plot_data = svc._extract_plot_data([label])
+    points = svc._extract_points(plot_data, side="both", region="ME")
+
+    assert len(points) == 1, f"{label}: expected one point, got {points}"
+    assert points[0]["x"] == expected_x, (
+        f"{label}: expected x={expected_x}, got {points[0]['x']}"
+    )
