@@ -24,8 +24,9 @@ logger = logging.getLogger(__name__)
 class ScatterplotService:
     """Service for creating scatterplots with markers for all available neuron types."""
 
-    def __init__(self):
-        self.config = Config.load("config.yaml")
+    def __init__(self, config, cache_manager=None):
+        self.config = config
+        self.cache_manager = cache_manager
         self.scatter_config = ScatterConfig()
 
         if isinstance(self.scatter_config.scatter_dir, str):
@@ -33,17 +34,12 @@ class ScatterplotService:
             plot_dir = Path(self.plot_output_dir)
             plot_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize cache manager for neuron type data
-        self.cache_manager = None
         if (
             self.config
             and hasattr(self.config, "output")
             and hasattr(self.config.output, "directory")
         ):
             self.output_dir = self.config.output.directory
-            from ..cache import create_cache_manager
-
-            self.cache_manager = create_cache_manager(self.output_dir)
 
     async def create_scatterplots(self) -> Result[list[Path], str]:
         """Create scatterplots of spatial metrics for optic lobe neuron types."""
@@ -82,6 +78,9 @@ class ScatterplotService:
                     ctx = self._prepare(
                         self.scatter_config, points, region=region, side=side
                     )
+                    if ctx is None:
+                        logger.info(f"Skipping {region}_{side}: no points to plot")
+                        continue
 
                     template_dir = get_templates_dir()
                     template_env = Environment(loader=FileSystemLoader(template_dir))
@@ -172,23 +171,6 @@ class ScatterplotService:
                 ):
                     sm = cache_data.spatial_metrics
 
-                # ---- set incl_scatter ----
-                sides_to_update = ("both", "L", "R")
-                for region in ("ME", "LO", "LOP"):
-                    for side_key in sides_to_update:
-                        if isinstance(sm, dict):
-                            if side_key not in sm or sm[side_key] is None:
-                                sm[side_key] = {}
-                            side_dict = sm[side_key]
-                            if region not in side_dict or side_dict[region] is None:
-                                side_dict[region] = {}
-                            region_dict = side_dict[region]
-                            if isinstance(region_dict, dict):
-                                if region_dict["cols_innervated"] > 0:
-                                    region_dict["incl_scatter"] = 1
-                                else:
-                                    region_dict["incl_scatter"] = None
-
                 entry["spatial_metrics"] = sm
 
                 logger.debug(f"Used cached data for {neuron_name}")
@@ -221,16 +203,14 @@ class ScatterplotService:
         """
         pts = []
         for rec in plot_data:
-            incl = (
-                rec.get("spatial_metrics", {})
-                .get(side, {})
-                .get(region, {})
-                .get("incl_scatter")
-            )
+            # Read the (side, region) cell defensively — any level may be
+            # absent or None when the cache build skipped the spatial calc.
+            cell = ((rec.get("spatial_metrics") or {}).get(side) or {}).get(
+                region
+            ) or {}
+            incl_scatter = 1 if (cell.get("cols_innervated") or 0) > 0 else None
 
-            # Only include types that have "incl_scatter" == 1.
-            # Pass threshold for syn % and syn #.
-            if incl == 1:
+            if incl_scatter == 1:
                 name = rec.get("name", "unknown")
 
                 # Determine cell count based on side
@@ -244,24 +224,9 @@ class ScatterplotService:
                 else:
                     x = int(rec.get("total_count") / 2)
 
-                y = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cell_size")
-                )
-                c = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("coverage")
-                )
-                col_count = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cols_innervated")
-                )
+                y = cell.get("cell_size")
+                c = cell.get("coverage")
+                col_count = cell.get("cols_innervated")
 
                 # require x,y positive for log scales
                 if x is None or y is None or c is None:
@@ -295,18 +260,18 @@ class ScatterplotService:
         region=None,
         side="both",
     ):
-        """Compute pixel positions for an SVG scatter plot (color by coverage)."""
+        """Compute pixel positions for an SVG scatter plot (color by coverage).
 
-        # Range depends on values of "points"
-        xmin = min(p["x"] for p in points)
-        xmax = max(p["x"] for p in points)
-        ymin = min(p["y"] for p in points)
-        ymax = max(p["y"] for p in points)
+        Returns None when ``points`` is empty so the caller can skip rendering
+        instead of crashing on ``min()`` over an empty sequence.
+        """
 
-        xmin = 1
-        ymin = 1
-        xmax = 1000
-        ymax = 1000
+        if not points:
+            return None
+
+        # Fixed range so ME/LO/LOP and L/R plots are directly comparable.
+        xmin, xmax = 1, 1000
+        ymin, ymax = 1, 1000
 
         # coverage color scaling with 98th percentile clipping
         coverages = [p["coverage"] for p in points]

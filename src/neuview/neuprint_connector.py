@@ -20,6 +20,7 @@ from neuprint import Client, NeuronCriteria, fetch_neurons
 from .cache import NeuronTypeCacheManager
 from .config import Config, DiscoveryConfig
 from .dataset_adapters import get_dataset_adapter
+from .utils import extract_first_non_null, extract_unique_joined, extract_unique_list
 
 # Set up logger for performance monitoring
 logger = logging.getLogger(__name__)
@@ -743,128 +744,62 @@ class NeuPrintConnector:
         celltype_predicted_nt = None
         celltype_predicted_nt_confidence = None
         celltype_total_nt_predictions = None
-        cell_class = None
-        cell_subclass = None
-        cell_superclass = None
+        cell_classes = None
+        cell_subclasses = None
+        cell_superclasses = None
         dimorphism = None
         synonyms = None
         flywire_types = None
-        soma_neuromere = None
-        truman_hl = None
+        soma_neuromeres = None
+        truman_hemilineages = None
 
         if total_count > 0:
-            first_row = neurons_df.iloc[0]
+            # Celltype-invariant attributes: any non-null row carries the canonical
+            # value. extract_first_non_null skips a NaN row 0 when a left-join
+            # leaves the joined column empty for that row.
+            consensus_nt = extract_first_non_null(
+                neurons_df, ("consensusNt_y", "consensusNt")
+            )
+            celltype_predicted_nt = extract_first_non_null(
+                neurons_df, ("celltypePredictedNt_y", "celltypePredictedNt")
+            )
+            celltype_predicted_nt_confidence = extract_first_non_null(
+                neurons_df,
+                ("celltypePredictedNtConfidence_y", "celltypePredictedNtConfidence"),
+            )
+            celltype_total_nt_predictions = extract_first_non_null(
+                neurons_df,
+                ("celltypeTotalNtPredictions_y", "celltypeTotalNtPredictions"),
+            )
 
-            # Try _y suffixed columns first (from merged custom query), then fallback to original columns
-            consensus_nt = None
-            if "consensusNt_y" in neurons_df.columns:
-                consensus_nt = first_row.get("consensusNt_y")
-            elif "consensusNt" in neurons_df.columns:
-                consensus_nt = first_row.get("consensusNt")
+            dimorphism = extract_first_non_null(
+                neurons_df, ("dimorphism_y", "dimorphism")
+            )
+            synonyms = extract_first_non_null(neurons_df, ("synonyms_y", "synonyms"))
 
-            celltype_predicted_nt = None
-            if "celltypePredictedNt_y" in neurons_df.columns:
-                celltype_predicted_nt = first_row.get("celltypePredictedNt_y")
-            elif "celltypePredictedNt" in neurons_df.columns:
-                celltype_predicted_nt = first_row.get("celltypePredictedNt")
+            # Per-cell attributes that legitimately vary within a celltype.
+            # An empirical check of male-cns:v0.9 showed cellClass / cellSubclass /
+            # cellSuperclass / somaNeuromere / trumanHl all carry distinct values
+            # across cells of many celltypes, so we aggregate rather than pick
+            # one row's value (which is non-deterministic under join ordering).
+            cell_classes = extract_unique_list(neurons_df, ("cellClass_y", "cellClass"))
+            cell_subclasses = extract_unique_list(
+                neurons_df, ("cellSubclass_y", "cellSubclass")
+            )
+            cell_superclasses = extract_unique_list(
+                neurons_df, ("cellSuperclass_y", "cellSuperclass")
+            )
+            soma_neuromeres = extract_unique_list(
+                neurons_df, ("somaNeuromere_y", "somaNeuromere")
+            )
+            truman_hemilineages = extract_unique_list(
+                neurons_df, ("trumanHl_y", "trumanHl")
+            )
 
-            celltype_predicted_nt_confidence = None
-            if "celltypePredictedNtConfidence_y" in neurons_df.columns:
-                celltype_predicted_nt_confidence = first_row.get(
-                    "celltypePredictedNtConfidence_y"
-                )
-            elif "celltypePredictedNtConfidence" in neurons_df.columns:
-                celltype_predicted_nt_confidence = first_row.get(
-                    "celltypePredictedNtConfidence"
-                )
-
-            celltype_total_nt_predictions = None
-            if "celltypeTotalNtPredictions_y" in neurons_df.columns:
-                celltype_total_nt_predictions = first_row.get(
-                    "celltypeTotalNtPredictions_y"
-                )
-            elif "celltypeTotalNtPredictions" in neurons_df.columns:
-                celltype_total_nt_predictions = first_row.get(
-                    "celltypeTotalNtPredictions"
-                )
-
-            # Extract class/subclass/superclass data
-            cell_class = None
-            if "cellClass_y" in neurons_df.columns:
-                cell_class = first_row.get("cellClass_y")
-            elif "cellClass" in neurons_df.columns:
-                cell_class = first_row.get("cellClass")
-
-            cell_subclass = None
-            if "cellSubclass_y" in neurons_df.columns:
-                cell_subclass = first_row.get("cellSubclass_y")
-            elif "cellSubclass" in neurons_df.columns:
-                cell_subclass = first_row.get("cellSubclass")
-
-            cell_superclass = None
-            if "cellSuperclass_y" in neurons_df.columns:
-                cell_superclass = first_row.get("cellSuperclass_y")
-            elif "cellSuperclass" in neurons_df.columns:
-                cell_superclass = first_row.get("cellSuperclass")
-
-            # Extract dimorphism, synonyms, and flywire types data
-            dimorphism = None
-            if "dimorphism_y" in neurons_df.columns:
-                dimorphism = first_row.get("dimorphism_y")
-            elif "dimorphism" in neurons_df.columns:
-                dimorphism = first_row.get("dimorphism")
-
-            synonyms = None
-            if "synonyms_y" in neurons_df.columns:
-                synonyms = first_row.get("synonyms_y")
-            elif "synonyms" in neurons_df.columns:
-                synonyms = first_row.get("synonyms")
-
-            flywire_types = None
-            if "flywireType_y" in neurons_df.columns:
-                flywire_types = first_row.get("flywireType_y")
-            elif "flywireType" in neurons_df.columns:
-                flywire_types = first_row.get("flywireType")
-
-            soma_neuromere = None
-            if "somaNeuromere_y" in neurons_df.columns:
-                soma_neuromere = first_row.get("somaNeuromere_y")
-            elif "somaNeuromere" in neurons_df.columns:
-                soma_neuromere = first_row.get("somaNeuromere")
-
-            truman_hl = None
-            if "trumanHl_y" in neurons_df.columns:
-                truman_hl = first_row.get("trumanHl_y")
-            elif "trumanHl" in neurons_df.columns:
-                truman_hl = first_row.get("trumanHl")
-
-            # Clean up None values and NaN
-            import pandas as pd
-
-            if pd.isna(consensus_nt):
-                consensus_nt = None
-            if pd.isna(celltype_predicted_nt):
-                celltype_predicted_nt = None
-            if pd.isna(celltype_predicted_nt_confidence):
-                celltype_predicted_nt_confidence = None
-            if pd.isna(celltype_total_nt_predictions):
-                celltype_total_nt_predictions = None
-            if pd.isna(cell_class):
-                cell_class = None
-            if pd.isna(cell_subclass):
-                cell_subclass = None
-            if pd.isna(cell_superclass):
-                cell_superclass = None
-            if pd.isna(dimorphism):
-                dimorphism = None
-            if pd.isna(synonyms):
-                synonyms = None
-            if pd.isna(flywire_types):
-                flywire_types = None
-            if pd.isna(soma_neuromere):
-                soma_neuromere = None
-            if pd.isna(truman_hl):
-                truman_hl = None
+            # FlyWire IDs are per-cell and aggregated as a display string.
+            flywire_types = extract_unique_joined(
+                neurons_df, ("flywireType_y", "flywireType")
+            )
 
         # Calculate neurotransmitter analysis
         nt_analysis = None
@@ -909,15 +844,15 @@ class NeuPrintConnector:
             "celltype_predicted_nt": celltype_predicted_nt,
             "celltype_predicted_nt_confidence": celltype_predicted_nt_confidence,
             "celltype_total_nt_predictions": celltype_total_nt_predictions,
-            "cell_class": cell_class,
-            "cell_subclass": cell_subclass,
-            "cell_superclass": cell_superclass,
+            "cell_classes": cell_classes,
+            "cell_subclasses": cell_subclasses,
+            "cell_superclasses": cell_superclasses,
             "nt_analysis": nt_analysis,
             "dimorphism": dimorphism,
             "synonyms": synonyms,
-            "flywireType": flywire_types,
-            "somaNeuromere": soma_neuromere,
-            "trumanHl": truman_hl,
+            "flywire_types": flywire_types,
+            "soma_neuromeres": soma_neuromeres,
+            "truman_hemilineages": truman_hemilineages,
             "left_upstream_connections": left_upstream_connections,
             "left_downstream_connections": left_downstream_connections,
             "right_upstream_connections": right_upstream_connections,
