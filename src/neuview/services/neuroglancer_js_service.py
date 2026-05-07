@@ -11,6 +11,8 @@ import logging
 from pathlib import Path
 from typing import Dict, Any
 
+from ..utils import atomic_write
+
 logger = logging.getLogger(__name__)
 
 
@@ -105,9 +107,8 @@ class NeuroglancerJSService:
             js_dir = output_dir / "static" / "js"
             js_dir.mkdir(parents=True, exist_ok=True)
 
-            # Write the JavaScript file
             output_file = js_dir / "neuroglancer-url-generator.js"
-            with open(output_file, "w", encoding="utf-8") as f:
+            with atomic_write(output_file) as f:
                 f.write(js_content)
 
             logger.info(f"Generated neuroglancer JavaScript file: {output_file}")
