@@ -186,7 +186,7 @@ class ScatterplotService:
             logger.warning(
                 f"Plot data generation completed: {len(plot_data)} entries, "
                 f"{cached_count} with cache, {missing_cache_count} missing cache. "
-                f"Run 'quickpage generate' to populate cache."
+                f"Run 'neuview generate' to populate cache."
             )
         else:
             logger.info(
