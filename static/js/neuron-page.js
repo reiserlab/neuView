@@ -592,7 +592,6 @@ function initializeAllTooltips() {
 function highlightInSvgDocument(doc, neuronType) {
   const needleName = String(neuronType || "").trim().toLowerCase();
   if (!needleName) return 0;
-  console.log(`Needle: ${needleName}.`);
 
   let candidates = Array.from(doc.querySelectorAll('g.marker'));
   if (candidates.length === 0) {
@@ -613,7 +612,6 @@ function highlightInSvgDocument(doc, neuronType) {
 
     const haystack  = (circle.getAttribute('data-type') || '').toLowerCase();
     if (!haystack) continue;
-    console.log(`haystack: ${haystack}.`);
 
     // Require an exact, case-insensitive name match
     if (haystack !== needleName) continue;
@@ -693,8 +691,6 @@ function highlightNeuronAllPlots(neuronType) {
   const needle = String(neuronType || '').trim();
   if (!needle) return;
 
-  let total = 0;
-
   const objects = Array.from(document.querySelectorAll('object[type="image/svg+xml"]'));
   for (const obj of objects) {
     const run = () => {
@@ -702,7 +698,6 @@ function highlightNeuronAllPlots(neuronType) {
         const doc = obj.contentDocument;
         if (doc) {
           const added = highlightInSvgDocument(doc, needle);
-          total += added;
           if (added === 0) {
             // helpful debug
             console.warn('No match in <object> SVG:', obj.data);
@@ -719,9 +714,6 @@ function highlightNeuronAllPlots(neuronType) {
     }
   }
   
-  setTimeout(() => {
-    console.log(`Highlighted ${total} plot(s) for neuron "${needle}".`);
-  }, 0);
 }
 
 

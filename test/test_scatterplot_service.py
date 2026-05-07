@@ -204,3 +204,48 @@ def test_prepare_handles_single_point():
     ]
 
     svc._prepare(svc.scatter_config, points, region="LO", side="R")
+
+
+# ---------------------------------------------------------------------------
+# Pure-math helpers: _scale_log10 and _cov_to_rgb
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "v, expected_px",
+    [
+        # vmin maps to a, vmax maps to b — the boundary contract.
+        (1, 0.0),
+        (1000, 90.0),
+        # Log-uniform spacing: log10 covers [0, 3]; pixel covers [0, 90].
+        (10, 30.0),
+        (100, 60.0),
+    ],
+)
+def test_scale_log10_endpoints_and_log_spacing(v, expected_px):
+    svc = ScatterplotService.__new__(ScatterplotService)
+    assert svc._scale_log10(v, 1, 1000, 0, 90) == pytest.approx(expected_px)
+
+
+def test_scale_log10_degenerate_range():
+    """vmin == vmax collapses to the midpoint of the pixel range."""
+    svc = ScatterplotService.__new__(ScatterplotService)
+    assert svc._scale_log10(5, 5, 5, 0, 100) == pytest.approx(50.0)
+
+
+@pytest.mark.parametrize(
+    "t, expected",
+    [
+        # White → dark red gradient: t=0 is pure white, t=1 is the
+        # endpoint dark red the function defines (rgb(180,0,0)).
+        (0.0, "rgb(255,255,255)"),
+        (1.0, "rgb(180,0,0)"),
+        # Midpoint: linear interpolation of each channel, then int(round).
+        # _lerp(255, 180, 0.5) = 217.5 → 218 (banker's rounding).
+        # _lerp(255,   0, 0.5) = 127.5 → 128.
+        (0.5, "rgb(218,128,128)"),
+    ],
+)
+def test_cov_to_rgb_endpoints_and_midpoint(t, expected):
+    svc = ScatterplotService.__new__(ScatterplotService)
+    assert svc._cov_to_rgb(t) == expected
