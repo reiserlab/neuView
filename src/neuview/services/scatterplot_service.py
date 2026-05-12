@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
+from ..commands import CreateScatterCommand
 from ..result import Err, Ok, Result
 from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
@@ -27,11 +28,7 @@ class ScatterplotService:
         self.config = config
         self.cache_manager = cache_manager
         self.scatter_config = ScatterConfig()
-
-        if isinstance(self.scatter_config.scatter_dir, str):
-            self.plot_output_dir = self.scatter_config.scatter_dir
-            plot_dir = Path(self.plot_output_dir)
-            plot_dir.mkdir(parents=True, exist_ok=True)
+        self.plot_output_dir = Path(self.scatter_config.scatter_dir)
 
         if (
             self.config
@@ -40,8 +37,11 @@ class ScatterplotService:
         ):
             self.output_dir = self.config.output.directory
 
-    async def create_scatterplots(self) -> Result[list[Path], str]:
+    async def create_scatterplots(
+        self, command: CreateScatterCommand
+    ) -> Result[list[Path], str]:
         """Create scatterplots of spatial metrics for optic lobe neuron types."""
+        logger.debug(f"create_scatterplots requested at {command.requested_at}")
 
         try:
             discovery = NeuronTypeDiscovery(self.config, self.cache_manager)
@@ -63,8 +63,16 @@ class ScatterplotService:
             # Generate scatterplot data for corrected neuron types
             plot_data = self._extract_plot_data(corrected_neuron_types)
 
+            # Reserve the output directory only once we know we have
+            # something to write — avoids leaving empty dirs on early
+            # exits and keeps __init__ free of filesystem side effects.
+            self.plot_output_dir.mkdir(parents=True, exist_ok=True)
+
             written: list[Path] = []
             # Generate plots for each side (both, L, R) and each region
+            template_env = Environment(loader=FileSystemLoader(get_templates_dir()))
+            template = template_env.get_template(self.scatter_config.template_name)
+
             for side in ["both", "L", "R"]:
                 for region in ["ME", "LO", "LOP"]:
                     points = self._extract_points(plot_data, side=side, region=region)
@@ -77,11 +85,6 @@ class ScatterplotService:
                         logger.info(f"Skipping {region}_{side}: no points to plot")
                         continue
 
-                    template_dir = get_templates_dir()
-                    template_env = Environment(loader=FileSystemLoader(template_dir))
-                    template = template_env.get_template(
-                        self.scatter_config.template_name
-                    )
                     svg_content = template.render(**ctx)
 
                     if side == "both":
@@ -182,7 +185,7 @@ class ScatterplotService:
             logger.warning(
                 f"Plot data generation completed: {len(plot_data)} entries, "
                 f"{cached_count} with cache, {missing_cache_count} missing cache. "
-                f"Run 'quickpage generate' to populate cache."
+                f"Run 'neuview generate' to populate cache."
             )
         else:
             logger.info(
@@ -208,16 +211,22 @@ class ScatterplotService:
             if incl_scatter == 1:
                 name = rec.get("name", "unknown")
 
-                # Determine cell count based on side
-                if side == "both":
-                    # Halve cell count to estimate neuron count per eye
-                    x = int(rec.get("total_count") / 2)
-                elif side == "L":
+                # Determine cell count based on side. `side` is always
+                # one of {"both", "L", "R"} per the caller's loop in
+                # create_scatterplots.
+                if side == "L":
                     x = rec.get("left_count", 0)
                 elif side == "R":
                     x = rec.get("right_count", 0)
                 else:
-                    x = int(rec.get("total_count") / 2)
+                    # "Per eye" estimate: average of the two hemispheres
+                    # plus midline cells counted whole (they have no
+                    # contralateral twin to halve against). Keeps
+                    # midline-only types visible instead of plotting them
+                    # at x=0 and silently dropping them on the log scale.
+                    x = (
+                        rec.get("left_count", 0) + rec.get("right_count", 0)
+                    ) / 2 + rec.get("middle_count", 0)
 
                 y = cell.get("cell_size")
                 c = cell.get("coverage")
@@ -255,18 +264,41 @@ class ScatterplotService:
         region=None,
         side="both",
     ):
-        """Compute pixel positions for an SVG scatter plot (color by coverage).
+        """Compute pixel positions for an SVG scatter plot (color by coverage)."""
 
-        Returns None when ``points`` is empty so the caller can skip rendering
-        instead of crashing on ``min()`` over an empty sequence.
-        """
+        # Fixed axis range — see ScatterConfig.axis_min / axis_max.
+        xmin = ymin = config.axis_min
+        xmax = ymax = config.axis_max
+
+        # Skip points outside the fixed range (would otherwise render past the
+        # inner plot box and look like a rendering bug). Warn once per plot.
+        in_range, out_of_range = [], []
+        for p in points:
+            if xmin <= p["x"] <= xmax and ymin <= p["y"] <= ymax:
+                in_range.append(p)
+            else:
+                out_of_range.append(p)
+
+        if out_of_range:
+            names = ", ".join(p["name"] for p in out_of_range[:10])
+            tail = (
+                f" (+{len(out_of_range) - 10} more)" if len(out_of_range) > 10 else ""
+            )
+            logger.warning(
+                "%s/%s scatter: %d point(s) outside axis range [%g, %g] skipped: %s%s",
+                region,
+                side,
+                len(out_of_range),
+                xmin,
+                xmax,
+                names,
+                tail,
+            )
+
+        points = in_range
 
         if not points:
             return None
-
-        # Fixed range so ME/LO/LOP and L/R plots are directly comparable.
-        xmin, xmax = 1, 1000
-        ymin, ymax = 1, 1000
 
         # coverage color scaling with 98th percentile clipping
         coverages = [p["coverage"] for p in points]
