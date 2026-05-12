@@ -25,6 +25,7 @@ dependencies = [
     "semver>=3.0.4,<4",
     "numpy>=1.26",
     "pillow>=10.0",
+    "filelock>=3.15,<4",
 ]
 
 [project.scripts]
@@ -57,6 +58,7 @@ ruff = ">=0.12.11,<0.13"
 pyprojroot = ">=0.3.0,<0.4"
 psutil = ">=7.1.0,<8"
 semver = ">=3.0.4,<4"
+filelock = ">=3.15,<4"
 
 [tool.pixi.pypi-dependencies]
 neuview = { path = ".", editable = true }
@@ -133,6 +135,7 @@ depends-on = ["subset-medium-optic-no-index", "create-list"]
 # Live-runtime trigger for issue #2 in secret/00_refactor_issue_78.md.
 # LAL048 only innervates LO_R columns, so 8 of the 9 (side, region) plots
 # get zero points and `_prepare` crashes on `min()` over an empty sequence.
+
 [tool.pixi.tasks.issue-78-part-2-2]
 depends-on = [
     "clean-output",
