@@ -135,6 +135,7 @@ depends-on = ["subset-medium-optic-no-index", "create-list"]
 # Live-runtime trigger for issue #2 in secret/00_refactor_issue_78.md.
 # LAL048 only innervates LO_R columns, so 8 of the 9 (side, region) plots
 # get zero points and `_prepare` crashes on `min()` over an empty sequence.
+
 [tool.pixi.tasks.issue-78-part-2-2]
 depends-on = [
     "clean-output",
