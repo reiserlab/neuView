@@ -69,6 +69,9 @@ class ScatterplotService:
 
             written: list[Path] = []
             # Generate plots for each side (both, L, R) and each region
+            template_env = Environment(loader=FileSystemLoader(get_templates_dir()))
+            template = template_env.get_template(self.scatter_config.template_name)
+
             for side in ["both", "L", "R"]:
                 for region in ["ME", "LO", "LOP"]:
                     points = self._extract_points(plot_data, side=side, region=region)
@@ -81,11 +84,6 @@ class ScatterplotService:
                         logger.info(f"Skipping {region}_{side}: no points to plot")
                         continue
 
-                    template_dir = get_templates_dir()
-                    template_env = Environment(loader=FileSystemLoader(template_dir))
-                    template = template_env.get_template(
-                        self.scatter_config.template_name
-                    )
                     svg_content = template.render(**ctx)
 
                     if side == "both":
