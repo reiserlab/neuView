@@ -12,8 +12,7 @@ from pathlib import Path
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
-from ..config import Config
-from ..result import Err
+from ..result import Err, Ok, Result
 from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
 from .index_service import IndexService
@@ -24,8 +23,9 @@ logger = logging.getLogger(__name__)
 class ScatterplotService:
     """Service for creating scatterplots with markers for all available neuron types."""
 
-    def __init__(self):
-        self.config = Config.load("config.yaml")
+    def __init__(self, config, cache_manager=None):
+        self.config = config
+        self.cache_manager = cache_manager
         self.scatter_config = ScatterConfig()
 
         if isinstance(self.scatter_config.scatter_dir, str):
@@ -33,19 +33,14 @@ class ScatterplotService:
             plot_dir = Path(self.plot_output_dir)
             plot_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize cache manager for neuron type data
-        self.cache_manager = None
         if (
             self.config
             and hasattr(self.config, "output")
             and hasattr(self.config.output, "directory")
         ):
             self.output_dir = self.config.output.directory
-            from ..cache import create_cache_manager
 
-            self.cache_manager = create_cache_manager(self.output_dir)
-
-    async def create_scatterplots(self):
+    async def create_scatterplots(self) -> Result[list[Path], str]:
         """Create scatterplots of spatial metrics for optic lobe neuron types."""
 
         try:
@@ -72,6 +67,7 @@ class ScatterplotService:
             # Generate scatterplot data for corrected neuron types
             plot_data = self._extract_plot_data(corrected_neuron_types)
 
+            written: list[Path] = []
             # Generate plots for each side (both, L, R) and each region
             template_env = Environment(loader=FileSystemLoader(get_templates_dir()))
             template = template_env.get_template(self.scatter_config.template_name)
@@ -84,26 +80,25 @@ class ScatterplotService:
                     ctx = self._prepare(
                         self.scatter_config, points, region=region, side=side
                     )
+                    if ctx is None:
+                        logger.info(f"Skipping {region}_{side}: no points to plot")
+                        continue
 
                     svg_content = template.render(**ctx)
 
-                    # Determine filename suffix based on side
                     if side == "both":
-                        # Combined plots: ME.svg, LO.svg, LOP.svg
-                        svg_path = f"{self.plot_output_dir}/{region}.svg"
+                        svg_path = Path(self.plot_output_dir) / f"{region}.svg"
                     else:
-                        # Hemisphere-specific plots: ME_L.svg, ME_R.svg, etc.
-                        svg_path = f"{self.plot_output_dir}/{region}_{side}.svg"
+                        svg_path = Path(self.plot_output_dir) / f"{region}_{side}.svg"
 
-                    # Write the SVG file
-                    with open(svg_path, "w", encoding="utf-8") as f:
-                        f.write(svg_content)
+                    svg_path.write_text(svg_content, encoding="utf-8")
+                    written.append(svg_path)
 
-            return
+            return Ok(written)
 
         except Exception as e:
             logger.error(f"Failed to create scatterplots: {e}")
-            return Err(f"Failed to create scatterplots: {str(e)}")
+            return Err(f"Failed to create scatterplots: {e}")
 
     def _extract_plot_data(self, neuron_types):
         """Generate plot data from list of neuron types."""
@@ -173,23 +168,6 @@ class ScatterplotService:
                 ):
                     sm = cache_data.spatial_metrics
 
-                # ---- set incl_scatter ----
-                sides_to_update = ("both", "L", "R")
-                for region in ("ME", "LO", "LOP"):
-                    for side_key in sides_to_update:
-                        if isinstance(sm, dict):
-                            if side_key not in sm or sm[side_key] is None:
-                                sm[side_key] = {}
-                            side_dict = sm[side_key]
-                            if region not in side_dict or side_dict[region] is None:
-                                side_dict[region] = {}
-                            region_dict = side_dict[region]
-                            if isinstance(region_dict, dict):
-                                if region_dict["cols_innervated"] > 0:
-                                    region_dict["incl_scatter"] = 1
-                                else:
-                                    region_dict["incl_scatter"] = None
-
                 entry["spatial_metrics"] = sm
 
                 logger.debug(f"Used cached data for {neuron_name}")
@@ -222,16 +200,14 @@ class ScatterplotService:
         """
         pts = []
         for rec in plot_data:
-            incl = (
-                rec.get("spatial_metrics", {})
-                .get(side, {})
-                .get(region, {})
-                .get("incl_scatter")
-            )
+            # Read the (side, region) cell defensively — any level may be
+            # absent or None when the cache build skipped the spatial calc.
+            cell = ((rec.get("spatial_metrics") or {}).get(side) or {}).get(
+                region
+            ) or {}
+            incl_scatter = 1 if (cell.get("cols_innervated") or 0) > 0 else None
 
-            # Only include types that have "incl_scatter" == 1.
-            # Pass threshold for syn % and syn #.
-            if incl == 1:
+            if incl_scatter == 1:
                 name = rec.get("name", "unknown")
 
                 # Determine cell count based on side
@@ -245,24 +221,9 @@ class ScatterplotService:
                 else:
                     x = int(rec.get("total_count") / 2)
 
-                y = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cell_size")
-                )
-                c = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("coverage")
-                )
-                col_count = (
-                    rec.get("spatial_metrics", {})
-                    .get(side, {})
-                    .get(region, {})
-                    .get("cols_innervated")
-                )
+                y = cell.get("cell_size")
+                c = cell.get("coverage")
+                col_count = cell.get("cols_innervated")
 
                 # require x,y positive for log scales
                 if x is None or y is None or c is None:
@@ -298,16 +259,39 @@ class ScatterplotService:
     ):
         """Compute pixel positions for an SVG scatter plot (color by coverage)."""
 
-        # Range depends on values of "points"
-        xmin = min(p["x"] for p in points)
-        xmax = max(p["x"] for p in points)
-        ymin = min(p["y"] for p in points)
-        ymax = max(p["y"] for p in points)
+        # Fixed axis range — see ScatterConfig.axis_min / axis_max.
+        xmin = ymin = config.axis_min
+        xmax = ymax = config.axis_max
 
-        xmin = 1
-        ymin = 1
-        xmax = 1000
-        ymax = 1000
+        # Skip points outside the fixed range (would otherwise render past the
+        # inner plot box and look like a rendering bug). Warn once per plot.
+        in_range, out_of_range = [], []
+        for p in points:
+            if xmin <= p["x"] <= xmax and ymin <= p["y"] <= ymax:
+                in_range.append(p)
+            else:
+                out_of_range.append(p)
+
+        if out_of_range:
+            names = ", ".join(p["name"] for p in out_of_range[:10])
+            tail = (
+                f" (+{len(out_of_range) - 10} more)" if len(out_of_range) > 10 else ""
+            )
+            logger.warning(
+                "%s/%s scatter: %d point(s) outside axis range [%g, %g] skipped: %s%s",
+                region,
+                side,
+                len(out_of_range),
+                xmin,
+                xmax,
+                names,
+                tail,
+            )
+
+        points = in_range
+
+        if not points:
+            return None
 
         # coverage color scaling with 98th percentile clipping
         coverages = [p["coverage"] for p in points]

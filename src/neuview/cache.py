@@ -13,6 +13,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .utils import atomic_write
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,9 +36,9 @@ class NeuronTypeCacheData:
     celltype_predicted_nt: Optional[str] = None
     celltype_predicted_nt_confidence: Optional[float] = None
     celltype_total_nt_predictions: Optional[int] = None
-    cell_class: Optional[str] = None
-    cell_subclass: Optional[str] = None
-    cell_superclass: Optional[str] = None
+    cell_classes: Optional[List[str]] = None
+    cell_subclasses: Optional[List[str]] = None
+    cell_superclasses: Optional[List[str]] = None
     dimorphism: Optional[str] = None
     nt_analysis: Optional[List[Dict[str, Any]]] = None
     # Column data for optic lobe neurons
@@ -46,8 +48,8 @@ class NeuronTypeCacheData:
     original_neuron_name: Optional[str] = None
     synonyms: Optional[str] = None
     flywire_types: Optional[str] = None
-    soma_neuromere: Optional[str] = None
-    truman_hl: Optional[str] = None
+    soma_neuromeres: Optional[List[str]] = None
+    truman_hemilineages: Optional[List[str]] = None
     spatial_metrics: Optional[Dict[str, Dict[str, Dict[str, float]]]] = None
     # Side-specific synapse counts
     side_synapse_stats: Optional[Dict[str, Dict[str, int]]] = None
@@ -233,7 +235,7 @@ class NeuronTypeCacheManager:
                 "cache_version": "1.0",
             }
 
-            with open(self._roi_hierarchy_cache_path, "w", encoding="utf-8") as f:
+            with atomic_write(self._roi_hierarchy_cache_path) as f:
                 json.dump(cache_data, f, indent=2, ensure_ascii=False)
 
             logger.debug(
