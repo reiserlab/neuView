@@ -569,3 +569,127 @@ class TestNormalCaseRegression:
         )
         assert ctx is not None
         assert len(ctx["points"]) == 1
+
+
+# ===========================================================================
+# Cell-count formula in _extract_points for side in {L, R, both}
+# ===========================================================================
+# `side="both"` used to compute `int(total_count / 2)`, which crashed when
+# `total_count` was missing and dropped midline-only types to x=0 (silently
+# filtered by the x>0 log-scale guard). The current formula is
+#   L     -> left_count
+#   R     -> right_count
+#   both  -> (left_count + right_count) / 2 + middle_count
+# i.e. average of the two hemispheres plus midline cells counted whole, with
+# all three count fields defaulting to 0 when absent.
+
+
+def _rec_with_innervated_cell(name="T", **counts):
+    """Build a plot_data record where (L|R|both, ME) is innervated.
+
+    ``counts`` is a subset of {left_count, right_count, middle_count,
+    total_count}. Keys not provided are absent from the record so we can
+    exercise the .get(..., 0) defaults.
+    """
+    rec = {
+        "name": name,
+        "spatial_metrics": {
+            side: {
+                "ME": {
+                    "cols_innervated": 5,
+                    "cell_size": 3.0,
+                    "coverage": 1.5,
+                }
+            }
+            for side in ("L", "R", "both")
+        },
+    }
+    rec.update(counts)
+    return rec
+
+
+@pytest.mark.parametrize(
+    "label, side, counts, expected_x",
+    [
+        # side="both": new (left+right)/2 + middle formula
+        (
+            "midline_only_stays_visible",
+            "both",
+            {"left_count": 0, "right_count": 0, "middle_count": 7},
+            7.0,
+        ),
+        (
+            "mixed_left_right_and_midline",
+            "both",
+            {"left_count": 10, "right_count": 14, "middle_count": 3},
+            15.0,  # (10+14)/2 + 3
+        ),
+        (
+            "no_midline_simple_mean",
+            "both",
+            {"left_count": 10, "right_count": 14, "middle_count": 0},
+            12.0,  # (10+14)/2
+        ),
+        (
+            "asymmetric_no_LR_assumption",
+            "both",
+            {"left_count": 6, "right_count": 18, "middle_count": 0},
+            12.0,  # (6+18)/2 -- does not assume L/R symmetry
+        ),
+        # side="L" / "R" pick their own count directly and ignore the others
+        (
+            "L_uses_left_count_only",
+            "L",
+            {"left_count": 20, "right_count": 999, "middle_count": 999},
+            20.0,
+        ),
+        (
+            "R_uses_right_count_only",
+            "R",
+            {"left_count": 999, "right_count": 15, "middle_count": 999},
+            15.0,
+        ),
+    ],
+)
+def test_extract_points_cell_count_formula(label, side, counts, expected_x):
+    """_extract_points uses the side-specific cell-count formula."""
+    svc = _make_service()
+    points = svc._extract_points(
+        [_rec_with_innervated_cell(**counts)], side=side, region="ME"
+    )
+    assert len(points) == 1, f"{label}: expected exactly one point"
+    assert points[0]["x"] == pytest.approx(expected_x), label
+
+
+def test_extract_points_both_does_not_require_total_count():
+    """Regression: the old ``int(total_count / 2)`` formula crashed with
+    TypeError when ``total_count`` was missing. The new formula reads
+    left/right/middle directly, so a record without ``total_count`` works."""
+    svc = _make_service()
+    rec = _rec_with_innervated_cell(left_count=4, right_count=6, middle_count=0)
+    assert "total_count" not in rec
+
+    points = svc._extract_points([rec], side="both", region="ME")
+    assert len(points) == 1
+    assert points[0]["x"] == pytest.approx(5.0)
+
+
+def test_extract_points_both_with_all_counts_absent_filters_out():
+    """When no count fields are present, every .get(..., 0) returns 0, so
+    x=0 and the x>0 log-scale guard correctly drops the point. This locks
+    in the contract that absent counts are a soft skip, not a crash."""
+    svc = _make_service()
+    rec = {
+        "name": "Empty",
+        "spatial_metrics": {
+            "both": {
+                "ME": {
+                    "cols_innervated": 5,
+                    "cell_size": 3.0,
+                    "coverage": 1.5,
+                }
+            }
+        },
+    }
+
+    assert svc._extract_points([rec], side="both", region="ME") == []

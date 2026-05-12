@@ -188,7 +188,7 @@ class ScatterplotService:
             logger.warning(
                 f"Plot data generation completed: {len(plot_data)} entries, "
                 f"{cached_count} with cache, {missing_cache_count} missing cache. "
-                f"Run 'quickpage generate' to populate cache."
+                f"Run 'neuview generate' to populate cache."
             )
         else:
             logger.info(
@@ -214,16 +214,22 @@ class ScatterplotService:
             if incl_scatter == 1:
                 name = rec.get("name", "unknown")
 
-                # Determine cell count based on side
-                if side == "both":
-                    # Halve cell count to estimate neuron count per eye
-                    x = int(rec.get("total_count") / 2)
-                elif side == "L":
+                # Determine cell count based on side. `side` is always
+                # one of {"both", "L", "R"} per the caller's loop in
+                # create_scatterplots.
+                if side == "L":
                     x = rec.get("left_count", 0)
                 elif side == "R":
                     x = rec.get("right_count", 0)
                 else:
-                    x = int(rec.get("total_count") / 2)
+                    # "Per eye" estimate: average of the two hemispheres
+                    # plus midline cells counted whole (they have no
+                    # contralateral twin to halve against). Keeps
+                    # midline-only types visible instead of plotting them
+                    # at x=0 and silently dropping them on the log scale.
+                    x = (
+                        rec.get("left_count", 0) + rec.get("right_count", 0)
+                    ) / 2 + rec.get("middle_count", 0)
 
                 y = cell.get("cell_size")
                 c = cell.get("coverage")
