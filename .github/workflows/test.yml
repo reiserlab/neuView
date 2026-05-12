@@ -4,6 +4,7 @@ name: Unit Tests
 
 env:
   PIXI_VERSION: &pixi_version v0.67.2
+  SETUP_PIXI_VERSION: &setup_version prefix-dev/setup-pixi@v0.9.5
 
 on:
   push:
@@ -22,7 +23,7 @@ jobs:
 
       # Set up pixi for dependency management
       - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.9.3
+        uses: *setup_version
         with:
           pixi-version: *pixi_version
           cache: true
@@ -49,7 +50,7 @@ jobs:
 
       # Set up pixi for dependency management
       - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.9.3
+        uses: *setup_version
         with:
           pixi-version: *pixi_version
           cache: true

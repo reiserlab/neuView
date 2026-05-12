@@ -24,6 +24,7 @@ from .commands import (
     FillQueueCommand,
     PopCommand,
     CreateListCommand,
+    CreateScatterCommand,
     DatasetInfo,
 )
 
@@ -62,6 +63,7 @@ __all__ = [
     "FillQueueCommand",
     "PopCommand",
     "CreateListCommand",
+    "CreateScatterCommand",
     # Services
     "PageGenerationService",
     "NeuronDiscoveryService",
