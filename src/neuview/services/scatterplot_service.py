@@ -28,11 +28,7 @@ class ScatterplotService:
         self.config = config
         self.cache_manager = cache_manager
         self.scatter_config = ScatterConfig()
-
-        if isinstance(self.scatter_config.scatter_dir, str):
-            self.plot_output_dir = self.scatter_config.scatter_dir
-            plot_dir = Path(self.plot_output_dir)
-            plot_dir.mkdir(parents=True, exist_ok=True)
+        self.plot_output_dir = Path(self.scatter_config.scatter_dir)
 
         if (
             self.config
@@ -70,6 +66,11 @@ class ScatterplotService:
 
             # Generate scatterplot data for corrected neuron types
             plot_data = self._extract_plot_data(corrected_neuron_types)
+
+            # Reserve the output directory only once we know we have
+            # something to write — avoids leaving empty dirs on early
+            # exits and keeps __init__ free of filesystem side effects.
+            self.plot_output_dir.mkdir(parents=True, exist_ok=True)
 
             written: list[Path] = []
             # Generate plots for each side (both, L, R) and each region
