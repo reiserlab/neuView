@@ -9,6 +9,8 @@ import logging
 import time
 from pathlib import Path
 
+from ..utils import atomic_write
+
 logger = logging.getLogger(__name__)
 
 
@@ -160,7 +162,7 @@ class ROIHierarchyService:
 
             cache_data = {"hierarchy": hierarchy, "timestamp": time.time()}
 
-            with open(cache_path, "w") as f:
+            with atomic_write(cache_path) as f:
                 json.dump(cache_data, f, indent=2)
 
             logger.info(f"Saved ROI hierarchy to persistent cache: {cache_path}")

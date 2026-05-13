@@ -14,6 +14,7 @@ import click
 
 from .commands import (
     CreateListCommand,
+    CreateScatterCommand,
     FillQueueCommand,
     GeneratePageCommand,
     PopCommand,
@@ -382,7 +383,8 @@ def create_scatter(ctx):
     services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
 
     async def run_create_scatter():
-        result = await services.scatter_service.create_scatterplots()
+        command = CreateScatterCommand()
+        result = await services.scatter_service.create_scatterplots(command)
         if result.is_err():
             click.echo(f"❌ Error: {result.unwrap_err()}", err=True)
             sys.exit(1)

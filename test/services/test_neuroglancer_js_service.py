@@ -294,6 +294,77 @@ function generateNeuroglancerUrl() {
         assert "selected_template" in info, "Selected template should be included"
         assert "template_validation" in info, "Template validation should be included"
 
+    def test_atomic_write_leaves_no_temp_file(self):
+        """After a successful write, only the final file should remain."""
+        service = self.create_service()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir)
+            success = service.generate_neuroglancer_js(output_dir)
+            assert success
+
+            js_dir = output_dir / "static" / "js"
+            files = sorted(p.name for p in js_dir.iterdir())
+            assert files == ["neuroglancer-url-generator.js"], (
+                f"Expected only the final file, got: {files}"
+            )
+
+    def test_failed_rename_cleans_up_temp_file(self):
+        """If os.replace raises, the temp file must not be left behind."""
+        service = self.create_service()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir)
+            js_dir = output_dir / "static" / "js"
+
+            with patch(
+                "neuview.utils.atomic_write.os.replace",
+                side_effect=OSError("simulated rename failure"),
+            ):
+                success = service.generate_neuroglancer_js(output_dir)
+
+            assert success is False
+            # js_dir is created before the failed write; nothing should remain.
+            leftover = list(js_dir.iterdir()) if js_dir.exists() else []
+            assert leftover == [], f"Temp file leaked after rename failure: {leftover}"
+
+    def test_concurrent_writes_produce_complete_file(self):
+        """Concurrent generate calls must never leave a half-written file.
+
+        Reproduces the parallel-pop-all race that triggered the
+        'missing required function' error: with non-atomic writes, a
+        reader observing the file mid-write would see truncated content.
+        """
+        import threading
+
+        service = self.create_service()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir)
+            js_file = output_dir / "static" / "js" / "neuroglancer-url-generator.js"
+            barrier = threading.Barrier(8)
+            errors = []
+
+            def worker():
+                try:
+                    barrier.wait(timeout=5)
+                    assert service.generate_neuroglancer_js(output_dir)
+                except Exception as e:
+                    errors.append(e)
+
+            threads = [threading.Thread(target=worker) for _ in range(8)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+            assert not errors, f"Worker errors: {errors}"
+            content = js_file.read_text()
+            # Every render must contain the embedded base URL marker —
+            # a partial write would have truncated before this line.
+            assert "const NEUROGLANCER_BASE_URL =" in content
+            assert "function generateNeuroglancerUrl" in content
+
     def test_handles_template_error_gracefully(self):
         """Test that the service handles template errors gracefully."""
         # Create service with broken templates

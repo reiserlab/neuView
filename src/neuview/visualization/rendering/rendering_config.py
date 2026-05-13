@@ -212,6 +212,11 @@ class ScatterConfig:
     legend_label: str = "Coverage factor"
     legend_label_hover: str = "mean cells per column"
 
+    # Axis range on log10 scale. Fixed so ME/LO/LOP and L/R plots are
+    # directly comparable across regions and hemispheres.
+    axis_min: float = 1.0
+    axis_max: float = 1000.0
+
     # Tick marks
     xticks: list[int] = field(default_factory=lambda: [1, 10, 100, 1000])
     yticks: list[int] = field(default_factory=lambda: [1, 10, 100, 1000])

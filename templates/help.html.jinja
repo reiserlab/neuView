@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <!-- Table of Contents -->
+  {# Table of Contents #}
   <div class="row">
     <div class="col-xs-12 col-md-3">
       <h3 class="pm-no-margin">Contents</h3>
@@ -40,11 +40,10 @@
           <ul>
             <li><a href="#header-info">Header Information</a></li>
             <li><a href="#summary-stats">Summary Statistics</a></li>
-            <li><a href="#layer-analysis">Layer Analysis</a></li>
-            <li><a href="#neuroglancer">Neuroglancer 3D Viewer</a></li>
-            <li><a href="#eyemaps">Eye Maps</a></li>
+            <li><a href="#layer-column-coverage">Layer and Column Coverage</a></li>
+            <li><a href="#neuron-visualization">Neuron Visualization</a></li>
             <li><a href="#roi-innervation">ROI Innervation</a></li>
-            <li><a href="#connectivity">Connectivity Data</a></li>
+            <li><a href="#s-c">Connectivity</a></li>
           </ul>
         </li>
         <li><a href="#terminology">Terminology</a></li>
@@ -55,7 +54,7 @@
 
     <div class="col-xs-12 col-md-9">
       <div>
-        <!-- Overview -->
+        {# Overview #}
         <section id="overview" class="pm-stacked">
           <h2>Overview</h2>
           <p>
@@ -82,7 +81,7 @@
 
         <hr />
 
-        <!-- Types Page -->
+        {# Types Page #}
         <section id="types-page" class="pm-stacked">
           <h2>Types Index Page</h2>
           <p>
@@ -96,7 +95,7 @@
 
           <img src="static/images/types_page_filter50.gif" width="100%" alt="How to use the types filters.">
 
-          <!-- Using Filters -->
+          {# Using Filters #}
           <div id="filters" class="pm-stacked">
             <h3>Using Filters</h3>
             <p>
@@ -155,12 +154,12 @@
             <h4>Synonyms</h4>
             <p>
               Two types of synonyms can appear on neuron cards. Use the search field to find neurons by their synonyms
-              (see Search below). Clicking a synonym tag highlights neuron types that also have that type of synonym.
+              (see <a href="#search">Search</a> below). Clicking a synonym tag highlights neuron types that also have that type of synonym.
             </p>
             <div class="pm-stacked pm-bg-light pm-padded">
               <p>
                 <span class="synonym-tag">Published Synonyms</span>
-                <strong>Published Synonyms:</strong> Alternative names or aliases from the literature. See the neuron’s
+                <strong>Published Synonyms:</strong> Alternative names or aliases from the literature. See the neuron's
                 page for details on sources.
               </p>
             </div>
@@ -173,7 +172,7 @@
 
             <h4>Side Filter</h4>
             <p>
-              Two lateral classifications are considered for the side assignment in the dataset. One considers the location of the soma relative to the midline (`somaSide`). If the soma is missing from the reconstruction, the dendritic arbors can be used to determine the side (`rootSide`). In both cases, the majority of neurons are either considered "left" or "right", with a smaller subset classified as "middle". If a
+              Two lateral classifications are considered for the side assignment in the dataset. One considers the location of the soma relative to the midline (<code>somaSide</code>). If the soma is missing from the reconstruction, the dendritic arbors can be used to determine the side (<code>rootSide</code>). In both cases, the majority of neurons are either considered "left" or "right", with a smaller subset classified as "middle". If a
               neuron is not assigned in the dataset, we classify it as "undefined".
             </p>
             <div class="pm-stacked pm-bg-light pm-padded">
@@ -244,7 +243,7 @@
               <div class="pm-stacked pm-bg-light pm-padded">
               <p>
                 <span class="soma-neuromere-tag">A1</span>
-                <strong>Soma Neuromere:</strong> Segemental units such as A1, CB and T2.
+                <strong>Soma Neuromere:</strong> Segmental units such as A1, CB and T2.
               </p>
               </div>
 
@@ -313,7 +312,7 @@
 
         <hr />
 
-        <!-- Individual Neuron Pages -->
+        {# Individual Neuron Pages #}
         <section id="neuron-page" class="pm-stacked">
           <h2>Individual Neuron Pages</h2>
           <p>
@@ -327,37 +326,60 @@
             side of the page or the menu (☰) to switch between views.
           </p>
 
-          <!-- Header Info -->
+          {# Header Info #}
           <div id="header-info" class="pm-stacked">
             <h3>Header Information</h3>
             <p>
-              The header shows the neuron type, the currently selected hemisphere variant as well as well as any associated synonyms.
+              The header shows the neuron type, the currently selected hemisphere variant as well as any associated synonyms.
             </p>
             <p>
               Clicking on the link icon will take you to the relevant neurons' page in the neuPrint database for further exploration.
             </p>
           </div>
 
-          <!-- Summary Stats -->
+          {# Summary Stats #}
           <div id="summary-stats" class="pm-stacked">
             <h3>Summary Statistics</h3>
             <p>The summary section provides key quantitative information:</p>
 
-            <h4>Total Neurons</h4>
+            <h4>Neurons</h4>
             <p>
-              The number of individual neurons of this type in the dataset. For bilateral neurons, counts and ratios may
-              be shown across hemispheres.
+              The number of individual neurons of this type in the dataset. For bilateral neurons, counts reflect the number per hemisphere and log ratios
+              show the balance across hemispheres.
             </p>
 
-            <h4>Total Synapses</h4>
-            <p>Combined pre-synaptic (outputs) and post-synaptic (inputs), with breakdowns where applicable.
-            For combined pages the breakdown shows the number of neurons assigned to each hemisphere.
-            Whereas for unilateral pages the breakdown shows the number of pre and post synapses across all neurons of the type.</p>
+            <h4>Synapses</h4>
+            <p>Combined post-synaptic (inputs) and pre-synaptic (T-bars, outputs), with breakdowns and log ratios where applicable.
+            Technically, this number is a pre-calculated property for each neuron from the neuPrint database.<br/>
+            For combined pages the breakdown shows the total number of synapses assigned to each hemisphere and their ratio.
+            Whereas for unilateral pages the breakdown and log ratio shows the number of post and pre synapses across all neurons of the type assigned to that side.</p>
 
-            <h4>Mean Synapses</h4>
-            <p>Average number of synapses per neuron of this type. Useful for comparing connectivity levels.
+            <h4>Connections</h4>
+            <p>
+              Combined upstream and downstream connections, with breakdowns and log ratios where applicable.
+              Here, connections are the number of anatomical synapses between neurons. Technically, this number comes from the number of connected
+              <em>synapse</em>s, which are combined to form <em>SynapseSet</em>s and assigned to <em>Neuron</em>s within the neuprint database.
+              A single pre-synaptic site (T-bar) can form multiple anatomical synaptic contacts with different post-synaptic partners. Each such 
+              contact counts as one downstream connection, so a neuron's number of downstream connections can exceed its number of pre-synaptic sites.<br/>
+              For combined pages the breakdown shows the total number of connections assigned to each hemisphere and their ratio.
+              Whereas for unilateral pages the breakdown shows the number of upstream and downstream connections across all neurons of the type assigned to that side.
+            </p>
+
+            <h4>Neurotransmitter</h4>
+            <p>
+              Predicted neurotransmitter for the type and the corresponding confidence level (CL).
+              For some types, the predicted neurotransmitter may be <em>Unc</em> for unclear.
+            </p>
+
+            <h4>Synapses per Neuron</h4>
+            <p>Average number of synapses per neuron of this type. Useful for comparing connectivity levels.<br/>
             For the combined page, the breakdown shows the mean number of synapses for neurons on the right and left.
             Whereas for unilateral pages the breakdown shows the mean number of pre and post synapses per neuron assigned to that side.</p>
+
+            <h4>Connections per Neuron</h4>
+            <p>Average number of connections per neuron of this type. Useful for comparing connectivity levels.<br/>
+            For the combined page, the breakdown shows the mean number of connections for neurons on the right and left.
+            Whereas for unilateral pages the breakdown shows the mean number of pre and post connections per neuron assigned to that side.</p>
 
             <h4>Log Ratios</h4>
             <p>
@@ -365,19 +387,15 @@
               values above 0 favor left/outputs.
             </p>
 
-            <h4>Neurotransmitter</h4>
-            <p>
-              Predicted neurotransmitter for the type and the corresponding confidence level (CL).
-              For some types, the predicted neurotransmitter may be "Unc" for unclear.
-            </p>
           </div>
 
-          <!-- Layer Analysis -->
-          <div id="layer-analysis" class="pm-stacked">
-            <h3>Layer Analysis</h3>
-            <p>Detailed analysis of neuron distribution across layers in visual system neuropils:</p>
+          {# Columnar Layer and Spatial Coverage (Eye Maps) #}
+          <div id="layer-column-coverage" class="pm-stacked">
+            <h3>Layer and Column Coverage</h3>
+            <p><em>Note: These views are only present for visual system neuron types with columnar organization.</em></p>
+            <p>Detailed analysis of neuron distribution across layers in visual system neuropils. This section explains how to interpret the “Mean Synapse Count per Layer” tables shown on individual neuron type pages (e.g., Tm3).</p>
 
-            <h4>Layer Tables</h4>
+            <h4>Mean Synapse Count per Layer</h4>
             <ul>
               <li><strong>Layer names and anatomical locations:</strong> Lamina (LA),
              Medulla (ME), Lobula (LO), Accessory Medulla (AME), Lobula Plate (LOP) and Central Brain (CB). </li>
@@ -394,9 +412,10 @@
               the tables include only the counts for the ipsilateral synapses.</li>
             </ul>
 
-            <h4>Hexagonal Grid Visualizations</h4>
-            <p>Interactive hexagonal grids show the spatial distribution of neuron terminals across columnar structure of visual system regions.</p>
-            <p>The plots show the neural innervation of the <strong>ipsilateral</strong> medulla (ME), lobula (LO) and lobula plate (LOP).
+            <h4>Population Spatial Coverage</h4>
+            <p><em>Note: These Population Spatial Coverage maps are only present for visual system neuron types with columnar organization.</em></p>
+            <p>This section visualizes how a neuron type covers the columnar structure of visual system regions using interactive hexagonal grids.</p>
+            <p>The plots show the neural innervation of the <strong>ipsilateral</strong> medulla (ME), lobula (LO) and lobula plate (LOP).</p>
             <ul>
               <li><strong>Column Analysis:</strong> Which columns within the ROI the neurons innervate.</li>
               <li><strong>Regional Breakdown:</strong> Separate views for different regions (e.g., ME, LO, LOP)</li>
@@ -407,15 +426,15 @@
             <img src="static/images/eyemap_demo.gif" width="50%" alt="Interactivity of the hexagonal eyemap plots." style="display: block; margin-left: auto; margin-right: auto;">
           </div>
 
-          <!-- Neuroglancer -->
-          <div id="neuroglancer" class="pm-stacked">
-            <h3>Neuroglancer 3D Viewer</h3>
-            <p>Interactive 3D visualization of neuron morphology:</p>
+          {# Neuron Visualization #}
+          <div id="neuron-visualization" class="pm-stacked">
+            <h3>Neuron Visualization</h3>
+            <p>Interactive 3D visualization of neuron morphology using the embedded Neuroglancer viewer:</p>
 
             <h4>Viewing the 3D Model</h4>
             <ul>
-              <li><strong>Rotate:</strong> Left mouse buttom + drag. (Mac trackpad: click + drag.)</li>
-              <li><strong>Translate:</strong> Left mouse buttom + Shift + drag. (Mac trackpad: click + shift + drag.)</li>
+              <li><strong>Rotate:</strong> Left mouse button + drag. (Mac trackpad: click + drag.)</li>
+              <li><strong>Translate:</strong> Left mouse button + Shift + drag. (Mac trackpad: click + shift + drag.)</li>
               <li><strong>Zoom:</strong> Ctrl + Mouse wheel (Mac trackpad: two finger pinch gestures)</li>
               <li><strong>Select:</strong> Click on neurons to highlight and inspect</li>
               <li><strong>Layers:</strong> Toggle reference layers on/off (as available).
@@ -443,7 +462,7 @@
             <h4>Adding Partners from the Connectivity table</h4></div>
             <p>
               You can add connected partners to the 3D view directly from the Connectivity tables by selecting their
-              blue checkboxes (see Connectivity Data). Some connected cell types have filled pink checkboxes because there
+              blue checkboxes (see <a href="#s-c">Connectivity</a> section below). Some connected cell types have filled red checkboxes because there
               are no neurons of that type that directly innervate the example neuron visible by default in the neuroglancer view.
               A random neuron of that type can be added by searching for the type in the search box within the neuroglancer view and adding it manually.
             </p>
@@ -458,7 +477,7 @@
             </p>
           </div>
 
-          <!-- ROI Innervation -->
+          {# ROI Innervation #}
           <div id="roi-innervation" class="pm-stacked">
             <h3>ROI Innervation</h3>
             <p>Detailed breakdown of connectivity within specific brain regions:</p>
@@ -470,14 +489,14 @@
             </ul>
           </div>
 
-          <!-- Connectivity -->
-          <div id="connectivity" class="pm-stacked">
-            <h3>Connectivity Data</h3>
+          {# Connectivity #}
+          <div id="s-c" class="pm-stacked">
+            <h3>Connectivity</h3>
             <p>Comprehensive analysis of synaptic connections with other neuron types:</p>
             <ul>
               <li><strong>Upstream Partners:</strong> Neurons that provide input (pre-synaptic partners)</li>
               <li><strong>Downstream Partners:</strong> Neurons that receive output (post-synaptic partners)</li>
-              <li><strong>Number of connected partner:</strong> The celltype count of the connected partners. Note: This is not the number of neurons of that type that act as upstream or downstream partners.</li>
+              <li><strong>Number of connected partners:</strong> The celltype count of the connected partners. Note: This is not the number of neurons of that type that act as upstream or downstream partners.</li>
               <li><strong>Number of connections per neuron:</strong> Number of synaptic connections per target neuron.</li>
               <li><strong>Percentage Contribution:</strong> Percentage of total synaptic connections to/from the target type.</li>
                <li><strong>CV:</strong> Coefficient of variation for the number of connections per neuron.</li>
@@ -488,23 +507,23 @@
           <h3>Interactive Table Features</h3>
           <p>Both the ROI and Connectivity tables have a number of interactive features:</p>
             <ul>
-              <li><strong>Sort:</strong> Sort the table by a particular column by clicking on the column header.</li>
+              <li><strong>Sort:</strong> Sort the table by a particular column by clicking on the column header.<br/>
                 <img src="static/images/sort_table_column50.gif" width="99.5%" alt="Sort table by column." style="display: block; margin-left: auto; margin-right: auto;">
-              <br>
+                    </li>
               <li><strong>Filter:</strong> Filter the table based on the percentage of input or output synapses within
                the region for the ROI table or the minimum number of connections per individual neuron of the target type
                 for the connectivity table using the slider in the top right.<br>
                By default, the ROI table is filtered to show only the ROIs with at least <strong>1.5%</strong> of all synapses and the
-                connectivity tables to show types with at least <strong>one connection</strong> per neuron of the target type.</li>
+                connectivity tables to show types with at least <strong>one connection</strong> per neuron of the target type.<br/>
 
               <img src="static/images/filter_table_slider50.gif" width="100%" alt="Filter table with slider." style="display: block; margin-left: auto; margin-right: auto;">
+                  </li>
 
-              <br>
-              <li><strong>Search:</strong> Search the table for a given string or number using the search box in the top left.</li>
+              <li><strong>Search:</strong> Search the table for a given string or number using the search box in the top left.<br/>
 
               <img src="static/images/search_table50.gif" width="100%" alt="Search table." style="display: block; margin-left: auto; margin-right: auto;">
+                  </li>
 
-              <br>
               <li><strong>Add meshes to the neuroglancer view:</strong> Click on the checkboxes to add either ROI meshes or
               a connected neuron of that type to the neuroglancer visualisation.
               See the adding connected <a href="#adding-connected-neurons">partners</a> or adding <a href="#adding-rois">ROIs</a>
@@ -512,9 +531,10 @@
 
               <li><strong>Jump to connected pages:</strong> Click on the partner type's name within the
               connectivity table to take you to that type's page.</li>
+              </ul>
           </div>
 
-          <div id="interactive-table-features" class="pm-stacked"></div>
+          <div id="checkboxes-and-neuroglancer" class="pm-stacked">
           <h4>Checkboxes and Neuroglancer Integration</h4>
             <ul>
               <li>Each partner row has a checkbox.</li>
@@ -532,12 +552,12 @@
             </ul>
             <p>Use these checkboxes to quickly visualize specific partners together with the current neuron in 3D.
             Disabled checkboxes prevent redundant visualization of the same neuron instances.</p>
-
+          </div>
         </section>
 
         <hr />
 
-        <!-- Terminology -->
+        {# Terminology #}
         <section id="terminology" class="pm-stacked">
           <h2>Terminology</h2>
           <p>Key terms and concepts used throughout the catalog:</p>
@@ -556,20 +576,24 @@
 
             <dt>Pre-synaptic / Post-synaptic</dt>
             <dd>
-              Pre-synaptic refers to outputs from a neuron; post-synaptic refers to inputs to a neuron.
+                Post-synaptic refers to inputs to a neuron, pre-synaptic refers to outputs from a neuron.
             </dd>
 
-            <dt>Synapse Count</dt>
-            <dd>The number of synaptic connections. Higher counts indicate stronger or denser connectivity.</dd>
+            <dt id="terminology-synapse-count">Synapse Count</dt>
+            <dd>The number of synaptic connections. Higher counts indicate denser connectivity. neuView uses the properties from the neurons in the database.</dd>
 
             <dt>Post-synaptic Sites</dt>
-            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners.</dd>
+            <dd>Postsynaptic receptor sites where a neuron receives inputs from presynaptic partners. In the neuPrint data model, this is the <code>Neuron.post</code> property.</dd>
 
             <dt>Pre-synaptic Sites (T-bars)</dt>
-            <dd>Presynaptic release sites where a neuron outputs signals. Also called t-bars. One presynaptic site can connect to multiple postsynaptic partners.</dd>
+            <dd>Presynaptic release sites where a neuron outputs signals, also called t-bars. In the neuprint data model, this is the <code>Neuron.pre</code> property.</dd>
 
-            <dt>Connections vs. Synapses</dt>
-            <dd>A single presynaptic site (t-bar) can form multiple connections to different postsynaptic partners. Therefore, the number of output connections can be greater than the number of presynaptic sites.</dd>
+            <dt id="terminology-connections">Connections</dt>
+            <dd>Input <code>upstream</code> connections are conceptually similar to post-synaptic sites while one presynaptic site can connect to multiple <code>downstream</code> postsynaptic partners.
+            We calculate the number of connections by identifying the connecting neurons and then use the <code>weight</code> property from the <code>ConnectsTo</code> edge between the neurons.</dd>
+
+            <dt class="highlight">Connections vs. Synapses</dt>
+            <dd class="highlight">The numeric difference between post-synaptic sites and input connections stems from the difference in how the numbers are retrieved (see <a href="#terminology-synapse-count">Synapse Count</a> and <a href="#terminology-connections">Connections</a> above). A single presynaptic site (t-bar) can form multiple connections to different postsynaptic partners. Therefore, the number of output connections can be greater than the number of presynaptic sites.</dd>
 
             <dt>Inputs</dt>
             <dd>All pre-synaptic connecting cell types upstream from a given cell type (neurons providing input to the cell type).</dd>
@@ -622,7 +646,7 @@
 
         <hr />
 
-        <!-- FAQ and Troubleshooting -->
+        {# FAQ and Troubleshooting #}
         <section id="faq" class="pm-stacked">
           <h2>FAQ and Troubleshooting</h2>
           <dl class="pm-stacked">
@@ -662,7 +686,7 @@
           </ul>
         </section>
 
-        <!-- Contact and Feedback -->
+        {# Contact and Feedback #}
         <section id="contact" class="pm-stacked">
           <h2>Contact and Feedback</h2>
           <p>
@@ -679,7 +703,7 @@
           </p>
         </section>
 
-        <!-- Footer -->
+        {# Footer #}
         <div class="pm-stacked">
           <hr />
           <blockquote>
@@ -697,7 +721,6 @@
               >project repository</a
             >
             for additional resources and documentation{% endif %}.
-            for technical documentation.
           </blockquote>
         </div>
       </div>
