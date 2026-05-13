@@ -8,13 +8,13 @@ architecture that maintains the same functionality and output.
 import asyncio
 import logging
 import sys
-from pathlib import Path
 from typing import Optional
 
 import click
 
 from .commands import (
     CreateListCommand,
+    CreateScatterCommand,
     FillQueueCommand,
     GeneratePageCommand,
     PopCommand,
@@ -383,24 +383,20 @@ def create_scatter(ctx):
     services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
 
     async def run_create_scatter():
-        result = await services.scatter_service.create_scatterplots()
+        command = CreateScatterCommand()
+        result = await services.scatter_service.create_scatterplots(command)
         if result.is_err():
             click.echo(f"❌ Error: {result.unwrap_err()}", err=True)
             sys.exit(1)
 
-        scatter_dir = Path(services.scatter_service.scatter_config.scatter_dir)
-        expected = [scatter_dir / f"{region}.svg" for region in ("ME", "LO", "LOP")]
-        expected += [
-            scatter_dir / f"{region}_{side}.svg"
-            for side in ("L", "R")
-            for region in ("ME", "LO", "LOP")
-        ]
-
-        for file_path in expected:
-            if file_path.exists():
+        # Diff actually-written paths against the full expected set so
+        # the user sees exactly which (side, region) plots were skipped.
+        written = set(result.unwrap())
+        for file_path in services.scatter_service.expected_svg_paths():
+            if file_path in written:
                 click.echo(f"✅ Created: {file_path}")
             else:
-                click.echo(f"⚠️ Expected but not found: {file_path}", err=True)
+                click.echo(f"⚠️ Skipped (no points): {file_path}", err=True)
 
     asyncio.run(run_create_scatter())
 
