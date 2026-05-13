@@ -9,8 +9,7 @@ Usage:
 import yaml
 import sys
 import subprocess
-import argparse
-from pathlib import Path
+import click
 
 
 def load_config(config_path: str) -> dict:
@@ -60,41 +59,28 @@ def run_fill_queue(neuron_type: str, config_file: str) -> bool:
         return False
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Extract neuron types from config and run fill-queue"
-    )
-    parser.add_argument(
-        "config_file",
-        nargs="?",
-        default="config.yaml",
-        help="Path to config file (default: config.yaml)",
-    )
-    parser.add_argument(
-        "subset_category",
-        nargs="?",
-        default="subset-medium",
-        help="Subset category to extract (default: subset-medium)",
-    )
-
-    args = parser.parse_args()
-
-    # Check if config file exists
-    if not Path(args.config_file).exists():
-        print(f"❌ Config file not found: {args.config_file}")
-        sys.exit(1)
-
+@click.command(help="Extract neuron types from config and run fill-queue")
+@click.argument(
+    "config_file",
+    default="config.yaml",
+    type=click.Path(exists=True, dir_okay=False),
+)
+@click.argument(
+    "subset_category",
+    default="subset-medium",
+)
+def main(config_file: str, subset_category: str):
     # Load config
-    config = load_config(args.config_file)
+    config = load_config(config_file)
 
     # Extract neuron types
-    neuron_types = extract_neuron_types(config, args.subset_category)
+    neuron_types = extract_neuron_types(config, subset_category)
 
     if not neuron_types:
         sys.exit(1)
 
     print(
-        f"📋 Found {len(neuron_types)} neuron types for '{args.subset_category}' in {args.config_file}"
+        f"📋 Found {len(neuron_types)} neuron types for '{subset_category}' in {config_file}"
     )
 
     # Show what will be processed
@@ -105,7 +91,7 @@ def main():
 
     success_count = 0
     for nt in neuron_types:
-        if run_fill_queue(nt, args.config_file):
+        if run_fill_queue(nt, config_file):
             print(f"✅ Processed: {nt}")
             success_count += 1
         # Error message is already printed in run_fill_queue
