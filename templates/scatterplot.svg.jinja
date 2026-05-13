@@ -16,6 +16,7 @@
 .guide { stroke:#bcbcbc; fill:none; }
 .dot { cursor:pointer; opacity:0.9; transition:opacity 0.15s; }
 .dot:hover { opacity:1; }
+.highlighted { stroke:#CCCC00; stroke-width:2; }
 .tooltip-box { pointer-events:none; transition:opacity 0.2s; z-index:9999; }
 .tooltip-rect { fill:rgba(0, 0, 0, 0.8); rx:3; ry:3; }
 .tooltip-text { fill:white; font-family:Helvetica, Arial, 'Liberation Sans', 'Nimbus Sans', 'DejaVu Sans', sans-serif; font-size:16px; }
@@ -128,6 +129,9 @@ function highlightByName(name) {
 
     var dataType = (c.getAttribute('data-type') || '').trim().toLowerCase();
     if (!dataType || dataType !== needle) continue;
+
+    c.classList.add('highlighted');
+    g.parentNode.appendChild(g);
 
     var rect = c.getBoundingClientRect();
     sT({
