@@ -16,7 +16,7 @@ from ..commands import CreateScatterCommand
 from ..result import Err, Ok, Result
 from ..utils import get_templates_dir
 from ..visualization.rendering.rendering_config import ScatterConfig
-from .index_service import IndexService
+from .neuron_type_discovery import NeuronTypeDiscovery
 
 logger = logging.getLogger(__name__)
 
@@ -44,23 +44,19 @@ class ScatterplotService:
         logger.debug(f"create_scatterplots requested at {command.requested_at}")
 
         try:
-            page_generator = (
-                None  # or a tiny stub object if your constructors assume methods exist
-            )
-            index = IndexService(self.config, page_generator)
+            discovery = NeuronTypeDiscovery(self.config, self.cache_manager)
 
-            # 3) Use the instance properly
-            neuron_types, _ = index.discover_neuron_types(Path(self.output_dir))
+            neuron_types, _ = discovery.discover_neuron_types(Path(self.output_dir))
             if not neuron_types:
                 return Err("No neuron type HTML files found in output directory")
 
             # Initialize connector if needed for database lookups
-            connector = await index.initialize_connector_if_needed(
+            connector = await discovery.initialize_connector_if_needed(
                 neuron_types, self.output_dir
             )
 
             # Correct neuron names (convert filenames back to original names)
-            corrected_neuron_types, _ = index.correct_neuron_names(
+            corrected_neuron_types, _ = discovery.correct_neuron_names(
                 neuron_types, connector
             )
 
