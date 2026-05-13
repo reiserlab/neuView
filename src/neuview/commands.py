@@ -95,6 +95,17 @@ class CreateListCommand:
 
 
 @dataclass
+class CreateScatterCommand:
+    """Command to create svg scatterplots of spatial metrics."""
+
+    requested_at: Optional[datetime] = None
+
+    def __post_init__(self):
+        if self.requested_at is None:
+            self.requested_at = datetime.now()
+
+
+@dataclass
 class DatasetInfo:
     """Information about the dataset."""
 

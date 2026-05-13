@@ -2,11 +2,12 @@
 Configuration management for neuView.
 """
 
-import yaml
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from dataclasses import dataclass, field
+
+import yaml
 from dotenv import load_dotenv
 
 

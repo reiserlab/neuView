@@ -6,23 +6,24 @@ architecture that maintains the same functionality and output.
 """
 
 import asyncio
-import click
+import logging
 import sys
 from typing import Optional
-import logging
+
+import click
 
 from .commands import (
-    GeneratePageCommand,
-    TestConnectionCommand,
-    FillQueueCommand,
-    PopCommand,
     CreateListCommand,
+    CreateScatterCommand,
+    FillQueueCommand,
+    GeneratePageCommand,
+    PopCommand,
+    TestConnectionCommand,
 )
+from .models import NeuronTypeName
 from .services import ServiceContainer
 from .services.neuron_discovery_service import InspectNeuronTypeCommand
-from .models import NeuronTypeName
 from .utils import get_git_version
-
 
 # Configure logging
 logging.basicConfig(
@@ -373,6 +374,31 @@ def create_list(ctx, output_dir: Optional[str], minify: bool):
             sys.exit(1)
 
     asyncio.run(run_create_list())
+
+
+@main.command("create-scatter")
+@click.pass_context
+def create_scatter(ctx):
+    """Generate SVG scatterplots of spatial metrics for optic lobe types (combined and per hemisphere)."""
+    services = setup_services(ctx.obj["config_path"], ctx.obj["verbose"])
+
+    async def run_create_scatter():
+        command = CreateScatterCommand()
+        result = await services.scatter_service.create_scatterplots(command)
+        if result.is_err():
+            click.echo(f"❌ Error: {result.unwrap_err()}", err=True)
+            sys.exit(1)
+
+        # Diff actually-written paths against the full expected set so
+        # the user sees exactly which (side, region) plots were skipped.
+        written = set(result.unwrap())
+        for file_path in services.scatter_service.expected_svg_paths():
+            if file_path in written:
+                click.echo(f"✅ Created: {file_path}")
+            else:
+                click.echo(f"⚠️ Skipped (no points): {file_path}", err=True)
+
+    asyncio.run(run_create_scatter())
 
 
 if __name__ == "__main__":

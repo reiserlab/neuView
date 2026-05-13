@@ -127,8 +127,15 @@ class TestTm3NeuronType:
             pytest.fail(f"Test failed with unexpected error: {e}")
 
     @pytest.mark.unit
-    def test_neuprint_connector_initialization(self, config):
-        """Test that NeuPrint connector can be initialized properly."""
+    def test_neuprint_connector_initialization(self, config, monkeypatch):
+        """NeuPrintConnector constructs cleanly and exposes its required API.
+
+        The real ``_connect`` makes an HTTPS call to the neuPrint server, so
+        a true unit test must mock it out. Real connection behaviour is
+        exercised by the ``@pytest.mark.integration`` tests above (they
+        skip cleanly when the server is unreachable).
+        """
+        monkeypatch.setattr(NeuPrintConnector, "_connect", lambda self: None)
         connector = NeuPrintConnector(config)
         assert connector is not None, "Connector should be initialized"
         assert hasattr(connector, "get_available_types"), (

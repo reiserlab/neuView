@@ -173,6 +173,9 @@ pixi run neuview inspect Tm3
 # Generate complete website with all neurons
 pixi run create-all-pages
 
+# Generate scatter plots (for optic lobe datasets)
+pixi run neuview create-scatter
+
 # Verbose output for debugging
 pixi run neuview --verbose generate --neuron-type Tm3
 ```
@@ -253,6 +256,12 @@ Get detailed information about processing:
 **Verbose Mode Commands**:
 - Enable verbose output: `pixi run neuview --verbose generate -n Dm4`
 - Enable debug mode: Use the `--verbose` flag for detailed logging
+
+**`create-scatter` command:**
+- `neuview create-scatter` - Generate SVG scatter plots of spatial metrics for optic lobe types
+- Generates plots for ME, LO, and LOP regions
+- Creates both combined (both hemispheres) and hemisphere-specific (L/R) plots
+- Output: `output/scatter/*.svg` files
 
 ## Generated Website Features
 

@@ -29,9 +29,7 @@ def connected_bids():
 
 class TestSpecificSideRouting:
     @pytest.mark.parametrize("side", ["L", "R", "M", "C", "center"])
-    def test_known_sides_route_to_side_specific(
-        self, service, connected_bids, side
-    ):
+    def test_known_sides_route_to_side_specific(self, service, connected_bids, side):
         # Just verify the call doesn't fall through to the all-sides path or
         # log a warning. We don't assert ID contents because the side-specific
         # lookup logic is exercised separately.
@@ -46,9 +44,7 @@ class TestNoSideMarkers:
         "marker",
         ["", "na", "NA", "Nan", "none", "None", "NULL", "unknown", "U", "u"],
     )
-    def test_no_side_markers_return_all_sides(
-        self, service, connected_bids, marker
-    ):
+    def test_no_side_markers_return_all_sides(self, service, connected_bids, marker):
         result = service.get_partner_body_ids(
             {"type": "Dm4", "soma_side": marker}, "upstream", connected_bids
         )
@@ -60,9 +56,7 @@ class TestNoSideMarkers:
         )
         assert result == [1, 2, 3, 4]
 
-    def test_no_side_markers_do_not_warn(
-        self, service, connected_bids, caplog
-    ):
+    def test_no_side_markers_do_not_warn(self, service, connected_bids, caplog):
         with caplog.at_level(logging.WARNING):
             service.get_partner_body_ids(
                 {"type": "Dm4", "soma_side": "na"}, "upstream", connected_bids
@@ -86,20 +80,15 @@ class TestUnrecognizedSide:
             )
         assert result == [1, 2, 3, 4]
         assert any(
-            "Unrecognized soma side" in rec.message
-            and rec.levelno == logging.DEBUG
+            "Unrecognized soma side" in rec.message and rec.levelno == logging.DEBUG
             for rec in caplog.records
         )
 
-    def test_unrecognized_side_does_not_warn(
-        self, service, connected_bids, caplog
-    ):
+    def test_unrecognized_side_does_not_warn(self, service, connected_bids, caplog):
         with caplog.at_level(logging.WARNING):
             service.get_partner_body_ids(
                 {"type": "Dm4", "soma_side": "topside"},
                 "upstream",
                 connected_bids,
             )
-        assert not any(
-            rec.levelno >= logging.WARNING for rec in caplog.records
-        )
+        assert not any(rec.levelno >= logging.WARNING for rec in caplog.records)
