@@ -87,11 +87,7 @@ class ScatterplotService:
 
                     svg_content = template.render(**ctx)
 
-                    if side == "both":
-                        svg_path = Path(self.plot_output_dir) / f"{region}.svg"
-                    else:
-                        svg_path = Path(self.plot_output_dir) / f"{region}_{side}.svg"
-
+                    svg_path = self._svg_path_for(side, region)
                     svg_path.write_text(svg_content, encoding="utf-8")
                     written.append(svg_path)
 
@@ -100,6 +96,29 @@ class ScatterplotService:
         except Exception as e:
             logger.error(f"Failed to create scatterplots: {e}")
             return Err(f"Failed to create scatterplots: {e}")
+
+    def _svg_path_for(self, side: str, region: str) -> Path:
+        """Path the (side, region) SVG would be written to.
+
+        ``side="both"`` produces the combined plot (e.g. ``ME.svg``); the
+        hemisphere-specific plots get a suffix (e.g. ``ME_L.svg``).
+        """
+        filename = f"{region}.svg" if side == "both" else f"{region}_{side}.svg"
+        return Path(self.plot_output_dir) / filename
+
+    def expected_svg_paths(self) -> list[Path]:
+        """All 9 SVG paths ``create_scatterplots`` may produce, in render order.
+
+        ``create_scatterplots`` skips a (side, region) combination when
+        no points qualify, so the actual returned list can be shorter.
+        Callers that want to know which combinations were skipped can
+        diff this list against the service's return value.
+        """
+        return [
+            self._svg_path_for(side, region)
+            for side in ("both", "L", "R")
+            for region in ("ME", "LO", "LOP")
+        ]
 
     def _extract_plot_data(self, neuron_types):
         """Generate plot data from list of neuron types."""
