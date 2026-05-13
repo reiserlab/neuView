@@ -21,8 +21,9 @@ Example workflow:
 """
 
 import sys
-import argparse
-import toml
+import click
+import tomlkit
+import yaml
 import semver
 from pathlib import Path
 from typing import Optional
@@ -125,15 +126,56 @@ def get_project_root() -> Path:
         sys.exit(1)
 
 
+def get_neuprint_config() -> Optional[dict]:
+    """Read neuprint.server and neuprint.dataset from config.yaml at the project root."""
+    try:
+        project_root = get_project_root()
+        config_path = project_root / "config.yaml"
+
+        if not config_path.exists():
+            print(f"Warning: {config_path} not found", file=sys.stderr)
+            return None
+
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f) or {}
+
+        neuprint = config.get("neuprint", {})
+        server = neuprint.get("server")
+        dataset = neuprint.get("dataset")
+
+        if not server or not dataset:
+            print(
+                "Warning: neuprint.server and/or neuprint.dataset missing from config.yaml",
+                file=sys.stderr,
+            )
+            return None
+
+        return {"server": server, "dataset": dataset}
+    except Exception as e:
+        print(f"Warning: could not read neuprint config: {e}", file=sys.stderr)
+        return None
+
+
+def build_tag_message(tag: str, neuprint: Optional[dict]) -> str:
+    """Build the annotated tag message, including neuprint info when available."""
+    message = f"Release {tag}"
+    if neuprint:
+        message += (
+            f"\n\nneuprint.server: {neuprint['server']}"
+            f"\nneuprint.dataset: {neuprint['dataset']}"
+        )
+    return message
+
+
 def update_pyproject_version(new_version_without_v: str, dry_run: bool = False) -> bool:
-    """Update the version in pyproject.toml using toml package."""
+    """Update the version in pyproject.toml using tomlkit (preserves formatting/comments)."""
     try:
         project_root = get_project_root()
         pyproject_path = project_root / "pyproject.toml"
 
         # Read the current pyproject.toml
         with open(pyproject_path, "r", encoding="utf-8") as f:
-            pyproject_data = toml.load(f)
+            pyproject_data = tomlkit.parse(f.read())
 
         # Get current version for comparison
         current_version = pyproject_data.get("project", {}).get("version", "unknown")
@@ -148,12 +190,12 @@ def update_pyproject_version(new_version_without_v: str, dry_run: bool = False) 
 
         # Update the version
         if "project" not in pyproject_data:
-            pyproject_data["project"] = {}
+            pyproject_data["project"] = tomlkit.table()
         pyproject_data["project"]["version"] = new_version_without_v
 
         # Write back to file
         with open(pyproject_path, "w", encoding="utf-8") as f:
-            toml.dump(pyproject_data, f)
+            f.write(tomlkit.dumps(pyproject_data))
 
         print(
             f"Successfully updated pyproject.toml version to: {new_version_without_v}"
@@ -203,8 +245,8 @@ def commit_version_change(new_version_with_v: str, dry_run: bool = False) -> boo
         return False
 
 
-def create_git_tag(tag: str, dry_run: bool = False) -> bool:
-    """Create a new git tag using GitPython."""
+def create_git_tag(tag: str, message: str, dry_run: bool = False) -> bool:
+    """Create a new annotated git tag using GitPython."""
     try:
         repo = get_git_repo()
 
@@ -216,11 +258,12 @@ def create_git_tag(tag: str, dry_run: bool = False) -> bool:
 
         if dry_run:
             print(f"[DRY RUN] Would create git tag: {tag}")
+            print(f"[DRY RUN] Tag message:\n{message}")
             return True
 
         # Create the tag
         try:
-            repo.create_tag(tag, message=f"Release {tag}")
+            repo.create_tag(tag, message=message)
             print(f"Successfully created git tag: {tag}")
             return True
         except Exception as e:
@@ -232,20 +275,17 @@ def create_git_tag(tag: str, dry_run: bool = False) -> bool:
         return False
 
 
-def main():
+@click.command(
+    help="Increment version, update pyproject.toml, commit, and create git tag"
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Show what would be done without making actual changes",
+)
+def main(dry_run: bool):
     """Main function to increment version, update pyproject.toml, commit, and create tag."""
-    parser = argparse.ArgumentParser(
-        description="Increment version, update pyproject.toml, commit, and create git tag"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be done without making actual changes",
-    )
-
-    args = parser.parse_args()
-
-    if args.dry_run:
+    if dry_run:
         print("Starting version increment process (DRY RUN MODE)...")
     else:
         print("Starting version increment process...")
@@ -274,21 +314,23 @@ def main():
         print(f"New version (for pyproject.toml): {new_version_without_v}")
 
         # Step 1: Update pyproject.toml
-        if not update_pyproject_version(new_version_without_v, dry_run=args.dry_run):
+        if not update_pyproject_version(new_version_without_v, dry_run=dry_run):
             print("Failed to update pyproject.toml", file=sys.stderr)
             sys.exit(1)
 
         # Step 2: Commit the change
-        if not commit_version_change(new_version_with_v, dry_run=args.dry_run):
+        if not commit_version_change(new_version_with_v, dry_run=dry_run):
             print("Failed to commit version change", file=sys.stderr)
             sys.exit(1)
 
-        # Step 3: Create the git tag
-        if not create_git_tag(new_version_with_v, dry_run=args.dry_run):
+        # Step 3: Create the git tag (with neuprint info from config.yaml)
+        neuprint_config = get_neuprint_config()
+        tag_message = build_tag_message(new_version_with_v, neuprint_config)
+        if not create_git_tag(new_version_with_v, tag_message, dry_run=dry_run):
             print("Failed to create git tag", file=sys.stderr)
             sys.exit(1)
 
-        if args.dry_run:
+        if dry_run:
             print(f"\n[DRY RUN] Summary of what would be done:")
             print(f"  1. Update pyproject.toml version: {new_version_without_v}")
             print(
