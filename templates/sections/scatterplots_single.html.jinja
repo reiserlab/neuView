@@ -2,11 +2,11 @@
 <div class="row">
     {%- for region in ['ME','LO','LOP'] -%}
         {%- if soma_side == 'left' -%}
-          {%- set svg_path = '../../output/scatter/' ~ region ~ '_L.svg' -%}
+          {%- set svg_path = '../scatter/' ~ region ~ '_L.svg' -%}
         {%- elif soma_side == 'right' -%}
-          {%- set svg_path = '../../output/scatter/' ~ region ~ '_R.svg' -%}
+          {%- set svg_path = '../scatter/' ~ region ~ '_R.svg' -%}
         {%- else -%}
-          {%- set svg_path = '../../output/scatter/' ~ region ~ '.svg' -%}
+          {%- set svg_path = '../scatter/' ~ region ~ '.svg' -%}
         {%- endif -%}
     <div class="col-md-4 col-sm-6 col-xs-12">
       <div class="scatterplot-container">
