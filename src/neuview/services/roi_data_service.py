@@ -12,8 +12,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+from filelock import FileLock
+
+from ..utils import atomic_write
 
 logger = logging.getLogger(__name__)
+
+# Generous timeout for the cache critical section. The work inside is a single
+# HTTP GET (bounded by self.timeout) plus a small JSON write; anything longer
+# means a peer worker is stuck and we should fetch ourselves.
+_CACHE_LOCK_TIMEOUT = 120
 
 
 class ROIDataService:
@@ -67,82 +75,75 @@ class ROIDataService:
             json.JSONDecodeError: If the response is not valid JSON
         """
         cache_file = self.cache_dir / cache_filename
+        lock_file = cache_file.with_suffix(cache_file.suffix + ".lock")
 
-        # Try to load from cache first (cache for 1 hour)
-        if cache_file.exists():
-            cache_age = time.time() - cache_file.stat().st_mtime
-            if cache_age < 3600:  # 1 hour cache
-                try:
-                    with open(cache_file, "r") as f:
-                        data = json.load(f)
-                        logger.debug(f"Loaded ROI data from cache: {cache_filename}")
-                        return data
-                except (json.JSONDecodeError, IOError) as e:
-                    logger.warning(f"Failed to load cache file {cache_filename}: {e}")
-                    # Delete corrupted cache file to force refetch
-                    try:
-                        cache_file.unlink()
-                        logger.debug(f"Deleted corrupted cache file: {cache_filename}")
-                    except OSError as unlink_error:
-                        logger.warning(
-                            f"Failed to delete corrupted cache file {cache_filename}: {unlink_error}"
-                        )
-
-        # Fetch from GCS
-        logger.info(f"Fetching ROI data from: {url}")
-        try:
-            response = requests.get(url, timeout=self.timeout)
-            response.raise_for_status()
-
-            data = response.json()
-
-            # Validate that we have actual data before caching
-            if not data or (isinstance(data, dict) and not any(data.values())):
-                logger.warning(f"Received empty data from {url}, not caching")
-                raise ValueError("Empty data received from GCS endpoint")
-
-            # Cache the result
-            try:
-                with open(cache_file, "w") as f:
-                    json.dump(data, f, indent=2)
-                logger.debug(f"Cached ROI data to: {cache_filename}")
-            except IOError as e:
-                logger.warning(f"Failed to cache data to {cache_filename}: {e}")
-
-            return data
-
-        except requests.RequestException as e:
-            logger.error(f"Failed to fetch ROI data from {url}: {e}")
-
-            # Try to use stale cache as fallback
+        # Serialize the fetch across workers. The `pop-all` pixi task launches
+        # many `neuview` invocations through GNU parallel, all of which try to
+        # populate the same cache file at startup; without this only one
+        # actually fetches from GCS and the rest wait for the result.
+        with FileLock(str(lock_file), timeout=_CACHE_LOCK_TIMEOUT):
+            # Try to load from cache first (cache for 1 hour)
             if cache_file.exists():
-                try:
-                    with open(cache_file, "r") as f:
-                        data = json.load(f)
-                        logger.warning(
-                            f"Using stale cache for {cache_filename} due to fetch failure"
-                        )
-                        return data
-                except (json.JSONDecodeError, IOError) as fallback_error:
-                    logger.warning(
-                        f"Stale cache file is also corrupted for {cache_filename}: {fallback_error}"
-                    )
-                    # Delete corrupted cache file
+                cache_age = time.time() - cache_file.stat().st_mtime
+                if cache_age < 3600:  # 1 hour cache
                     try:
-                        cache_file.unlink()
+                        with open(cache_file, "r") as f:
+                            data = json.load(f)
+                            logger.debug(
+                                f"Loaded ROI data from cache: {cache_filename}"
+                            )
+                            return data
+                    except (json.JSONDecodeError, OSError) as e:
                         logger.debug(
-                            f"Deleted corrupted stale cache file: {cache_filename}"
+                            f"Cache file {cache_filename} unreadable, refetching: {e}"
                         )
-                    except OSError as unlink_error:
+
+            # Fetch from GCS
+            logger.info(f"Fetching ROI data from: {url}")
+            try:
+                response = requests.get(url, timeout=self.timeout)
+                response.raise_for_status()
+
+                data = response.json()
+
+                # Validate that we have actual data before caching
+                if not data or (isinstance(data, dict) and not any(data.values())):
+                    logger.warning(f"Received empty data from {url}, not caching")
+                    raise ValueError("Empty data received from GCS endpoint")
+
+                # Atomic write: temp file + rename, so concurrent readers
+                # never observe a half-written cache file.
+                try:
+                    with atomic_write(cache_file) as f:
+                        json.dump(data, f, indent=2)
+                    logger.debug(f"Cached ROI data to: {cache_filename}")
+                except OSError as e:
+                    logger.warning(f"Failed to cache data to {cache_filename}: {e}")
+
+                return data
+
+            except requests.RequestException as e:
+                logger.error(f"Failed to fetch ROI data from {url}: {e}")
+
+                # Try to use stale cache as fallback
+                if cache_file.exists():
+                    try:
+                        with open(cache_file, "r") as f:
+                            data = json.load(f)
+                            logger.warning(
+                                f"Using stale cache for {cache_filename} due to fetch failure"
+                            )
+                            return data
+                    except (json.JSONDecodeError, OSError) as fallback_error:
                         logger.warning(
-                            f"Failed to delete corrupted stale cache file {cache_filename}: {unlink_error}"
+                            f"Stale cache file is also unreadable for {cache_filename}: {fallback_error}"
                         )
 
-            raise
+                raise
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON response from {url}: {e}")
-            raise
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON response from {url}: {e}")
+                raise
 
     def _extract_roi_ids_and_names(
         self, segment_data: Dict[str, Any]
