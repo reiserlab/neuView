@@ -225,6 +225,7 @@ class DataProcessingService:
         return f"""
         MATCH (n:Neuron)-[:Contains]->(nss:SynapseSet)-[:Contains]->(ns:Synapse)
         WHERE n.type = "{neuron_type}"
+        WITH DISTINCT ns
         WITH ns,  CASE
                WHEN exists(ns['ME(R)']) THEN ['ME', 'R']
                WHEN exists(ns['ME(L)']) THEN ['ME', 'L']
