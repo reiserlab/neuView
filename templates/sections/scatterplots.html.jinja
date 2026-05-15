@@ -1,7 +1,7 @@
 {#- Scatterplots Row -#}
 <div class="row">
     {%- for region in ['ME', 'LO', 'LOP'] -%}
-    {%- set svg_path = '../../output/scatter/' ~ region ~ '.svg' -%}
+    {%- set svg_path = '../scatter/' ~ region ~ '.svg' -%}
     <div class="col-md-4 col-sm-6 col-xs-12">
       <div class="scatterplot-container">
         <object data="{{- svg_path -}}#highlight={{ neuron_data.type | urlencode }}" type="image/svg+xml" class="grid-image">
