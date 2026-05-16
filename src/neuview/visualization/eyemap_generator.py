@@ -1155,70 +1155,6 @@ class EyemapGenerator:
 
         return processed_hexagons
 
-    def get_performance_statistics(self) -> Dict[str, Any]:
-        """
-        Get performance statistics for the eyemap generator.
-
-        This method now delegates to the PerformanceManager for centralized
-        performance monitoring and statistics collection.
-
-        Returns:
-            Dictionary containing performance metrics, cache statistics, and memory usage
-        """
-        # Fallback to original implementation
-        with ErrorContext("performance_statistics_collection"):
-            try:
-                if not self.performance_enabled:
-                    return {"performance_monitoring": "disabled"}
-
-                stats = {}
-
-                if self.performance_monitor:
-                    try:
-                        stats["performance_summary"] = (
-                            self.performance_monitor.get_performance_summary()
-                        )
-                        stats["operation_stats"] = (
-                            self.performance_monitor.get_operation_stats()
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to get performance monitor stats: {e}")
-                        stats["performance_monitor_error"] = str(e)
-
-                if self.memory_optimizer:
-                    try:
-                        stats["memory_usage_mb"] = (
-                            self.memory_optimizer.get_memory_usage_mb()
-                        )
-                        stats["memory_pressure"] = (
-                            self.memory_optimizer.is_memory_pressure()
-                        )
-                    except Exception as e:
-                        logger.warning(f"Failed to get memory stats: {e}")
-                        stats["memory_optimizer_error"] = str(e)
-
-                # Add cache statistics if available
-                if hasattr(self, "optimizers") and self.optimizers:
-                    cache_stats = {}
-                    for name, optimizer in self.optimizers.items():
-                        try:
-                            if hasattr(optimizer, "cache_manager"):
-                                cache_stats[name] = (
-                                    optimizer.cache_manager.get_statistics()
-                                )
-                        except Exception as e:
-                            logger.warning(f"Failed to get cache stats for {name}: {e}")
-                            cache_stats[f"{name}_error"] = str(e)
-                    stats["cache_statistics"] = cache_stats
-
-                return stats
-
-            except Exception as e:
-                from .exceptions import PerformanceError
-
-                raise PerformanceError(
-                    f"Failed to collect performance statistics: {str(e)}"
-                ) from e
 
     def clear_performance_caches(self) -> Dict[str, Union[int, str]]:
         """
@@ -1274,67 +1210,6 @@ class EyemapGenerator:
                     f"Failed to clear performance caches: {str(e)}"
                 ) from e
 
-    def optimize_memory_usage(self) -> Dict[str, Any]:
-        """
-        Optimize memory usage by delegating to the PerformanceManager.
-
-        This method now uses the centralized PerformanceManager for
-        memory optimization operations.
-
-        Returns:
-            Dictionary with optimization results
-        """
-        # Fallback to original implementation
-        with ErrorContext("memory_optimization"):
-            try:
-                if not self.performance_enabled:
-                    return {"message": "Performance optimization not enabled"}
-
-                results = {}
-                initial_memory = None
-
-                # Get initial memory usage
-                if self.memory_optimizer:
-                    try:
-                        initial_memory = self.memory_optimizer.get_memory_usage_mb()
-                        results["memory_before_optimization"] = initial_memory
-                    except Exception as e:
-                        logger.warning(f"Failed to get initial memory usage: {e}")
-
-                # Clear caches
-                try:
-                    cache_cleanup = self.clear_performance_caches()
-                    results["cache_cleanup"] = cache_cleanup
-                except Exception as e:
-                    logger.warning(f"Cache cleanup failed: {e}")
-                    results["cache_cleanup_error"] = str(e)
-
-                # Force garbage collection
-                if self.memory_optimizer:
-                    try:
-                        gc_results = self.memory_optimizer.force_garbage_collection()
-                        results["garbage_collection"] = gc_results
-                    except Exception as e:
-                        logger.warning(f"Garbage collection failed: {e}")
-                        results["garbage_collection_error"] = str(e)
-
-                # Get updated memory usage
-                if self.memory_optimizer:
-                    try:
-                        final_memory = self.memory_optimizer.get_memory_usage_mb()
-                        results["memory_after_optimization"] = final_memory
-                        if initial_memory is not None:
-                            results["memory_savings_mb"] = initial_memory - final_memory
-                    except Exception as e:
-                        logger.warning(f"Failed to get final memory usage: {e}")
-
-                logger.info("Memory optimization completed")
-                return results
-
-            except Exception as e:
-                from .exceptions import PerformanceError
-
-                raise PerformanceError(f"Memory optimization failed: {str(e)}") from e
 
     def _determine_mirror_side_with_context(
         self, soma_side: SomaSide, current_side: str = None

@@ -279,56 +279,6 @@ class PartnerAnalysisService:
 
         return results
 
-    def get_partner_statistics(self, connected_bids: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Get statistics about partner connectivity data.
-
-        Args:
-            connected_bids: Connectivity mapping to analyze
-
-        Returns:
-            Dictionary with connectivity statistics
-        """
-        stats = {
-            "directions": list(connected_bids.keys()),
-            "total_partner_types": 0,
-            "types_by_direction": {},
-            "side_specific_types": {"L": 0, "R": 0, "bare": 0},
-        }
-
-        all_types = set()
-
-        for direction, direction_data in connected_bids.items():
-            if not isinstance(direction_data, dict):
-                continue
-
-            direction_types = set()
-
-            for key in direction_data.keys():
-                all_types.add(key)
-                direction_types.add(key)
-
-                # Count side-specific vs bare types
-                if key.endswith("_L"):
-                    stats["side_specific_types"]["L"] += 1
-                elif key.endswith("_R"):
-                    stats["side_specific_types"]["R"] += 1
-                elif key.endswith("_M"):
-                    stats["side_specific_types"]["M"] = (
-                        stats["side_specific_types"].get("M", 0) + 1
-                    )
-                elif key.endswith("_C"):
-                    stats["side_specific_types"]["C"] = (
-                        stats["side_specific_types"].get("C", 0) + 1
-                    )
-                else:
-                    stats["side_specific_types"]["bare"] += 1
-
-            stats["types_by_direction"][direction] = len(direction_types)
-
-        stats["total_partner_types"] = len(all_types)
-
-        return stats
 
     def validate_connected_bids_structure(
         self, connected_bids: Dict[str, Any]

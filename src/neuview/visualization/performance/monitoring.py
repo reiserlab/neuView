@@ -436,53 +436,6 @@ class BatchPerformanceAnalyzer:
         """Initialize with performance monitor."""
         self.monitor = monitor
 
-    def analyze_batch_performance(self, batch_operation_pattern: str) -> Dict[str, Any]:
-        """
-        Analyze performance patterns for batch operations.
-
-        Args:
-            batch_operation_pattern: Pattern to match batch operations (e.g., "batch_")
-
-        Returns:
-            Analysis results with recommendations
-        """
-        with self.monitor._lock:
-            # Find batch operations
-            batch_metrics = [
-                m for m in self.monitor._metrics if batch_operation_pattern in m.name
-            ]
-
-        if not batch_metrics:
-            return {"error": "No batch operations found"}
-
-        # Analyze patterns
-        durations = [m.duration for m in batch_metrics]
-        memory_deltas = [m.memory_delta for m in batch_metrics]
-
-        avg_duration = sum(durations) / len(durations)
-        avg_memory_delta = sum(memory_deltas) / len(memory_deltas)
-
-        # Identify outliers (operations > 2 std deviations from mean)
-        duration_std = (
-            sum((d - avg_duration) ** 2 for d in durations) / len(durations)
-        ) ** 0.5
-        duration_outliers = [
-            m
-            for m in batch_metrics
-            if abs(m.duration - avg_duration) > 2 * duration_std
-        ]
-
-        return {
-            "total_batch_operations": len(batch_metrics),
-            "avg_duration_ms": avg_duration * 1000,
-            "avg_memory_delta_mb": avg_memory_delta,
-            "duration_std_ms": duration_std * 1000,
-            "outlier_count": len(duration_outliers),
-            "outlier_percentage": (len(duration_outliers) / len(batch_metrics)) * 100,
-            "recommendations": self._generate_batch_recommendations(
-                avg_duration, avg_memory_delta, len(duration_outliers)
-            ),
-        }
 
     def _generate_batch_recommendations(
         self, avg_duration: float, avg_memory_delta: float, outlier_count: int

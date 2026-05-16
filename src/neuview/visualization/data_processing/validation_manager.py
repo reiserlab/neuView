@@ -371,68 +371,6 @@ class ValidationManager:
 
         return True
 
-    def validate_min_max_data(self, min_max_data: MinMaxData) -> ValidationResult:
-        """
-        Validate min/max data for normalization.
-
-        Args:
-            min_max_data: MinMaxData to validate
-
-        Returns:
-            ValidationResult containing validation status
-        """
-        result = ValidationResult(is_valid=True)
-
-        try:
-            # Validate global min/max values
-            if min_max_data.global_min_syn >= min_max_data.global_max_syn:
-                result.add_error("global_min_syn must be less than global_max_syn")
-
-            if min_max_data.global_min_cells >= min_max_data.global_max_cells:
-                result.add_error("global_min_cells must be less than global_max_cells")
-
-            # Validate region-specific values
-            for region, min_val in min_max_data.min_syn_region.items():
-                max_val = min_max_data.max_syn_region.get(region)
-                if max_val is not None and min_val >= max_val:
-                    result.add_error(
-                        f"Region {region}: min_syn ({min_val}) >= max_syn ({max_val})"
-                    )
-
-            for region, min_val in min_max_data.min_cells_region.items():
-                max_val = min_max_data.max_cells_region.get(region)
-                if max_val is not None and min_val >= max_val:
-                    result.add_error(
-                        f"Region {region}: min_cells ({min_val}) >= max_cells ({max_val})"
-                    )
-
-            # Check for missing corresponding min/max values
-            syn_regions = set(min_max_data.min_syn_region.keys()) | set(
-                min_max_data.max_syn_region.keys()
-            )
-            for region in syn_regions:
-                if region not in min_max_data.min_syn_region:
-                    result.add_warning(f"Region {region}: missing min_syn_region value")
-                if region not in min_max_data.max_syn_region:
-                    result.add_warning(f"Region {region}: missing max_syn_region value")
-
-            cells_regions = set(min_max_data.min_cells_region.keys()) | set(
-                min_max_data.max_cells_region.keys()
-            )
-            for region in cells_regions:
-                if region not in min_max_data.min_cells_region:
-                    result.add_warning(
-                        f"Region {region}: missing min_cells_region value"
-                    )
-                if region not in min_max_data.max_cells_region:
-                    result.add_warning(
-                        f"Region {region}: missing max_cells_region value"
-                    )
-
-        except Exception as e:
-            result.add_error(f"Exception validating min/max data: {str(e)}")
-
-        return result
 
     def validate_region_columns_map(
         self, region_columns_map: Dict[str, Set[Tuple[int, int]]]
