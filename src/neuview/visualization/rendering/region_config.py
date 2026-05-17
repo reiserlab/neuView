@@ -114,18 +114,6 @@ class RegionConfigRegistry:
             # Return default config for unknown regions
             return cls._default_config
 
-    @classmethod
-    def get_layer_count(cls, region: str) -> int:
-        """
-        Get layer count for a region.
-
-        Args:
-            region: Region identifier string
-
-        Returns:
-            Number of layers for the region
-        """
-        return cls.get_config(region).layer_count
 
     @classmethod
     def get_display_layer_name(cls, region: str, layer_num: int) -> str:
@@ -154,40 +142,5 @@ class RegionConfigRegistry:
         """
         return cls.get_config(region).calculate_control_dimensions()
 
-    @classmethod
-    def register_region(cls, region: Region, config: RegionConfig) -> None:
-        """
-        Register a new region configuration.
 
-        Args:
-            region: Region enum value
-            config: Configuration for the region
-        """
-        cls._configs[region] = config
 
-    @classmethod
-    def get_supported_regions(cls) -> list[str]:
-        """
-        Get list of supported region identifiers.
-
-        Returns:
-            List of supported region strings
-        """
-        return [region.value for region in cls._configs.keys()]
-
-    @classmethod
-    def is_supported_region(cls, region: str) -> bool:
-        """
-        Check if a region is supported.
-
-        Args:
-            region: Region identifier string
-
-        Returns:
-            True if region is supported, False otherwise
-        """
-        try:
-            Region(region.upper())
-            return True
-        except ValueError:
-            return False

@@ -187,31 +187,7 @@ class CitationService:
             self.load_citations()
         return self.citations.get(citation_key)
 
-    def get_citation_url(self, citation_key: str) -> Optional[str]:
-        """
-        Get the URL for a specific citation.
 
-        Args:
-            citation_key: The citation identifier
-
-        Returns:
-            URL if found, None otherwise
-        """
-        citation_data = self.get_citation(citation_key)
-        return citation_data[0] if citation_data else None
-
-    def get_citation_title(self, citation_key: str) -> Optional[str]:
-        """
-        Get the title for a specific citation.
-
-        Args:
-            citation_key: The citation identifier
-
-        Returns:
-            Title if found, None otherwise
-        """
-        citation_data = self.get_citation(citation_key)
-        return citation_data[1] if citation_data else None
 
     def format_doi_url(self, doi: str) -> str:
         """

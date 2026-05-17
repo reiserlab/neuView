@@ -68,21 +68,6 @@ class NeuViewFacade:
 
         return cls(config=config, output_dir=output_dir)
 
-    @classmethod
-    def create_for_testing(cls, output_dir: str) -> "NeuViewFacade":
-        """
-        Create a neuView facade configured for testing.
-
-        Args:
-            output_dir: Output directory for test files
-
-        Returns:
-            NeuViewFacade configured for testing
-        """
-        config = Config.create_minimal_for_testing()
-        facade = cls(config=config, output_dir=output_dir)
-        facade._use_minimal_setup = True
-        return facade
 
     def with_queue_service(self, queue_service) -> "NeuViewFacade":
         """
@@ -242,50 +227,7 @@ class NeuViewFacade:
                 "metadata": {},
             }
 
-    def generate_pages_batch(self, neuron_types: List[str]) -> List[Dict[str, Any]]:
-        """
-        Generate pages for multiple neuron types.
 
-        Args:
-            neuron_types: List of neuron type names
-
-        Returns:
-            List of generation results for each neuron type
-        """
-        self._ensure_initialized()
-
-        results = []
-        for neuron_type in neuron_types:
-            result = self.generate_page(neuron_type)
-            results.append(result)
-
-        return results
-
-    def get_available_neuron_types(self) -> List[str]:
-        """
-        Get list of available neuron types that can be generated.
-
-        Returns:
-            List of neuron type names
-        """
-        self._ensure_initialized()
-
-        try:
-            # Use the discovery service if available
-            if hasattr(self._page_generator, "discovery_service"):
-                return self._page_generator.discovery_service.get_available_types()
-
-            # Fallback to cache manager if available
-            if self._cache_manager:
-                return list(self._cache_manager.get_cached_types())
-
-            # Return empty list if no discovery mechanism available
-            logger.warning("No neuron type discovery mechanism available")
-            return []
-
-        except Exception as e:
-            logger.error(f"Failed to get available neuron types: {e}")
-            return []
 
     def validate_configuration(self) -> Dict[str, Any]:
         """
@@ -334,38 +276,6 @@ class NeuViewFacade:
 
         return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
 
-    def get_system_status(self) -> Dict[str, Any]:
-        """
-        Get the current system status and configuration summary.
-
-        Returns:
-            Dictionary containing system status information
-        """
-        status = {
-            "initialized": self._is_initialized,
-            "config_loaded": self._config is not None,
-            "output_directory": self._output_dir,
-            "has_queue_service": self._queue_service is not None,
-            "has_cache_manager": self._cache_manager is not None,
-        }
-
-        if self._is_initialized and self._page_generator:
-            # Get service status from container if available
-            if hasattr(self._page_generator, "container"):
-                container_summary = (
-                    self._page_generator.container.create_service_summary()
-                )
-                status["services"] = container_summary
-            else:
-                status["services"] = "Container not available"
-
-        # Add configuration validation
-        validation = self.validate_configuration()
-        status["configuration_valid"] = validation["valid"]
-        status["configuration_errors"] = validation["errors"]
-        status["configuration_warnings"] = validation["warnings"]
-
-        return status
 
     def cleanup(self) -> None:
         """Clean up resources and reset the facade."""

@@ -107,19 +107,6 @@ class PageGeneratorBuilder:
         self._use_container = use_container
         return self
 
-    def with_container(self, container: PageGenerationContainer):
-        """
-        Set a pre-configured dependency injection container.
-
-        Args:
-            container: Pre-configured PageGenerationContainer
-
-        Returns:
-            Self for method chaining
-        """
-        self._container = container
-        self._use_container = True
-        return self
 
     def build(self):
         """
@@ -142,14 +129,6 @@ class PageGeneratorBuilder:
         else:
             return self._build_with_factory()
 
-    def build_for_testing(self):
-        """
-        Build a lightweight PageGenerator suitable for testing.
-
-        Returns:
-            PageGenerator instance with minimal dependencies
-        """
-        return self.build_with_minimal_container()
 
     def build_with_minimal_container(self):
         """
@@ -361,22 +340,3 @@ class PageGeneratorBuilder:
         """
         return cls().with_config(config).with_output_directory(output_dir)
 
-    @classmethod
-    def for_testing(cls, config: Config, output_dir: str):
-        """
-        Create a builder configured for testing with minimal DI container.
-
-        Args:
-            config: Configuration object
-            output_dir: Output directory path
-
-        Returns:
-            Builder configured for testing with DI container
-        """
-        return (
-            cls()
-            .with_config(config)
-            .with_output_directory(output_dir)
-            .with_dependency_injection(True)
-            .skip_config_validation(True)
-        )

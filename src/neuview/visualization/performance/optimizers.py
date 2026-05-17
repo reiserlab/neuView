@@ -68,57 +68,6 @@ class CoordinateOptimizer(BaseOptimizer):
         )
 
     @performance_timer("coordinate_conversion")
-    def convert_coordinates_optimized(
-        self,
-        all_possible_columns: List[Dict],
-        soma_side: Optional[str],
-        coordinate_system,
-    ) -> Dict[Tuple[int, int], Dict[str, float]]:
-        """
-        Optimized coordinate conversion with caching and batch processing.
-
-        Args:
-            all_possible_columns: List of column dictionaries with hex coordinates
-            soma_side: Optional soma side specification for mirroring
-            coordinate_system: Coordinate system instance for conversion
-
-        Returns:
-            Dictionary mapping (hex1, hex2) tuples to pixel coordinates
-        """
-        # Generate cache key based on coordinate data and soma side
-        cache_key = self._generate_coordinate_cache_key(all_possible_columns, soma_side)
-
-        # Try cache first
-        if self._coordinate_cache:
-            cached_result = self._coordinate_cache.get(cache_key)
-            if cached_result is not None:
-                logger.debug(
-                    f"Coordinate cache hit for {len(all_possible_columns)} columns"
-                )
-                return cached_result
-
-        logger.debug(
-            f"Coordinate cache miss - processing {len(all_possible_columns)} columns"
-        )
-
-        # Process coordinates with memory optimization
-        with self.memory_optimizer.memory_monitoring("coordinate_conversion"):
-            if (
-                len(all_possible_columns) > 5000
-            ):  # Use batch processing for large datasets
-                result = self._batch_coordinate_conversion(
-                    all_possible_columns, soma_side, coordinate_system
-                )
-            else:
-                result = self._direct_coordinate_conversion(
-                    all_possible_columns, soma_side, coordinate_system
-                )
-
-        # Cache the result
-        if self._coordinate_cache:
-            self._coordinate_cache.put(cache_key, result)
-
-        return result
 
     def _generate_coordinate_cache_key(
         self, columns: List[Dict], soma_side: Optional[str]
@@ -249,48 +198,6 @@ class ColorOptimizer(BaseOptimizer):
 
         return color
 
-    def batch_compute_colors(
-        self,
-        processed_columns: List,
-        min_value: float,
-        max_value: float,
-        color_mapper,
-        color_palette,
-    ) -> List[Optional[str]]:
-        """
-        Batch color computation for multiple columns.
-
-        Args:
-            processed_columns: List of processed column data
-            min_value: Minimum value for color mapping
-            max_value: Maximum value for color mapping
-            color_mapper: Color mapper instance
-            color_palette: Color palette instance
-
-        Returns:
-            List of color strings corresponding to input columns
-        """
-        colors = []
-        cache_hits = 0
-
-        with self.memory_optimizer.memory_monitoring("batch_color_computation"):
-            for col in processed_columns:
-                color = self.compute_color_optimized(
-                    col, min_value, max_value, color_mapper, color_palette
-                )
-                colors.append(color)
-
-                # Track cache performance
-                if self._color_cache and color is not None:
-                    cache_hits += 1
-
-        if self.monitoring_enabled:
-            hit_rate = cache_hits / len(processed_columns) if processed_columns else 0
-            logger.debug(
-                f"Batch color computation: {len(colors)} colors, cache hit rate: {hit_rate:.2%}"
-            )
-
-        return colors
 
     def _generate_color_cache_key(
         self, value: float, min_value: float, max_value: float
@@ -327,37 +234,6 @@ class MetadataOptimizer(BaseOptimizer):
         )
 
     @performance_timer("metadata_generation")
-    def generate_metadata_optimized(
-        self, request, value_range: Dict[str, float]
-    ) -> Dict[str, str]:
-        """
-        Optimized metadata generation with caching.
-
-        Args:
-            request: Single region grid request containing region and metric info
-            value_range: Value range information
-
-        Returns:
-            Dictionary containing title and subtitle strings
-        """
-        cache_key = self._generate_metadata_cache_key(request)
-
-        if self._metadata_cache:
-            cached_metadata = self._metadata_cache.get(cache_key)
-            if cached_metadata is not None:
-                logger.debug(f"Metadata cache hit for {request.region_name}")
-                return cached_metadata
-
-        logger.debug(f"Metadata cache miss - generating for {request.region_name}")
-
-        # Generate metadata
-        metadata = self._generate_metadata(request, value_range)
-
-        # Cache the result
-        if self._metadata_cache:
-            self._metadata_cache.put(cache_key, metadata)
-
-        return metadata
 
     def _generate_metadata_cache_key(self, request) -> str:
         """Generate cache key for metadata based on request parameters."""
@@ -414,41 +290,6 @@ class HexagonCollectionOptimizer(BaseOptimizer):
         )
 
     @performance_timer("hexagon_collection_creation")
-    def create_hexagon_collection_optimized(
-        self,
-        processing_result,
-        coord_to_pixel: Dict,
-        request,
-        value_range: Dict[str, float],
-        color_optimizer: ColorOptimizer,
-    ) -> List[Dict]:
-        """
-        Create hexagon collection with optimized processing.
-
-        Args:
-            processing_result: Result from data processing
-            coord_to_pixel: Coordinate to pixel mapping
-            request: Single region grid request
-            value_range: Value range for color mapping
-            color_optimizer: Color optimizer instance
-
-        Returns:
-            List of hexagon dictionaries ready for rendering
-        """
-        hexagons = []
-
-        # Determine processing strategy based on data size
-        if len(processing_result.processed_columns) > self.batch_size:
-            hexagons = self._create_hexagons_streaming(
-                processing_result, coord_to_pixel, request, value_range, color_optimizer
-            )
-        else:
-            hexagons = self._create_hexagons_direct(
-                processing_result, coord_to_pixel, request, value_range, color_optimizer
-            )
-
-        logger.debug(f"Created {len(hexagons)} hexagons with optimization")
-        return hexagons
 
     def _create_hexagons_streaming(
         self, processing_result, coord_to_pixel, request, value_range, color_optimizer

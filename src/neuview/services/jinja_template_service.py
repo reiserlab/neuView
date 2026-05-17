@@ -212,46 +212,7 @@ class JinjaTemplateService:
         template = self.get_template(template_name)
         return template.render(**context)
 
-    def render_string(self, template_string: str, context: Dict[str, Any]) -> str:
-        """
-        Render a template from a string.
 
-        Args:
-            template_string: Template content as string
-            context: Dictionary of variables to pass to template
-
-        Returns:
-            Rendered template content
-
-        Raises:
-            RuntimeError: If environment is not initialized
-        """
-        if not self._initialized or self.env is None:
-            raise RuntimeError(
-                "Jinja environment not initialized. Call setup_jinja_env() first."
-            )
-
-        template = self.env.from_string(template_string)
-        return template.render(**context)
-
-    def template_exists(self, template_name: str) -> bool:
-        """
-        Check if a template exists.
-
-        Args:
-            template_name: Name of the template file
-
-        Returns:
-            True if template exists, False otherwise
-        """
-        if not self._initialized:
-            return False
-
-        try:
-            self.get_template(template_name)
-            return True
-        except Exception:
-            return False
 
     def list_templates(self) -> list[str]:
         """
@@ -270,37 +231,7 @@ class JinjaTemplateService:
 
         return self.env.list_templates()
 
-    def get_template_source(self, template_name: str) -> tuple[str, str, bool]:
-        """
-        Get the source code of a template.
 
-        Args:
-            template_name: Name of the template file
-
-        Returns:
-            Tuple of (source, filename, is_uptodate_function)
-
-        Raises:
-            RuntimeError: If environment is not initialized
-            TemplateNotFound: If template file doesn't exist
-        """
-        if not self._initialized or self.env is None:
-            raise RuntimeError(
-                "Jinja environment not initialized. Call setup_jinja_env() first."
-            )
-
-        template = self.env.get_template(template_name)
-        return (template.source, template.filename or "", lambda: True)
-
-    def invalidate_cache(self) -> None:
-        """
-        Clear the template cache.
-
-        This forces templates to be reloaded from disk on next access.
-        """
-        if self._initialized and self.env is not None and hasattr(self.env, "cache"):
-            self.env.cache.clear()
-            logger.debug("Template cache cleared")
 
     def get_environment(self) -> Optional[Environment]:
         """
@@ -311,43 +242,7 @@ class JinjaTemplateService:
         """
         return self.env
 
-    def is_initialized(self) -> bool:
-        """
-        Check if the template service is initialized.
 
-        Returns:
-            True if initialized, False otherwise
-        """
-        return self._initialized
-
-    def configure_autoescape(self, autoescape: bool = True) -> None:
-        """
-        Configure autoescape setting for the environment.
-
-        Args:
-            autoescape: Whether to enable autoescape
-
-        Raises:
-            RuntimeError: If environment is not initialized
-        """
-        if not self._initialized or self.env is None:
-            raise RuntimeError(
-                "Jinja environment not initialized. Call setup_jinja_env() first."
-            )
-
-        # Recreate environment with new autoescape setting
-        self.env = Environment(
-            loader=FileSystemLoader(str(self.template_dir)),
-            autoescape=autoescape,
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-
-        # Re-register custom filters
-        for name, filter_func in self._custom_filters.items():
-            self.env.filters[name] = filter_func
-
-        logger.debug(f"Autoescape configured: {autoescape}")
 
     def add_global(self, name: str, value: Any) -> None:
         """
@@ -368,20 +263,3 @@ class JinjaTemplateService:
         self.env.globals[name] = value
         logger.debug(f"Added global variable: {name}")
 
-    def validate_template_syntax(
-        self, template_name: str
-    ) -> tuple[bool, Optional[str]]:
-        """
-        Validate the syntax of a template.
-
-        Args:
-            template_name: Name of the template file
-
-        Returns:
-            Tuple of (is_valid, error_message)
-        """
-        try:
-            self.get_template(template_name)
-            return True, None
-        except Exception as e:
-            return False, str(e)

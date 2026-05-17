@@ -388,32 +388,6 @@ class DataProcessingService:
         except Exception as e:
             logger.warning(f"Failed to save cache to {cache_path}: {e}")
 
-    def normalize_data_for_visualization(
-        self, data: List[Dict], normalization_method: str = "minmax"
-    ) -> List[Dict]:
-        """Normalize data for visualization purposes.
-
-        Args:
-            data: List of data dictionaries
-            normalization_method: Method for normalization ('minmax', 'zscore', etc.)
-
-        Returns:
-            Normalized data
-        """
-        if not data:
-            return data
-
-        try:
-            if normalization_method == "minmax":
-                return self._minmax_normalize(data)
-            elif normalization_method == "zscore":
-                return self._zscore_normalize(data)
-            else:
-                logger.warning(f"Unknown normalization method: {normalization_method}")
-                return data
-        except Exception as e:
-            logger.warning(f"Error normalizing data: {e}")
-            return data
 
     def _minmax_normalize(self, data: List[Dict]) -> List[Dict]:
         """Apply min-max normalization to numerical fields."""
@@ -425,50 +399,3 @@ class DataProcessingService:
         # Implementation would go here based on specific requirements
         return data
 
-    def filter_data_by_threshold(
-        self,
-        data: List[Dict],
-        threshold_field: str,
-        threshold_value: float,
-        operator: str = "gte",
-    ) -> List[Dict]:
-        """Filter data based on threshold criteria.
-
-        Args:
-            data: List of data dictionaries
-            threshold_field: Field name to apply threshold to
-            threshold_value: Threshold value
-            operator: Comparison operator ('gte', 'lte', 'gt', 'lt', 'eq')
-
-        Returns:
-            Filtered data list
-        """
-        if not data:
-            return data
-
-        try:
-            filtered_data = []
-            for item in data:
-                if threshold_field not in item:
-                    continue
-
-                value = item[threshold_field]
-                if not isinstance(value, (int, float)):
-                    continue
-
-                if operator == "gte" and value >= threshold_value:
-                    filtered_data.append(item)
-                elif operator == "lte" and value <= threshold_value:
-                    filtered_data.append(item)
-                elif operator == "gt" and value > threshold_value:
-                    filtered_data.append(item)
-                elif operator == "lt" and value < threshold_value:
-                    filtered_data.append(item)
-                elif operator == "eq" and value == threshold_value:
-                    filtered_data.append(item)
-
-            return filtered_data
-
-        except Exception as e:
-            logger.warning(f"Error filtering data: {e}")
-            return data

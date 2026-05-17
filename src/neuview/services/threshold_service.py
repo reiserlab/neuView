@@ -372,43 +372,7 @@ class ThresholdService:
         """
         return self.calculate_thresholds(values, n_bins, method="linear")
 
-    def compute_percentile_thresholds(
-        self, values: pd.Series, percentiles: List[float]
-    ) -> List[float]:
-        """
-        Compute thresholds based on percentiles.
 
-        Args:
-            values: Pandas Series containing numeric values
-            percentiles: List of percentile values (0-100)
-
-        Returns:
-            List of threshold values corresponding to the percentiles
-        """
-        if values.empty:
-            return [0.0] * len(percentiles)
-
-        try:
-            return [float(values.quantile(p / 100.0)) for p in percentiles]
-        except (TypeError, ValueError) as e:
-            logger.warning(f"Error computing percentile thresholds: {e}")
-            return [0.0] * len(percentiles)
-
-    def compute_adaptive_thresholds(
-        self, values: Any, n_bins: int = 5, method: str = "adaptive"
-    ) -> List[float]:
-        """
-        Compute adaptive thresholds using different methods.
-
-        Args:
-            values: Pandas Series, DataFrame, or other data structure containing numeric values
-            n_bins: Number of bins to create
-            method: Threshold computation method
-
-        Returns:
-            List of threshold values
-        """
-        return self.calculate_thresholds(values, n_bins, method)
 
     def validate_thresholds(self, thresholds: List[float]) -> bool:
         """
@@ -437,92 +401,7 @@ class ThresholdService:
         except (TypeError, ValueError):
             return False
 
-    def normalize_thresholds(
-        self, thresholds: List[float], target_min: float = 0.0, target_max: float = 1.0
-    ) -> List[float]:
-        """
-        Normalize thresholds to a target range.
 
-        Args:
-            thresholds: List of threshold values to normalize
-            target_min: Target minimum value
-            target_max: Target maximum value
-
-        Returns:
-            List of normalized threshold values
-        """
-        if not thresholds or len(thresholds) < 2:
-            return thresholds
-
-        try:
-            current_min = min(thresholds)
-            current_max = max(thresholds)
-
-            if current_max == current_min:
-                # All values are the same
-                return [target_min] * len(thresholds)
-
-            # Normalize to target range
-            scale = (target_max - target_min) / (current_max - current_min)
-            return [target_min + (t - current_min) * scale for t in thresholds]
-
-        except Exception as e:
-            logger.error(f"Error normalizing thresholds: {e}")
-            return thresholds
-
-    def filter_by_threshold(
-        self,
-        data: List[Dict[str, Any]],
-        field: str,
-        threshold_value: float,
-        operator: str = "gte",
-        profile_name: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """
-        Filter data based on threshold criteria.
-
-        Args:
-            data: List of data dictionaries to filter
-            field: Field name to apply threshold to
-            threshold_value: Threshold value to compare against
-            operator: Comparison operator ('gte', 'lte', 'gt', 'lt', 'eq')
-            profile_name: Optional profile name to get configured threshold
-
-        Returns:
-            Filtered list of data dictionaries
-        """
-        if profile_name:
-            configured_threshold = self.config.get_threshold_value(profile_name)
-            if configured_threshold != 0.0:  # Use configured value if available
-                threshold_value = configured_threshold
-
-        filtered_data = []
-        for item in data:
-            if field not in item:
-                continue
-
-            try:
-                value = float(item[field])
-
-                if operator == "gte" and value >= threshold_value:
-                    filtered_data.append(item)
-                elif operator == "lte" and value <= threshold_value:
-                    filtered_data.append(item)
-                elif operator == "gt" and value > threshold_value:
-                    filtered_data.append(item)
-                elif operator == "lt" and value < threshold_value:
-                    filtered_data.append(item)
-                elif operator == "eq" and abs(value - threshold_value) < 1e-9:
-                    filtered_data.append(item)
-
-            except (ValueError, TypeError):
-                # Skip items with invalid values
-                continue
-
-        logger.debug(
-            f"Filtered {len(data)} items to {len(filtered_data)} using {field} {operator} {threshold_value}"
-        )
-        return filtered_data
 
     def get_roi_filtering_threshold(
         self, profile_name: str = "roi_filtering_default"

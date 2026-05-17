@@ -278,26 +278,6 @@ class ThresholdConfig:
         """
         return self._profiles.get(name)
 
-    def list_profiles(
-        self, threshold_type: Optional[ThresholdType] = None
-    ) -> List[str]:
-        """
-        List available threshold profiles.
-
-        Args:
-            threshold_type: Optional filter by threshold type
-
-        Returns:
-            List of profile names
-        """
-        if threshold_type is None:
-            return list(self._profiles.keys())
-
-        return [
-            name
-            for name, profile in self._profiles.items()
-            if profile.threshold_type == threshold_type
-        ]
 
     def get_threshold_value(
         self, profile_name: str, context: Optional[str] = None
@@ -429,63 +409,7 @@ class ThresholdConfig:
         )
         return True
 
-    def reset_to_defaults(self, threshold_type: Optional[ThresholdType] = None) -> None:
-        """
-        Reset threshold settings to default values.
 
-        Args:
-            threshold_type: Optional filter to reset only specific type
-        """
-        if threshold_type is None:
-            self._settings.clear()
-            logger.info("Reset all threshold settings to defaults")
-        else:
-            settings_to_remove = []
-            for key, settings in self._settings.items():
-                if settings.profile.threshold_type == threshold_type:
-                    settings_to_remove.append(key)
-
-            for key in settings_to_remove:
-                del self._settings[key]
-
-            logger.info(f"Reset {threshold_type.value} threshold settings to defaults")
-
-    def export_config(self) -> Dict[str, Any]:
-        """
-        Export current threshold configuration.
-
-        Returns:
-            Dictionary containing the complete configuration
-        """
-        config = {
-            "profiles": {
-                name: {
-                    "name": profile.name,
-                    "type": profile.threshold_type.value,
-                    "default_value": profile.default_value,
-                    "min_value": profile.min_value,
-                    "max_value": profile.max_value,
-                    "method": profile.method.value,
-                    "n_bins": profile.n_bins,
-                    "adaptive": profile.adaptive,
-                    "description": profile.description,
-                    "metadata": profile.metadata,
-                }
-                for name, profile in self._profiles.items()
-            },
-            "settings": {
-                key: {
-                    "profile_name": settings.profile.name,
-                    "current_value": settings.current_value,
-                    "computed_thresholds": settings.computed_thresholds,
-                    "cache_key": settings.cache_key,
-                    "last_computed": settings.last_computed,
-                    "metadata": settings.metadata,
-                }
-                for key, settings in self._settings.items()
-            },
-        }
-        return config
 
     def import_config(self, config: Dict[str, Any]) -> bool:
         """
@@ -541,39 +465,7 @@ class ThresholdConfig:
             logger.error(f"Failed to import threshold configuration: {e}")
             return False
 
-    def get_profile_by_type(
-        self, threshold_type: ThresholdType, name_pattern: str = "default"
-    ) -> Optional[ThresholdProfile]:
-        """
-        Get a profile by type and name pattern.
 
-        Args:
-            threshold_type: Type of threshold to find
-            name_pattern: Pattern to match in profile name
-
-        Returns:
-            The first matching profile or None if not found
-        """
-        for profile in self._profiles.values():
-            if (
-                profile.threshold_type == threshold_type
-                and name_pattern in profile.name
-            ):
-                return profile
-        return None
-
-    def validate_all_settings(self) -> List[str]:
-        """
-        Validate all current threshold settings.
-
-        Returns:
-            List of validation error messages (empty if all valid)
-        """
-        errors = []
-        for key, settings in self._settings.items():
-            if not settings.is_valid():
-                errors.append(f"Invalid settings for {key}")
-        return errors
 
 
 # Global threshold configuration instance

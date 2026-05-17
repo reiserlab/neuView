@@ -475,25 +475,3 @@ def memory_limit_context(limit_mb: int):
             optimizer.force_garbage_collection()
 
 
-def estimate_memory_usage(data_size: int, item_size_bytes: int) -> Dict[str, float]:
-    """
-    Estimate memory usage for data processing.
-
-    Args:
-        data_size: Number of data items
-        item_size_bytes: Average size per item in bytes
-
-    Returns:
-        Dictionary with memory estimates in different units
-    """
-    total_bytes = data_size * item_size_bytes
-
-    return {
-        "total_bytes": total_bytes,
-        "total_kb": total_bytes / 1024,
-        "total_mb": total_bytes / (1024 * 1024),
-        "total_gb": total_bytes / (1024 * 1024 * 1024),
-        "recommended_batch_size": max(
-            1, min(10000, (100 * 1024 * 1024) // item_size_bytes)
-        ),
-    }

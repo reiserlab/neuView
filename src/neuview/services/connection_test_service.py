@@ -42,23 +42,3 @@ class ConnectionTestService:
         except Exception as e:
             return Err(f"Connection test failed: {str(e)}")
 
-    def get_connection_info(self) -> dict:
-        """Get basic connection information without testing."""
-        try:
-            # Try to get basic info without making a network call
-            return {
-                "server_configured": hasattr(self.connector, "server")
-                and self.connector.server is not None,
-                "credentials_configured": hasattr(self.connector, "token")
-                and self.connector.token is not None,
-                "client_initialized": hasattr(self.connector, "client")
-                and self.connector.client is not None,
-            }
-        except Exception as e:
-            logger.debug(f"Failed to get connection info: {e}")
-            return {
-                "server_configured": False,
-                "credentials_configured": False,
-                "client_initialized": False,
-                "error": str(e),
-            }

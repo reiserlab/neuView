@@ -216,28 +216,6 @@ class ROICombinationService:
             else:
                 roi["post_percentage"] = 0.0
 
-    def get_roi_side_mapping(self, roi_name: str) -> List[str]:
-        """
-        Get possible sided versions of an ROI name.
-
-        This is useful for neuroglancer integration where a combined ROI entry
-        might need to map back to specific sided ROIs.
-
-        Args:
-            roi_name: Base ROI name (e.g., "ME", "LO_layer_1")
-
-        Returns:
-            List of possible sided ROI names
-        """
-        # Generate possible side variants
-        side_variants = []
-
-        # Simple suffixes
-        side_variants.extend(
-            [f"{roi_name}_L", f"{roi_name}_R", f"{roi_name}(L)", f"{roi_name}(R)"]
-        )
-
-        return side_variants
 
     def is_sided_roi(self, roi_name: str) -> bool:
         """
@@ -259,28 +237,6 @@ class ROICombinationService:
 
         return False
 
-    def extract_side_from_roi(self, roi_name: str) -> Optional[str]:
-        """
-        Extract side information from ROI name.
-
-        Args:
-            roi_name: ROI name (e.g., "ME_L", "LO(R)")
-
-        Returns:
-            Side character ("L" or "R") or None if no side found
-        """
-        if not roi_name:
-            return None
-
-        # Try each pattern to extract side
-        for pattern in self.ROI_SIDE_PATTERNS:
-            match = re.match(pattern, roi_name)
-            if match:
-                groups = match.groups()
-                if len(groups) >= 2:
-                    return groups[1]  # Side is always the second group
-
-        return None
 
     def get_statistics(
         self, original_data: List[Dict[str, Any]], combined_data: List[Dict[str, Any]]

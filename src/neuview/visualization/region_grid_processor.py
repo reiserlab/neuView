@@ -255,62 +255,7 @@ class RegionGridProcessor:
         else:
             return "right"  # No mirroring for left soma side
 
-    def validate_region_side_combination(self, region: str, side: str) -> bool:
-        """
-        Validate that a region and side combination is valid.
 
-        Args:
-            region: Region name to validate
-            side: Side identifier to validate
-
-        Returns:
-            True if the combination is valid, False otherwise
-        """
-        if region not in REGION_ORDER:
-            logger.warning(f"Invalid region: {region}. Valid regions: {REGION_ORDER}")
-            return False
-
-        if side not in ["L", "R"]:
-            logger.warning(f"Invalid side: {side}. Valid sides: ['L', 'R']")
-            return False
-
-        return True
-
-    def get_processing_statistics(self, region_grids: Dict) -> Dict:
-        """
-        Get statistics about the processing results.
-
-        Args:
-            region_grids: Dictionary of processed region grids
-
-        Returns:
-            Dictionary containing processing statistics
-        """
-        stats = {
-            "total_region_side_combinations": len(region_grids),
-            "regions_processed": set(),
-            "sides_processed": set(),
-            "successful_generations": 0,
-            "failed_generations": 0,
-        }
-
-        for region_side_key, grid_data in region_grids.items():
-            if "_" in region_side_key:
-                region, side = region_side_key.split("_", 1)
-                stats["regions_processed"].add(region)
-                stats["sides_processed"].add(side)
-
-            # Check if generation was successful (has content)
-            if grid_data.get("synapse_content") and grid_data.get("cell_content"):
-                stats["successful_generations"] += 1
-            else:
-                stats["failed_generations"] += 1
-
-        # Convert sets to lists for JSON serialization
-        stats["regions_processed"] = list(stats["regions_processed"])
-        stats["sides_processed"] = list(stats["sides_processed"])
-
-        return stats
 
 
 class RegionGridProcessorFactory:
@@ -331,13 +276,3 @@ class RegionGridProcessorFactory:
         """
         return RegionGridProcessor(data_processor)
 
-    @staticmethod
-    def create_with_default_data_processor() -> RegionGridProcessor:
-        """
-        Create a RegionGridProcessor with a default DataProcessor.
-
-        Returns:
-            New RegionGridProcessor instance with default data processor
-        """
-        data_processor = DataProcessor()
-        return RegionGridProcessor(data_processor)

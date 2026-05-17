@@ -165,16 +165,6 @@ class Neuron:
             coord is not None for coord in [self.soma_x, self.soma_y, self.soma_z]
         )
 
-    def get_roi_synapse_count(self, roi: str, synapse_type: str = "total") -> int:
-        """Get synapse count for a specific ROI."""
-        if roi not in self.roi_data:
-            return 0
-
-        roi_synapses = self.roi_data[roi]
-        if synapse_type == "total":
-            return roi_synapses.get("pre", 0) + roi_synapses.get("post", 0)
-        else:
-            return roi_synapses.get(synapse_type, 0)
 
 
 @dataclass
@@ -225,21 +215,6 @@ class NeuronCollection:
         """List of all body IDs."""
         return [neuron.body_id for neuron in self.neurons]
 
-    def get_soma_side_counts(self) -> Dict[str, int]:
-        """Get count of neurons by soma side."""
-        counts = {"left": 0, "right": 0, "middle": 0, "unknown": 0}
-
-        for neuron in self.neurons:
-            if neuron.soma_side == SomaSide.LEFT:
-                counts["left"] += 1
-            elif neuron.soma_side == SomaSide.RIGHT:
-                counts["right"] += 1
-            elif neuron.soma_side == SomaSide.MIDDLE:
-                counts["middle"] += 1
-            else:
-                counts["unknown"] += 1
-
-        return counts
 
     def get_synapse_statistics(self) -> Dict[str, float]:
         """Calculate synapse statistics for the collection."""

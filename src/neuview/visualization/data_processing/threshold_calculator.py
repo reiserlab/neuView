@@ -169,49 +169,6 @@ class ThresholdCalculator:
             global_max_cells=global_max_cells,
         )
 
-    def calculate_adaptive_thresholds(
-        self,
-        column_data: List[ColumnData],
-        metric_type: MetricType,
-        target_distribution: str = "balanced",
-    ) -> ThresholdData:
-        """
-        Calculate adaptive thresholds based on data distribution characteristics.
-
-        Args:
-            column_data: List of column data to analyze
-            metric_type: Type of metric to calculate thresholds for
-            target_distribution: Target distribution ('balanced', 'log_scale', 'data_driven')
-
-        Returns:
-            ThresholdData containing adaptive thresholds
-        """
-        values = self._extract_metric_values(
-            column_data, metric_type, exclude_zeros=True
-        )
-
-        if not values:
-            return ThresholdData(min_value=0.0, max_value=1.0)
-
-        values_array = np.array(values)
-
-        if target_distribution == "balanced":
-            # Equal number of data points in each bin
-            thresholds = self._calculate_balanced_thresholds(values_array)
-        elif target_distribution == "log_scale":
-            # Logarithmic scaling for highly skewed data
-            thresholds = self._calculate_log_scale_thresholds(values_array)
-        elif target_distribution == "data_driven":
-            # Use data characteristics to determine optimal thresholds
-            thresholds = self._calculate_data_driven_thresholds(values_array)
-        else:
-            raise ValueError(f"Unknown target_distribution: {target_distribution}")
-
-        return ThresholdData(
-            all_layers=thresholds,
-            min_value=float(values_array.min()),
-            max_value=float(values_array.max()),
-        )
 
     def _extract_metric_values(
         self,
@@ -463,71 +420,6 @@ class ThresholdCalculator:
         """
         return self.validation_manager.validate_threshold_data(thresholds)
 
-    def optimize_thresholds(
-        self,
-        column_data: List[ColumnData],
-        metric_type: MetricType,
-        target_bins: int = 5,
-        max_iterations: int = 10,
-    ) -> ThresholdData:
-        """
-        Optimize thresholds to achieve balanced data distribution.
-
-        Args:
-            column_data: List of column data to analyze
-            metric_type: Type of metric to optimize thresholds for
-            target_bins: Target number of bins
-            max_iterations: Maximum optimization iterations
-
-        Returns:
-            ThresholdData containing optimized thresholds
-        """
-        values = self._extract_metric_values(
-            column_data, metric_type, exclude_zeros=True
-        )
-
-        if not values:
-            return ThresholdData(min_value=0.0, max_value=1.0)
-
-        values_array = np.array(values)
-        best_thresholds = None
-        best_score = float("inf")
-
-        # Try different threshold calculation methods
-        methods = ["percentile", "quantile", "data_driven"]
-
-        for method in methods:
-            for iteration in range(max_iterations):
-                # Calculate thresholds with slight variations
-                num_thresholds = (
-                    target_bins + iteration % 3 - 1
-                )  # Vary number of thresholds
-                if num_thresholds < 2:
-                    num_thresholds = 2
-
-                try:
-                    thresholds = self._calculate_threshold_values(
-                        values, num_thresholds, method
-                    )
-
-                    # Score based on distribution balance
-                    score = self._score_threshold_distribution(values_array, thresholds)
-
-                    if score < best_score:
-                        best_score = score
-                        best_thresholds = thresholds
-
-                except Exception as e:
-                    self.logger.warning(
-                        f"Error optimizing thresholds with method {method}: {e}"
-                    )
-                    continue
-
-        return ThresholdData(
-            all_layers=best_thresholds or [],
-            min_value=float(values_array.min()),
-            max_value=float(values_array.max()),
-        )
 
     def _score_threshold_distribution(
         self, values_array: np.ndarray, thresholds: List[float]

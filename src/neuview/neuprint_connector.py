@@ -440,14 +440,6 @@ class NeuPrintConnector:
             else:
                 self._soma_sides_cache.clear()
 
-    def restore_original_client(self):
-        """Restore the original fetch_custom and fetch_datasets methods to the client."""
-        if hasattr(self, "_original_fetch_custom") and self.client:
-            self.client.fetch_custom = self._original_fetch_custom
-            logger.debug("Restored original client fetch_custom method")
-        if hasattr(self, "_original_fetch_datasets") and self.client:
-            self.client.fetch_datasets = self._original_fetch_datasets
-            logger.debug("Restored original client fetch_datasets method")
 
     def get_database_metadata(self) -> Dict[str, Any]:
         """
@@ -553,14 +545,6 @@ class NeuPrintConnector:
                     "uuid": "Unknown",
                 }
 
-    def clear_global_cache(self):
-        """Clear the global cache for ROI hierarchy and meta data."""
-        global _GLOBAL_CACHE
-        _GLOBAL_CACHE["roi_hierarchy"] = None
-        _GLOBAL_CACHE["meta_data"] = None
-        _GLOBAL_CACHE["dataset_info"].clear()
-        _GLOBAL_CACHE["cache_timestamp"] = None
-        logger.info("Cleared global cache for ROI hierarchy and meta data")
 
     def get_cache_stats(self) -> Dict[str, Any]:
         """

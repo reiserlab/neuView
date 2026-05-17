@@ -233,102 +233,12 @@ def validate_type(value: Any, expected_type: Type, field_name: str) -> None:
         )
 
 
-def validate_positive_number(value: Union[int, float], field_name: str) -> None:
-    """
-    Validate that a numeric value is positive.
-
-    Args:
-        value: The numeric value to validate
-        field_name: Name of the field for error reporting
-
-    Raises:
-        ValidationError: If value is not positive
-    """
-    validate_type(value, (int, float), field_name)
-    if value <= 0:
-        raise ValidationError(
-            f"Field '{field_name}' must be positive, got {value}",
-            field=field_name,
-            value=value,
-        )
 
 
-def validate_file_path(
-    path: Union[str, Path], field_name: str, must_exist: bool = False
-) -> Path:
-    """
-    Validate and convert a file path.
-
-    Args:
-        path: The path to validate
-        field_name: Name of the field for error reporting
-        must_exist: Whether the path must already exist
-
-    Returns:
-        Validated Path object
-
-    Raises:
-        ValidationError: If path validation fails
-    """
-    validate_not_none(path, field_name)
-
-    try:
-        path_obj = Path(path)
-    except (TypeError, ValueError) as e:
-        raise ValidationError(
-            f"Field '{field_name}' is not a valid path: {e}",
-            field=field_name,
-            value=path,
-        )
-
-    if must_exist and not path_obj.exists():
-        raise ValidationError(
-            f"Path '{path}' does not exist", field=field_name, value=path
-        )
-
-    return path_obj
 
 
-def validate_non_empty_list(value: List[Any], field_name: str) -> None:
-    """
-    Validate that a list is not empty.
-
-    Args:
-        value: The list to validate
-        field_name: Name of the field for error reporting
-
-    Raises:
-        ValidationError: If list is empty or not a list
-    """
-    validate_type(value, list, field_name)
-    if not value:
-        raise ValidationError(
-            f"Field '{field_name}' cannot be empty", field=field_name, value=value
-        )
 
 
-def validate_dict_keys(
-    value: Dict[str, Any], required_keys: List[str], field_name: str
-) -> None:
-    """
-    Validate that a dictionary contains all required keys.
-
-    Args:
-        value: The dictionary to validate
-        required_keys: List of required keys
-        field_name: Name of the field for error reporting
-
-    Raises:
-        ValidationError: If required keys are missing
-    """
-    validate_type(value, dict, field_name)
-    missing_keys = [key for key in required_keys if key not in value]
-    if missing_keys:
-        raise ValidationError(
-            f"Field '{field_name}' missing required keys: {missing_keys}",
-            field=field_name,
-            value=list(value.keys()),
-        )
 
 
 def safe_operation(operation_name: str, operation_func, *args, **kwargs):

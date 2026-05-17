@@ -314,40 +314,6 @@ class ResourceManagerService:
             logger.error(f"Failed to copy static files: {e}")
             return False
 
-    def verify_static_content(self) -> Dict[str, bool]:
-        """
-        Verify that all expected static content has been copied to output.
-
-        Returns:
-            Dictionary with verification results
-        """
-        results = {}
-        directories = self.setup_output_directories()
-        output_static_dir = directories["static"]
-
-        # Check for essential directories
-        essential_dirs = ["css", "js", "images"]
-        for dir_name in essential_dirs:
-            dir_path = output_static_dir / dir_name
-            results[f"dir_{dir_name}"] = dir_path.exists()
-            if dir_path.exists():
-                file_count = len(list(dir_path.rglob("*")))
-                results[f"dir_{dir_name}_files"] = file_count
-
-        # Check for essential files
-        essential_files = [
-            "css/neuron-page.css",
-            "js/jquery-3.7.1.min.js",
-            "js/neuron-page.js",
-            "js/neuroglancer-url-generator.js",
-        ]
-
-        for file_path in essential_files:
-            full_path = output_static_dir / file_path
-            results[f"file_{file_path.replace('/', '_')}"] = full_path.exists()
-
-        return results
-
     def _copy_js_files_selective(
         self, source_dir: Path, dest_dir: Path, force_copy: bool = False
     ) -> None:
@@ -475,39 +441,6 @@ class ResourceManagerService:
             logger.debug(f"Error checking JS file existence, will copy: {e}")
             return True
 
-    def check_static_files_exist(self) -> Dict[str, bool]:
-        """
-        Check if essential static files already exist in the output directory.
-
-        Returns:
-            Dictionary mapping file categories to their existence status
-        """
-        try:
-            directories = self.setup_output_directories()
-            output_static_dir = directories["static"]
-            output_css_dir = directories["css"]
-            output_js_dir = directories["js"]
-
-            results = {
-                "css_dir": output_css_dir.exists(),
-                "js_dir": output_js_dir.exists(),
-                "neuroglancer_js": (
-                    output_js_dir / "neuroglancer-url-generator.js"
-                ).exists(),
-                "essential_css": (output_css_dir / "neuron-page.css").exists(),
-                "essential_js": all(
-                    [
-                        (output_js_dir / "jquery-3.7.1.min.js").exists(),
-                        (output_js_dir / "neuron-page.js").exists(),
-                    ]
-                ),
-                "images_dir": (output_static_dir / "images").exists(),
-            }
-
-            return results
-        except Exception as e:
-            logger.error(f"Error checking static files existence: {e}")
-            return {}
 
     def clean_dynamic_files(
         self, neuron_type: str = None, soma_side: str = None
@@ -590,23 +523,6 @@ class ResourceManagerService:
             logger.error(f"Failed to create directory {directory_path}: {e}")
             return False
 
-    def get_file_size(self, file_path: Path) -> Optional[int]:
-        """
-        Get the size of a file in bytes.
-
-        Args:
-            file_path: Path to the file
-
-        Returns:
-            File size in bytes, or None if file doesn't exist or error occurs
-        """
-        try:
-            if file_path.exists() and file_path.is_file():
-                return file_path.stat().st_size
-            return None
-        except Exception as e:
-            logger.error(f"Failed to get file size for {file_path}: {e}")
-            return None
 
     def list_directory_contents(
         self, directory_path: Path, pattern: str = "*", recursive: bool = False
@@ -635,118 +551,6 @@ class ResourceManagerService:
             logger.error(f"Failed to list directory contents for {directory_path}: {e}")
             return []
 
-    def copy_file(
-        self, source_path: Path, dest_path: Path, create_dirs: bool = True
-    ) -> bool:
-        """
-        Copy a single file from source to destination.
 
-        Args:
-            source_path: Source file path
-            dest_path: Destination file path
-            create_dirs: If True, create destination directories if they don't exist
 
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            if not source_path.exists():
-                logger.error(f"Source file does not exist: {source_path}")
-                return False
 
-            if create_dirs:
-                dest_path.parent.mkdir(parents=True, exist_ok=True)
-
-            shutil.copy2(source_path, dest_path)
-            logger.debug(f"Copied {source_path} to {dest_path}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to copy {source_path} to {dest_path}: {e}")
-            return False
-
-    def move_file(
-        self, source_path: Path, dest_path: Path, create_dirs: bool = True
-    ) -> bool:
-        """
-        Move a file from source to destination.
-
-        Args:
-            source_path: Source file path
-            dest_path: Destination file path
-            create_dirs: If True, create destination directories if they don't exist
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            if not source_path.exists():
-                logger.error(f"Source file does not exist: {source_path}")
-                return False
-
-            if create_dirs:
-                dest_path.parent.mkdir(parents=True, exist_ok=True)
-
-            shutil.move(str(source_path), str(dest_path))
-            logger.debug(f"Moved {source_path} to {dest_path}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to move {source_path} to {dest_path}: {e}")
-            return False
-
-    def delete_file(self, file_path: Path) -> bool:
-        """
-        Delete a file.
-
-        Args:
-            file_path: Path to the file to delete
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            if file_path.exists() and file_path.is_file():
-                file_path.unlink()
-                logger.debug(f"Deleted file: {file_path}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to delete file {file_path}: {e}")
-            return False
-
-    def get_resource_stats(self) -> Dict[str, Any]:
-        """
-        Get statistics about managed resources.
-
-        Returns:
-            Dictionary containing resource statistics
-        """
-        try:
-            stats = {
-                "output_dir": str(self.output_dir),
-                "output_dir_exists": self.output_dir.exists(),
-                "template_dir": str(self.template_dir),
-                "template_dir_exists": self.template_dir.exists(),
-                "directories": {},
-                "file_counts": {},
-            }
-
-            if self.output_dir.exists():
-                # Get directory information
-                for subdir in ["types", "eyemaps", "static", ".cache"]:
-                    dir_path = self.output_dir / subdir
-                    stats["directories"][subdir] = {
-                        "exists": dir_path.exists(),
-                        "path": str(dir_path),
-                    }
-                    if dir_path.exists():
-                        files = self.list_directory_contents(dir_path, recursive=True)
-                        stats["file_counts"][subdir] = len(
-                            [f for f in files if f.is_file()]
-                        )
-
-            return stats
-
-        except Exception as e:
-            logger.error(f"Failed to get resource stats: {e}")
-            return {"error": str(e)}

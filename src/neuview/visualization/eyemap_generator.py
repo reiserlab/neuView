@@ -154,44 +154,7 @@ class EyemapGenerator:
                 logger.error(f"Failed to resolve services from container: {e}")
                 raise
 
-    @classmethod
-    def create_with_defaults(cls, **config_overrides) -> "EyemapGenerator":
-        """
-        Create an EyemapGenerator with default configuration and dependency injection.
 
-        Args:
-            **config_overrides: Configuration parameters to override
-
-        Returns:
-            Configured EyemapGenerator instance
-
-        Raises:
-            ValidationError: If configuration is invalid
-        """
-        container = get_default_container()
-        if config_overrides:
-            # Create updated configuration
-            base_config = container.resolve(EyemapConfiguration)
-            updated_config = base_config.update(**config_overrides)
-            # Create new container with updated config
-            container = EyemapServiceContainer(updated_config)
-
-        return cls(service_container=container)
-
-    @classmethod
-    def create_from_container(
-        cls, container: EyemapServiceContainer
-    ) -> "EyemapGenerator":
-        """
-        Create an EyemapGenerator from an existing service container.
-
-        Args:
-            container: Configured service container
-
-        Returns:
-            EyemapGenerator instance using the provided container
-        """
-        return cls(service_container=container)
 
     @performance_timer("generate_comprehensive_region_hexagonal_grids")
     @performance_timer("comprehensive_grid_generation")
@@ -805,70 +768,6 @@ class EyemapGenerator:
                     operation="single_region_grid_generation",
                 ) from e
 
-    def _calculate_coordinate_ranges(
-        self, all_possible_columns: List[Dict]
-    ) -> Dict[str, int]:
-        """
-        Calculate coordinate ranges from all possible columns.
-
-        Analyzes the hex1 and hex2 coordinates across all columns to determine
-        the minimum values. This is used for coordinate system calculations
-        and grid positioning.
-
-        Args:
-            all_possible_columns: List of column dictionaries with hex1, hex2 coordinates
-
-        Returns:
-            Dictionary containing min_hex1 and min_hex2 values
-
-        Raises:
-            DataProcessingError: If coordinate calculation fails
-        """
-        with ErrorContext("coordinate_range_calculation"):
-            try:
-                # Validate input
-                if not all_possible_columns:
-                    raise DataProcessingError(
-                        "Cannot calculate coordinate ranges from empty column list",
-                        operation="coordinate_range_calculation",
-                    )
-
-                # Validate required fields exist
-                for i, col in enumerate(all_possible_columns):
-                    if "hex1" not in col or "hex2" not in col:
-                        raise DataProcessingError(
-                            f"Column at index {i} missing required coordinates (hex1/hex2)",
-                            operation="coordinate_range_calculation",
-                            data_context={
-                                "column_index": i,
-                                "available_keys": list(col.keys()),
-                            },
-                        )
-
-                # Calculate ranges with validation
-                hex1_values = [col["hex1"] for col in all_possible_columns]
-                hex2_values = [col["hex2"] for col in all_possible_columns]
-
-                if not all(
-                    isinstance(v, (int, float)) for v in hex1_values + hex2_values
-                ):
-                    raise DataProcessingError(
-                        "All coordinate values must be numeric",
-                        operation="coordinate_range_calculation",
-                    )
-
-                result = {"min_hex1": min(hex1_values), "min_hex2": min(hex2_values)}
-
-                logger.debug(f"Calculated coordinate ranges: {result}")
-                return result
-
-            except Exception as e:
-                if isinstance(e, DataProcessingError):
-                    raise
-                raise DataProcessingError(
-                    f"Failed to calculate coordinate ranges: {str(e)}",
-                    operation="coordinate_range_calculation",
-                ) from e
 
     def _determine_value_range(self, thresholds: Optional[Dict]) -> Dict[str, float]:
         """
@@ -1156,59 +1055,6 @@ class EyemapGenerator:
         return processed_hexagons
 
 
-    def clear_performance_caches(self) -> Dict[str, Union[int, str]]:
-        """
-        Clear all performance caches and return cleanup statistics.
-
-        This method now delegates to the PerformanceManager for centralized
-        cache management and cleanup operations.
-
-        Returns:
-            Dictionary with cache cleanup counts
-        """
-        # Fallback to original implementation
-        with ErrorContext("performance_cache_clearing"):
-            try:
-                if not self.performance_enabled or not self.optimizers:
-                    return {"message": "Performance optimization not enabled"}
-
-                cleanup_counts = {}
-                errors = []
-
-                for name, optimizer in self.optimizers.items():
-                    try:
-                        if hasattr(optimizer, "cache_manager"):
-                            cleanup_result = optimizer.cache_manager.cleanup_all()
-                            cleanup_counts.update(
-                                {f"{name}_{k}": v for k, v in cleanup_result.items()}
-                            )
-                    except Exception as e:
-                        logger.warning(f"Failed to clear cache for {name}: {e}")
-                        errors.append(f"{name}: {str(e)}")
-
-                # Force garbage collection
-                if self.memory_optimizer:
-                    try:
-                        gc_stats = self.memory_optimizer.force_garbage_collection()
-                        cleanup_counts["garbage_collection"] = gc_stats
-                    except Exception as e:
-                        logger.warning(f"Failed to run garbage collection: {e}")
-                        errors.append(f"garbage_collection: {str(e)}")
-
-                if errors:
-                    cleanup_counts["errors"] = errors
-
-                logger.debug(
-                    f"Cache cleanup completed with {len(cleanup_counts)} results"
-                )
-                return cleanup_counts
-
-            except Exception as e:
-                from .exceptions import PerformanceError
-
-                raise PerformanceError(
-                    f"Failed to clear performance caches: {str(e)}"
-                ) from e
 
 
     def _determine_mirror_side_with_context(

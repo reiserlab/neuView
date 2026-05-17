@@ -2,8 +2,6 @@
     <div class="container">
         <p>Generated on {{ generation_time.strftime('%Y-%m-%d %H:%M') }} • Dataset: {{ config.neuprint.dataset }} • Server: {{ config.neuprint.server }} • Generated via neuView {{ git_version }}</p>
     </div>
-
-    <!-- Floating Feedback Button -->
     <a href="#" id="feedback-btn" class="feedback-floating-btn" title="Report an issue or provide feedback by creating a GitHub issue (account required).">
         <img src="{{ '../' if is_neuron_page else '' }}static/icons/feedback.svg" alt="Feedback" class="feedback-icon">
     </a>

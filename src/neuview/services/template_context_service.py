@@ -211,32 +211,6 @@ class TemplateContextService:
 
         return None
 
-    def prepare_minimal_context(
-        self, neuron_type: str, soma_side: str, **kwargs
-    ) -> Dict[str, Any]:
-        """Prepare minimal context for simple template rendering.
-
-        Args:
-            neuron_type: The neuron type name
-            soma_side: Soma side filter used
-            **kwargs: Additional context items
-
-        Returns:
-            Minimal context dictionary
-        """
-        context = {
-            "config": self.config,
-            "neuron_type": neuron_type,
-            "soma_side": soma_side,
-            "generation_time": datetime.now(),
-            "git_version": get_git_version(),
-            "is_neuron_page": True,
-        }
-
-        # Add any additional items
-        context.update(kwargs)
-
-        return context
 
     def add_neuroglancer_variables(
         self, context: Dict[str, Any], neuroglancer_vars: Dict[str, Any]
@@ -264,23 +238,6 @@ class TemplateContextService:
 
         return context
 
-    def validate_context(self, context: Dict[str, Any]) -> bool:
-        """Validate that context contains required keys for template rendering.
-
-        Args:
-            context: Context dictionary to validate
-
-        Returns:
-            True if context is valid, False otherwise
-        """
-        required_keys = ["config", "neuron_type", "soma_side", "generation_time"]
-
-        for key in required_keys:
-            if key not in context:
-                logger.warning(f"Missing required context key: {key}")
-                return False
-
-        return True
 
     def prepare_summary_statistics(
         self,

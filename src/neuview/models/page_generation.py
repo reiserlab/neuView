@@ -118,15 +118,6 @@ class AnalysisResults:
     layer_analysis: Optional[Dict[str, Any]] = None
     column_analysis: Optional[Dict[str, Any]] = None
 
-    def has_any_analysis(self) -> bool:
-        """Check if any analysis results are available."""
-        return any(
-            [
-                self.roi_summary is not None,
-                self.layer_analysis is not None,
-                self.column_analysis is not None,
-            ]
-        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for template context."""
@@ -170,25 +161,6 @@ class PageGenerationContext:
     type_region: Optional[str] = None
     additional_context: Dict[str, Any] = field(default_factory=dict)
 
-    def to_template_context(self) -> Dict[str, Any]:
-        """Convert to dictionary suitable for template rendering."""
-        context = {
-            "neuron_type": self.request.get_neuron_name(),
-            "soma_side": self.request.get_soma_side(),
-            "neuron_data": self.request.get_neuron_data(),
-            "connectivity_data": self.request.get_neuron_data().get("connectivity", {}),
-            **self.analysis_results.to_dict(),
-            **self.urls.to_dict(),
-            **self.additional_context,
-        }
-
-        if self.neuroglancer_vars:
-            context.update(self.neuroglancer_vars)
-
-        if self.type_region:
-            context["type_region"] = self.type_region
-
-        return context
 
 
 @dataclass

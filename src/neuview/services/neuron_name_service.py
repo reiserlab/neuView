@@ -20,28 +20,6 @@ class NeuronNameService:
         """Convert neuron name to filename format (same logic as PageGenerator._generate_filename)."""
         return neuron_name.replace("/", "_").replace(" ", "_")
 
-    def get_neuron_name_from_cache_or_db(self, filename: str, connector=None) -> str:
-        """Get original neuron name from cache first, then fallback to database lookup."""
-        # First try to find the original neuron name in cached data
-        if self.cache_manager:
-            cached_data_lazy = self.cache_manager.get_cached_data_lazy()
-            for neuron_type in cached_data_lazy.keys():
-                cache_data = cached_data_lazy.get(neuron_type)
-                if cache_data and cache_data.original_neuron_name:
-                    generated_filename = self.neuron_name_to_filename(
-                        cache_data.original_neuron_name
-                    )
-                    if generated_filename == filename:
-                        logger.debug(
-                            f"Found original neuron name from cache: {filename} -> {cache_data.original_neuron_name}"
-                        )
-                        return cache_data.original_neuron_name
-
-        # Fallback to database lookup
-        logger.debug(
-            f"Cache miss for filename {filename}, falling back to database lookup"
-        )
-        return self.filename_to_neuron_name(filename, connector)
 
     def filename_to_neuron_name(self, filename: str, connector=None) -> str:
         """Convert filename back to original neuron name using database lookup."""

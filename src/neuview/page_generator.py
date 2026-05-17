@@ -301,46 +301,6 @@ class PageGenerator:
             partner_data, direction, connected_bids
         )
 
-    def _setup_jinja_env(self):
-        """Set up Jinja2 environment with templates."""
-
-        # Check if template manager is available
-        if hasattr(self, "template_manager") and self.template_manager:
-            # Use template manager with advanced caching and strategy support
-            utility_services = {
-                "number_formatter": self.number_formatter,
-                "percentage_formatter": self.percentage_formatter,
-                "synapse_formatter": self.synapse_formatter,
-                "neurotransmitter_formatter": self.neurotransmitter_formatter,
-                "mathematical_formatter": self.mathematical_formatter,
-                "html_utils": self.html_utils,
-                "text_utils": self.text_utils,
-                "roi_abbr_filter": self._roi_abbr_filter,
-                "get_partner_body_ids": self._get_partner_body_ids,
-                "queue_service": self.queue_service,
-            }
-
-            # Add custom filters and globals to template manager
-            for name, service in utility_services.items():
-                if hasattr(service, "format_number"):
-                    self.template_manager.add_custom_filter(
-                        "format_number", service.format_number
-                    )
-                elif hasattr(service, "format_percentage"):
-                    self.template_manager.add_custom_filter(
-                        "format_percentage", service.format_percentage
-                    )
-                elif name == "mathematical_formatter" and hasattr(service, "log_ratio"):
-                    self.template_manager.add_custom_filter(
-                        "log_ratio", service.log_ratio
-                    )
-                elif callable(service):
-                    self.template_manager.add_custom_filter(name, service)
-                else:
-                    self.template_manager.add_global_variable(name, service)
-
-            # Get Jinja environment from template manager's primary strategy
-            self.env = self.template_manager._primary_strategy.get_environment()
 
     def _generate_neuron_search_js(self):
         """Generate neuron-search.js with embedded neuron types data."""
@@ -371,44 +331,8 @@ class PageGenerator:
             neuron_type, neuron_data, soma_side, connector
         )
 
-    def _select_bodyid_by_synapse_percentile(
-        self, neuron_type: str, neurons_df: pd.DataFrame, percentile: float = 95
-    ) -> int:
-        """
-        Select bodyID of neuron closest to the specified percentile of synapse count.
 
-        Delegates to the neuron selection service.
-        """
-        return self.neuron_selection_service.select_bodyid_by_synapse_percentile(
-            neuron_type, neurons_df, percentile
-        )
 
-    def _select_bodyids_by_soma_side(
-        self,
-        neuron_type: str,
-        neurons_df: pd.DataFrame,
-        soma_side: Optional[str],
-        percentile: float = 95,
-    ) -> List[int]:
-        """
-        Select bodyID(s) based on soma side and synapse count percentiles.
-
-        Delegates to the neuron selection service.
-        """
-        return self.neuron_selection_service.select_bodyids_by_soma_side(
-            neuron_type, neurons_df, soma_side, percentile
-        )
-
-    def _get_connected_bids(self, visible_neurons: List[int], connector) -> Dict:
-        """
-        Get bodyIds of the top cell from each type that are connected with the
-        current 'visible_neuron' in the Neuroglancer view.
-
-        Delegates to the database query service.
-        """
-        return self.database_query_service.get_connected_bodyids(
-            visible_neurons, connector
-        )
 
     def _generate_neuprint_url(
         self, neuron_type: str, neuron_data: Dict[str, Any]
@@ -428,70 +352,6 @@ class PageGenerator:
             neuron_type, neuron_data
         )
 
-    def _get_available_soma_sides(self, neuron_type: str, connector) -> Dict[str, str]:
-        """
-        Get available soma sides for a neuron type and generate navigation links.
-
-        Args:
-            neuron_type: The neuron type name
-            connector: NeuPrint connector instance
-
-        Returns:
-            Dict with soma sides and their corresponding filenames
-        """
-        try:
-            # Use optimized query for single neuron type instead of querying all types
-            available_sides = connector.get_soma_sides_for_type(neuron_type)
-
-            # Get neuron data to check for unknown soma sides
-            neuron_data = connector.get_neuron_data(neuron_type, "combined")
-            neurons_df = neuron_data.get("neurons", pd.DataFrame())
-
-            # Calculate unknown soma side count
-            total_count = len(neurons_df) if not neurons_df.empty else 0
-            assigned_count = 0
-            if not neurons_df.empty and "somaSide" in neurons_df.columns:
-                assigned_count = len(
-                    neurons_df[neurons_df["somaSide"].isin(["L", "R", "M"])]
-                )
-            unknown_count = total_count - assigned_count
-
-            # Map soma side codes to readable names and generate filenames
-            side_mapping = {
-                "L": ("left", "_L"),
-                "R": ("right", "_R"),
-                "M": ("middle", "_M"),
-            }
-
-            soma_side_links = {}
-
-            # Create navigation if:
-            # 1. Multiple assigned sides exist, OR
-            # 2. Unknown sides exist alongside any assigned side
-            should_create_navigation = len(available_sides) > 1 or (
-                unknown_count > 0 and len(available_sides) > 0
-            )
-
-            if should_create_navigation:
-                # Add individual sides
-                for side_code in available_sides:
-                    if side_code in side_mapping:
-                        side_name, file_suffix = side_mapping[side_code]
-                        # Generate filename for this soma side
-                        clean_type = neuron_type.replace("/", "_").replace(" ", "_")
-                        filename = f"{clean_type}{file_suffix}.html"
-                        soma_side_links[side_name] = filename
-
-                # Add "combined" link (no suffix for URL compatibility)
-                clean_type = neuron_type.replace("/", "_").replace(" ", "_")
-                combined_filename = f"{clean_type}.html"
-                soma_side_links["combined"] = combined_filename
-
-            return soma_side_links
-
-        except Exception as e:
-            print(f"Warning: Could not get soma sides for {neuron_type}: {e}")
-            return {}
 
     def generate_page_unified(self, request: PageGenerationRequest):
         """
@@ -609,15 +469,6 @@ class PageGenerator:
         """
         return self.cache_service.get_columns_from_neuron_cache(neuron_type)
 
-    def _get_all_possible_columns_from_dataset(self, connector):
-        """
-        Query the dataset to get all possible column coordinates.
-
-        Delegates to the database query service.
-        """
-        return self.database_query_service.get_all_possible_columns_from_dataset(
-            connector
-        )
 
     def _load_persistent_columns_cache(self, cache_key):
         """Load persistent cache for all columns dataset query."""
@@ -671,18 +522,6 @@ class PageGenerator:
             spacing_factor,
         )
 
-    def _get_col_layer_values(self, neuron_type: str, connector):
-        """
-        Query the dataset to get the synapse density and neuron count per column
-        across the layer ROIs for a specific neuron type.
-
-        Args:
-            neuron_type: Type of neuron being analyzed
-            connector: NeuPrint connector instance for database queries
-        """
-        return self.data_processing_service.get_column_layer_values(
-            neuron_type, connector
-        )
 
     def _compute_thresholds(self, df: pd.DataFrame, n_bins: int = 5):
         """
@@ -770,29 +609,6 @@ class PageGenerator:
 
         return result.region_grids
 
-    def generate_and_save_hexagon_grids(
-        self,
-        column_summary: List[Dict],
-        neuron_type: str,
-        soma_side,
-        file_type: str = "png",
-    ) -> Dict[str, Dict[str, str]]:
-        """
-        Generate hexagon grids and save them to files.
-        Convenience method for external use or when files are specifically needed.
-
-        Args:
-            column_summary: List of column data dictionaries
-            neuron_type: Type of neuron being visualized
-            soma_side: Side of soma (left/right)
-            file_type: Output format ('svg' or 'png')
-
-        Returns:
-            Dictionary mapping region names to file paths
-        """
-        return self._generate_region_hexagonal_grids(
-            column_summary, neuron_type, soma_side, file_type, save_to_files=True
-        )
 
     def clean_dynamic_files_for_neuron(
         self, neuron_type: str, soma_side: str = None
@@ -828,14 +644,6 @@ class PageGenerator:
         """
         return FileService.generate_filename(neuron_type, soma_side)
 
-    def _load_youtube_videos(self) -> Dict[str, str]:
-        """
-        Load YouTube video mappings from CSV file.
-
-        Returns:
-            Dictionary mapping neuron type names to YouTube video IDs
-        """
-        return self.youtube_service.load_youtube_videos()
 
     def _find_youtube_video(self, neuron_type: str) -> Optional[str]:
         """
@@ -853,20 +661,6 @@ class PageGenerator:
         """Get primary ROIs based on dataset type and available data."""
         return self.roi_analysis_service.get_primary_rois(connector)
 
-    def _extract_roi_names_from_hierarchy(self, hierarchy, roi_names=None):
-        """
-        Recursively extract all ROI names from the hierarchical dictionary structure.
-
-        Args:
-            hierarchy: Dictionary or any structure from fetch_roi_hierarchy
-            roi_names: Set to collect ROI names (used for recursion)
-
-        Returns:
-            Set of all ROI names found in the hierarchy
-        """
-        return self.roi_analysis_service.extract_roi_names_from_hierarchy(
-            hierarchy, roi_names
-        )
 
     def _get_region_for_type(self, neuron_type: str, connector) -> str:
         """Find the type's assigned "region" - used for setting the NG view."""

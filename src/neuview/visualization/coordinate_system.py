@@ -387,26 +387,6 @@ class EyemapCoordinateSystem:
         self.geometry = HexagonGeometry(hex_size)
         self.layout = HexagonGridLayout(hex_size, margin)
 
-    def update_configuration(
-        self, hex_size: float = None, spacing_factor: float = None, margin: float = None
-    ):
-        """
-        Update coordinate system configuration in-place.
-
-        Args:
-            hex_size: New hexagon size (optional)
-            spacing_factor: New spacing factor (optional)
-            margin: New margin value (optional)
-        """
-        # Update coordinate system
-        self.coordinate_system.update_parameters(hex_size, spacing_factor)
-
-        # Update geometry
-        if hex_size is not None:
-            self.geometry.update_hex_size(hex_size)
-
-        # Update layout
-        self.layout.update_parameters(hex_size, margin)
 
     def convert_column_coordinates(
         self, columns: List[Dict], mirror_side: Optional[str] = None

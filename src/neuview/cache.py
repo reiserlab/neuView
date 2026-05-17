@@ -318,26 +318,6 @@ class NeuronTypeCacheManager:
             logger.warning(f"Failed to load cache for {neuron_type}: {e}")
             return None
 
-    def invalidate_neuron_type_cache(self, neuron_type: str) -> bool:
-        """Remove cache file for a neuron type.
-
-        Args:
-            neuron_type: Name of neuron type to invalidate
-
-        Returns:
-            True if removed successfully, False otherwise
-        """
-        try:
-            cache_file = self._get_cache_file_path(neuron_type)
-            if cache_file.exists():
-                cache_file.unlink()
-                logger.debug(f"Invalidated cache for neuron type {neuron_type}")
-                return True
-            return False
-
-        except Exception as e:
-            logger.warning(f"Failed to invalidate cache for {neuron_type}: {e}")
-            return False
 
     def list_cached_neuron_types(self) -> List[str]:
         """Get list of neuron types that have valid cache files (lazy - no file loading).
@@ -384,23 +364,6 @@ class NeuronTypeCacheManager:
 
         return sorted(cached_types)
 
-    def get_all_cached_data(self) -> Dict[str, NeuronTypeCacheData]:
-        """Get all valid cached neuron type data.
-
-        WARNING: This method loads ALL cache files at once. Consider using
-        get_cached_data_lazy() or load_neuron_type_cache() for individual types.
-
-        Returns:
-            Dictionary mapping neuron type names to cache data
-        """
-        cached_data = {}
-
-        for neuron_type in self.list_cached_neuron_types():
-            cache_data = self.load_neuron_type_cache(neuron_type)
-            if cache_data:
-                cached_data[neuron_type] = cache_data
-
-        return cached_data
 
     def get_cached_data_lazy(self) -> "LazyCacheDataDict":
         """Get a lazy-loading dictionary for cached neuron type data.

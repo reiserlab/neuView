@@ -238,111 +238,9 @@ class FileOutputManager:
         else:
             return None
 
-    def validate_output_configuration(self) -> bool:
-        """
-        Validate that the output configuration is valid for file operations.
 
-        Returns:
-            True if configuration is valid, False otherwise
-        """
-        if not self.output_dir:
-            logger.warning("No output directory configured")
-            return False
 
-        if not self.output_dir.exists():
-            try:
-                self.output_dir.mkdir(parents=True, exist_ok=True)
-                logger.info(f"Created output directory: {self.output_dir}")
-            except Exception as e:
-                logger.error(
-                    f"Failed to create output directory {self.output_dir}: {e}"
-                )
-                return False
 
-        if not self.output_dir.is_dir():
-            logger.error(f"Output path is not a directory: {self.output_dir}")
-            return False
-
-        if not os.access(self.output_dir, os.W_OK):
-            logger.error(f"Output directory is not writable: {self.output_dir}")
-            return False
-
-        return True
-
-    def clean_output_directory(self, pattern: str = "*.svg") -> int:
-        """
-        Clean files matching a pattern from the output directory.
-
-        Args:
-            pattern: Glob pattern for files to remove
-
-        Returns:
-            Number of files removed
-        """
-        if not self.output_dir or not self.output_dir.exists():
-            return 0
-
-        removed_count = 0
-        for file_path in self.output_dir.glob(pattern):
-            try:
-                file_path.unlink()
-                removed_count += 1
-                logger.debug(f"Removed file: {file_path}")
-            except Exception as e:
-                logger.warning(f"Failed to remove file {file_path}: {e}")
-
-        if removed_count > 0:
-            logger.info(f"Cleaned {removed_count} files from {self.output_dir}")
-
-        return removed_count
-
-    def get_output_statistics(self) -> Dict:
-        """
-        Get statistics about the output directory.
-
-        Returns:
-            Dictionary containing output directory statistics
-        """
-        stats = {
-            "output_dir": str(self.output_dir) if self.output_dir else None,
-            "eyemaps_dir": str(self.eyemaps_dir) if self.eyemaps_dir else None,
-            "output_dir_exists": self.output_dir.exists() if self.output_dir else False,
-            "eyemaps_dir_exists": self.eyemaps_dir.exists()
-            if self.eyemaps_dir
-            else False,
-            "file_count": 0,
-            "total_size_bytes": 0,
-        }
-
-        if self.output_dir and self.output_dir.exists():
-            try:
-                files = list(self.output_dir.glob("*"))
-                stats["file_count"] = len([f for f in files if f.is_file()])
-                stats["total_size_bytes"] = sum(
-                    f.stat().st_size for f in files if f.is_file()
-                )
-            except Exception as e:
-                logger.warning(f"Failed to get directory statistics: {e}")
-
-        return stats
-
-    def update_directories(
-        self, output_dir: Optional[Path] = None, eyemaps_dir: Optional[Path] = None
-    ):
-        """
-        Update the configured directories.
-
-        Args:
-            output_dir: New output directory (optional)
-            eyemaps_dir: New eyemaps directory (optional)
-        """
-        if output_dir is not None:
-            self.output_dir = output_dir
-
-        if eyemaps_dir is not None:
-            self.eyemaps_dir = eyemaps_dir
-
-        self._ensure_directories_exist()
 
 
 class FileOutputManagerFactory:
@@ -350,28 +248,6 @@ class FileOutputManagerFactory:
     Factory class for creating FileOutputManager instances.
     """
 
-    @staticmethod
-    def create_manager(
-        output_dir: Optional[Union[str, Path]] = None,
-        eyemaps_dir: Optional[Union[str, Path]] = None,
-    ) -> FileOutputManager:
-        """
-        Create a new FileOutputManager instance.
-
-        Args:
-            output_dir: Base directory for output files
-            eyemaps_dir: Specific directory for eyemap files
-
-        Returns:
-            New FileOutputManager instance
-        """
-        # Convert strings to Path objects
-        if isinstance(output_dir, str):
-            output_dir = Path(output_dir)
-        if isinstance(eyemaps_dir, str):
-            eyemaps_dir = Path(eyemaps_dir)
-
-        return FileOutputManager(output_dir, eyemaps_dir)
 
     @staticmethod
     def create_from_config(config) -> FileOutputManager:
@@ -388,26 +264,3 @@ class FileOutputManagerFactory:
             output_dir=config.output_dir, eyemaps_dir=config.eyemaps_dir
         )
 
-    @staticmethod
-    def create_temporary_manager(
-        base_dir: Optional[Union[str, Path]] = None,
-    ) -> FileOutputManager:
-        """
-        Create a FileOutputManager with temporary directories.
-
-        Args:
-            base_dir: Base directory for temporary files (optional)
-
-        Returns:
-            New FileOutputManager instance with temporary directories
-        """
-        import tempfile
-
-        if base_dir:
-            if isinstance(base_dir, str):
-                base_dir = Path(base_dir)
-            temp_dir = base_dir / "temp_eyemaps"
-        else:
-            temp_dir = Path(tempfile.mkdtemp(prefix="eyemaps_"))
-
-        return FileOutputManager(output_dir=temp_dir, eyemaps_dir=temp_dir / "eyemaps")
