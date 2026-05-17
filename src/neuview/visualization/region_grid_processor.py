@@ -167,11 +167,11 @@ class RegionGridProcessor:
         """
         # Create requests for single region grid generation
         synapse_request = self._create_metric_request(
-            request, region, data_map, region_config, "synapse_density"
+            request, region, data_map, region_config, "synapse_density", side
         )
 
         cell_request = self._create_metric_request(
-            request, region, data_map, region_config, "cell_count"
+            request, region, data_map, region_config, "cell_count", side
         )
 
         # Generate the grids
@@ -187,6 +187,7 @@ class RegionGridProcessor:
         data_map: Dict,
         region_config: Dict,
         metric_type: str,
+        side: str,
     ) -> SingleRegionGridRequest:
         """
         Create a SingleRegionGridRequest for a specific metric type.
@@ -197,6 +198,10 @@ class RegionGridProcessor:
             data_map: Data map for the current side
             region_config: Region-specific configuration
             metric_type: Either 'synapse_density' or 'cell_count'
+            side: "L" or "R" — the hemisphere being rendered by this single
+                grid. Differs from request.soma_side for combined pages where
+                the outer request claims COMBINED but each individual grid is
+                still L or R.
 
         Returns:
             SingleRegionGridRequest for the specified metric
@@ -207,18 +212,33 @@ class RegionGridProcessor:
         else:  # cell_count
             thresholds = request.thresholds_all["neuron_count"]
 
+        # Use the per-grid side as the soma_side on the inner request: it
+        # drives labels (e.g. "ME (L)") and the layout calculator's left/right
+        # control placement. For L/R pages this matches request.soma_side; for
+        # combined pages the outer is COMBINED but each grid is still L or R.
+        from .data_processing.data_structures import SomaSide
+
+        side_letter = (side or "").upper()
+        if side_letter == "L":
+            grid_soma_side = SomaSide.LEFT
+        elif side_letter == "R":
+            grid_soma_side = SomaSide.RIGHT
+        else:
+            grid_soma_side = request.soma_side
+
         return create_single_region_request(
             region_config["side_filtered_columns"],
             region_config["region_column_coords"],
             data_map,
             metric_type,
             region,
-            soma_side=request.soma_side,
+            soma_side=grid_soma_side,
             thresholds=thresholds,
             neuron_type=request.neuron_type,
             output_format=request.output_format,
             other_regions_coords=region_config["other_regions_coords"],
             min_max_data=request.min_max_data,
+            page_soma_side=getattr(request, "page_soma_side", None),
         )
 
     def determine_mirror_side(self, soma_side: str, current_side: str) -> str:

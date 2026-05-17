@@ -96,6 +96,22 @@ class LayoutCalculator:
         svg_width = max(base_width, control_space["min_width"])
         svg_height = max(base_height, control_space["min_height"])
 
+        # Enforce a per-region canvas floor so the L and R eyemaps for the
+        # same region render at identical SVG dimensions even though the L/R
+        # hex coordinate sets aren't strictly symmetric (R extends ~10px
+        # wider and ~6px taller for optic-lobe regions). The floor is the
+        # observed max plus a small buffer; the underlying hex content
+        # positions are unchanged, only the canvas around them grows.
+        region_canvas_floor = {
+            "ME": (380, 410),
+            "LO": (380, 410),
+            "LOP": (380, 410),
+        }
+        if region in region_canvas_floor:
+            floor_w, floor_h = region_canvas_floor[region]
+            svg_width = max(svg_width, floor_w)
+            svg_height = max(svg_height, floor_h)
+
         # Calculate layer control positioning
         layer_control_x, layer_control_y = self._calculate_layer_control_position(
             svg_width, svg_height, soma_side, control_dimensions

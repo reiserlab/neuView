@@ -275,10 +275,16 @@ function updateLayer(layer, regionId) {
 {#-- Background --#}
 <rect width="{{ width + 40 }}" height="{{ height }}" fill="#f8f9fa" stroke="none" />
 
-{#-- Plot Name, Region Name, Neuron Name, and Layer Scrollbar --#}
+{#-- Plot title, cell type, ROI. Each label uses <text> with a trailing
+     <tspan> for the side letter so the browser handles letter spacing
+     instead of us approximating text width from character count. The
+     side letter is rendered bold + colored (red R / green L matching the
+     soma-side colours used elsewhere on the page); group opacity matches
+     the visual weight of the surrounding gray text labels. --#}
+{%- macro side_color(side) -%}{%- if side == "R" -%}#dc3545{%- elif side == "L" -%}#28a745{%- endif -%}{%- endmacro -%}
 <text x="5" y="15" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#CCCCCC">{{ plot_desc }}</text>
-<text x="5" y="28" text-anchor="start" font-family="Arial, sans-serif" font-size="10" fill="#CCCCCC">{{ region_desc }}</text>
-<text x="5" y="41" text-anchor="start" font-family="Arial, sans-serif" font-size="10" fill="#CCCCCC">{{ neuron_desc }}</text>
+<text x="5" y="28" text-anchor="start" font-family="Arial, sans-serif" font-size="10" fill="#CCCCCC">{{ neuron_type }}{%- if cell_type_side in ("L", "R") -%}<tspan dx="6" font-weight="bold" fill="{{ side_color(cell_type_side) }}" fill-opacity="0.4">({{ cell_type_side }})</tspan>{%- endif -%}</text>
+<text x="5" y="41" text-anchor="start" font-family="Arial, sans-serif" font-size="10" fill="#CCCCCC">{{ roi }}{%- if render_side in ("L", "R") -%}<tspan dx="6" font-weight="bold" fill="{{ side_color(render_side) }}" fill-opacity="0.4">({{ render_side }})</tspan>{%- endif -%}</text>
 
 {#-- Hexagon Path Definition --#}
 {%- set hex_path = "M" + hex_points|join(" L") + " Z" -%}

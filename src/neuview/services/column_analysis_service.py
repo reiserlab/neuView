@@ -139,6 +139,76 @@ class ColumnAnalysisService:
             # Generate summary statistics
             summary_stats = self._generate_column_summary_statistics(column_summary)
 
+            # Combined page: delegate eyemap selection to the L-soma and
+            # R-soma analyses. Each side's analysis runs its own contralateral
+            # check and emits grids keyed by the *grid* hemisphere (post-swap).
+            # We merge those dicts as-is so the slot in the template matches
+            # the hemisphere the file actually depicts — i.e. for CT1 the L
+            # slot displays the L-hemisphere SVG (sourced from the R-soma
+            # analysis) and the R slot displays the R-hemisphere SVG (from
+            # the L-soma analysis). No separate combined-mode files are
+            # produced.
+            soma_side_lower = (
+                soma_side.lower() if isinstance(soma_side, str) else ""
+            )
+            if soma_side_lower == "combined":
+                if "somaSide" in neurons_df.columns:
+                    l_neurons = neurons_df[neurons_df["somaSide"] == "L"]
+                    r_neurons = neurons_df[neurons_df["somaSide"] == "R"]
+                else:
+                    l_neurons = neurons_df.iloc[0:0]
+                    r_neurons = neurons_df.iloc[0:0]
+
+                merged_grids = {}
+                fallback_all_count = 0
+                fallback_region_counts = {}
+                for side_neurons, side_name in (
+                    (l_neurons, "left"),
+                    (r_neurons, "right"),
+                ):
+                    if side_neurons.empty:
+                        continue
+                    side_result = self.analyze_column_roi_data(
+                        roi_counts_df,
+                        side_neurons,
+                        side_name,
+                        neuron_type,
+                        connector,
+                        file_type,
+                        save_to_files,
+                        hex_size,
+                        spacing_factor,
+                    )
+                    if not side_result:
+                        continue
+                    # Use the keys from the per-side result verbatim: they
+                    # already reflect the grid hemisphere, which is what we
+                    # want the combined-page slot to match.
+                    merged_grids.update(
+                        side_result.get("comprehensive_region_grids", {})
+                    )
+                    if not fallback_all_count:
+                        fallback_all_count = side_result.get(
+                            "all_possible_columns_count", 0
+                        )
+                        fallback_region_counts = side_result.get(
+                            "region_columns_counts", {}
+                        )
+
+                combined_result = {
+                    "columns": column_summary,
+                    "summary": summary_stats,
+                    "comprehensive_region_grids": merged_grids,
+                    "all_possible_columns_count": fallback_all_count,
+                    "region_columns_counts": fallback_region_counts,
+                }
+                self._column_analysis_cache[cache_key] = combined_result
+                logger.info(
+                    f"analyze_column_roi_data: combined merged from L/R for "
+                    f"{cache_key} in {time.time() - start_time:.3f}s"
+                )
+                return combined_result
+
             # Get comprehensive column data for hexagon grids
             all_possible_columns, region_columns_map = (
                 self.page_generator.database_query_service.get_all_possible_columns_from_dataset(
@@ -185,6 +255,54 @@ class ColumnAnalysisService:
                     SomaSide(soma_side) if isinstance(soma_side, str) else soma_side
                 )
 
+                # Detect contralateral-dominant types (e.g. CT1, DNc02): the
+                # cells' soma is on one side but their synapses live in the
+                # opposite hemisphere's columns. Compute synapse and cell
+                # totals per column-side and, when the contra hemisphere wins
+                # on BOTH counts, redirect the grid generation to render the
+                # contralateral side. The page_soma_side preserves the
+                # original soma side; downstream callers compare it with
+                # soma_side to know whether the grid is contralateral.
+                page_soma_side_enum = soma_side_enum
+                soma_side_lower = (
+                    soma_side.lower() if isinstance(soma_side, str) else ""
+                )
+                if soma_side_lower in ("left", "right"):
+                    ipsi = "L" if soma_side_lower == "left" else "R"
+                    contra = "R" if ipsi == "L" else "L"
+                    ipsi_syn = sum(
+                        c.get("total_synapses", 0)
+                        for c in column_summary
+                        if c.get("side") == ipsi
+                    )
+                    contra_syn = sum(
+                        c.get("total_synapses", 0)
+                        for c in column_summary
+                        if c.get("side") == contra
+                    )
+                    ipsi_cells = sum(
+                        c.get("neuron_count", 0)
+                        for c in column_summary
+                        if c.get("side") == ipsi
+                    )
+                    contra_cells = sum(
+                        c.get("neuron_count", 0)
+                        for c in column_summary
+                        if c.get("side") == contra
+                    )
+                    if contra_syn > ipsi_syn and contra_cells > ipsi_cells:
+                        soma_side_enum = (
+                            SomaSide.RIGHT
+                            if soma_side_lower == "left"
+                            else SomaSide.LEFT
+                        )
+                        logger.info(
+                            f"{neuron_type}/{soma_side}: contralateral dominance "
+                            f"(syn ipsi={ipsi_syn} vs contra={contra_syn}, "
+                            f"cells ipsi={ipsi_cells} vs contra={contra_cells}); "
+                            f"rendering {contra}-hemisphere eyemaps"
+                        )
+
                 # Create grid generation request
                 grid_request = create_grid_generation_request(
                     column_data=column_data,
@@ -196,6 +314,7 @@ class ColumnAnalysisService:
                     output_format=file_type,
                     save_to_files=save_to_files,
                     min_max_data=min_max_data,
+                    page_soma_side=page_soma_side_enum,
                 )
 
                 # Generate grids using new interface
