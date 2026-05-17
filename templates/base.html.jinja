@@ -25,7 +25,7 @@
         <script src="https://cdn.usefathom.com/script.js" data-site="{{- config.html.fathom_id -}}" defer></script>
         {% endif %}
     </head>
-    <body class="plume" id="top">
+    <body class="plume{% if is_neuron_page %} is-neuron-page{% endif %}" id="top">
         {% block header %}{% endblock %}
 
         <div class="container">
