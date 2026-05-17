@@ -1122,7 +1122,10 @@ class NeuPrintConnector:
                 # First group by (type, soma_side) only to aggregate all connections
                 type_soma_data = {}
                 for _, record in upstream_result.iterrows():
-                    if record["partner_type"]:  # Skip null types
+                    # pd.notna so float-NaN (from untyped Neuron nodes like
+                    # Anchor/Orphan partials) is correctly skipped — plain
+                    # truthy check lets NaN through.
+                    if pd.notna(record["partner_type"]):
                         soma_side = (
                             record["soma_side"] if pd.notna(record["soma_side"]) else ""
                         )
@@ -1265,7 +1268,10 @@ class NeuPrintConnector:
                 # Group by (type, soma_side) to aggregate connections
                 type_soma_data = {}
                 for _, record in downstream_result.iterrows():
-                    if record["partner_type"]:  # Skip null types
+                    # pd.notna so float-NaN (from untyped Neuron nodes like
+                    # Anchor/Orphan partials) is correctly skipped — plain
+                    # truthy check lets NaN through.
+                    if pd.notna(record["partner_type"]):
                         soma_side = (
                             record["soma_side"] if pd.notna(record["soma_side"]) else ""
                         )
