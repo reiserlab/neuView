@@ -599,6 +599,11 @@ span.truman-hl {
     margin-bottom: 1rem;
     text-align: center;
     border: 1px solid #e5e7eb;
+    /* Stretch to fill the row height so cards align with the tallest sibling.
+       Flexboxgrid's .row is display:flex, so cols already stretch; this just
+       lets the card inside the col take that full height. */
+    height: calc(100% - 1rem);
+    box-sizing: border-box;
 }
 
 .total-column {
