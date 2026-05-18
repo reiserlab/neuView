@@ -120,6 +120,7 @@ $(document).ready(function() {
         "pageLength": -1, {#- Show all rows -#}
         "paging": false, {#- Disable pagination since we're using connections filter -#}
         "responsive": true, {#- Disable responsive layout -#}
+        "autoWidth": false, {#- Let CSS drive column widths instead of DataTables' content-measuring auto-width -#}
         "buttons": [{
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',
@@ -178,6 +179,7 @@ $(document).ready(function() {
         "pageLength": -1, {#- Show all rows -#}
         "paging": false, {#- Disable pagination since we're using connections filter -#}
         "responsive": true, {#- Enable responsive layout -#}
+        "autoWidth": false, {#- Let CSS drive column widths instead of DataTables' content-measuring auto-width -#}
         "buttons": [{
                 extend: 'csv',
                 text: '<img src="{{ "../" if is_neuron_page else "" }}static/icons/download.svg" width="16" height="16" style="filter: brightness(0) invert(1);">',

@@ -58,11 +58,15 @@ JavaScript:
   {% set _ = section_links.append(('s-c', 'Connectivity')) %}
 {% endif %}
 
+<div class="hamburger-backdrop" id="hamburgerBackdrop" aria-hidden="true"></div>
 <div class="hamburger-menu" id="hamburgerMenu">
-  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Jump to section menu">
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation menu" aria-controls="hamburgerDropdown" aria-expanded="false">
     <span class="hamburger-icon">&#9776;</span>
   </button>
   <nav class="hamburger-dropdown" id="hamburgerDropdown">
+
+    {# -- Page navigation (this page's sections + soma side switcher) -- #}
+    <div class="hamburger-section hamburger-section-page">
     {% if soma_side_links and soma_side_links|length > 0 %}
     <div class="hamburger-title">
       <a href="#top" class="hamburger-link">{{ neuron_type }}{% if soma_side and soma_side != '' and soma_side != 'combined' %} ({{ soma_side[0]|upper }}){% endif %}</a>
@@ -92,5 +96,26 @@ JavaScript:
     {% for section_id, section_title in section_links %}
     <a href="#{{ section_id }}" class="hamburger-link">{{ section_title }}</a>
     {% endfor %}
+    </div>
+
+    {# -- Site-wide nav (only visible on small screens; the desktop header-bar covers this elsewhere) -- #}
+    <div class="hamburger-section hamburger-section-site">
+      <div class="hamburger-section-title">Site</div>
+      <a href="{{ '../' if is_neuron_page else '' }}index.html" class="hamburger-link">Home</a>
+      <a href="{{ '../' if is_neuron_page else '' }}types.html" class="hamburger-link">Types List</a>
+      <a href="{{ '../' if is_neuron_page else '' }}help.html" class="hamburger-link">Help</a>
+      <form class="search-form hamburger-search">
+        <input id="menulines-drawer" type="text" placeholder="Search cell types ..." />
+      </form>
+      <div class="hamburger-link-row">
+        {% if config.html.github_repo %}
+        <a href="{{ config.html.github_repo }}" class="icon-link" title="Open GitHub page in new tab" target="_blank"><img src="{{ '../' if is_neuron_page else '' }}static/icons/github.svg" alt="GitHub" width="24" height="24" /></a>
+        {% endif %}
+        {% if config.html.youtube_channel %}
+        <a href="{{ config.html.youtube_channel }}" class="icon-link" target="_blank" title="Open YouTube channel in new tab"><img src="{{ '../' if is_neuron_page else '' }}static/icons/youtube.svg" alt="YouTube" width="24" height="24" /></a>
+        {% endif %}
+        <a href="https://{{- config.neuprint.server -}}/?dataset={{- config.neuprint.dataset -}}" class="nav-link" target="_blank" title="Open {{ config.neuprint.dataset }} dataset in neuPrint">neuPrint&nbsp;&#x29c9;</a>
+      </div>
+    </div>
   </nav>
 </div>
