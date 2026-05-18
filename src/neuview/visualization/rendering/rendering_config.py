@@ -53,13 +53,15 @@ class RenderingConfig:
     png_scale: float = 1.0
 
     # Content configuration
-    plot_desc: str = ""
-    neuron_desc: str = ""
-    region_desc: str = ""
+    plot_desc: str = ""    # metric label, e.g. "Synapses (All Columns)"
     metric_type: str = ""
     soma_side: Optional[SomaSide] = None
-    neuron_type: Optional[str] = None
-    region_name: Optional[str] = None
+    neuron_type: Optional[str] = None   # cell type label, e.g. "CT1"
+    region_name: Optional[str] = None   # ROI label, e.g. "ME"
+    # The page's original soma side. When it differs from ``soma_side`` the
+    # rendered hemisphere is contralateral to the soma side; the SVG template
+    # uses the difference to colour the two header badges differently.
+    page_soma_side: Optional[SomaSide] = None
 
     # Data configuration
     min_max_data: Optional[Dict[str, Any]] = None

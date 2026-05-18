@@ -28,6 +28,12 @@ class GridGenerationRequest:
     output_format: str = "svg"
     save_to_files: bool = True
     min_max_data: Optional[Dict] = None
+    # The page's *original* soma side. When ``soma_side`` differs from this
+    # (i.e. the caller redirected to the contralateral hemisphere because the
+    # neurons' synapses+cells favour the opposite side), downstream code
+    # marks the SVG with a hemisphere badge that differs from the cell-type
+    # badge and tags the output file with a ``_con`` suffix.
+    page_soma_side: Optional[SomaSide] = None
 
     @property
     def regions(self) -> List[str]:
@@ -82,6 +88,8 @@ class SingleRegionGridRequest:
     output_format: str = "svg"
     other_regions_coords: Optional[Set] = None
     min_max_data: Optional[Dict] = None
+    # Propagated from the outer GridGenerationRequest — see that class.
+    page_soma_side: Optional[SomaSide] = None
 
     def __post_init__(self):
         """Validate the request parameters."""
@@ -104,15 +112,19 @@ class RenderingRequest:
     min_val: float
     max_val: float
     thresholds: Dict
-    plot_desc: str
-    neuron_desc: str
-    region_desc: str
+    plot_desc: str         # e.g. "Synapses (All Columns)"
+    roi: str               # ROI label, e.g. "ME" / "LO" / "LOP"
+    neuron_type: str       # Cell type label, e.g. "CT1" / "Tm3"
     metric_type: str
     soma_side: SomaSide
     output_format: str = "svg"
     save_to_file: bool = False
     filename: Optional[str] = None
     min_max_data: Optional[Dict] = None
+    # The page's *original* soma side (before any contralateral swap). Used
+    # to decide whether the rendered hemisphere is opposite the soma side
+    # (= contralateral); compare with ``soma_side`` at the point of use.
+    page_soma_side: Optional[SomaSide] = None
 
     def __post_init__(self):
         """Validate the rendering request."""
@@ -204,26 +216,26 @@ def create_rendering_request(
     max_val: float,
     thresholds: Dict,
     plot_desc: str,
-    neuron_desc: str,
-    region_desc: str,
+    roi: str,
+    neuron_type: str,
     metric_type: str,
     soma_side: SomaSide,
     **kwargs,
 ) -> RenderingRequest:
     """
-    Factory function to create a RenderingRequest with modern types.
+    Factory function to create a RenderingRequest.
 
     Args:
         hexagons: List of hexagon data dictionaries
         min_val: Minimum value for scaling
         max_val: Maximum value for scaling
         thresholds: Threshold values dictionary
-        plot_desc: Type description, e.g. Synapses or Cell count, as shown in the figure
-        neuron_desc: Neuron name description as shown in the figure
-        region_desc: Region name description as shown in the figure
+        plot_desc: Metric label shown in the figure (e.g. "Synapses (All Columns)")
+        roi: ROI label, e.g. "ME" / "LO" / "LOP"
+        neuron_type: Cell type label, e.g. "CT1" / "Tm3"
         metric_type: Type of metric being displayed
         soma_side: Side of soma (SomaSide enum)
-        **kwargs: Additional optional parameters (including min_max_data)
+        **kwargs: Additional optional parameters (including ``page_soma_side``)
 
     Returns:
         RenderingRequest object
@@ -238,8 +250,8 @@ def create_rendering_request(
         max_val=max_val,
         thresholds=thresholds,
         plot_desc=plot_desc,
-        neuron_desc=neuron_desc,
-        region_desc=region_desc,
+        roi=roi,
+        neuron_type=neuron_type,
         metric_type=metric_type,
         soma_side=soma_side,
         **kwargs,

@@ -234,13 +234,29 @@ class SVGRenderer(BaseRenderer):
         # Get data hexagons for legend
         data_hexagons = [h for h in hexagons if h.get("status") == "has_data"]
 
+        # Helper for the single-letter side: derive "L"/"R" from a SomaSide
+        # enum or string, returning "" for None / COMBINED / MIDDLE.
+        def _side_letter(side):
+            if side is None:
+                return ""
+            value = side.value if hasattr(side, "value") else str(side)
+            letter = value.upper()[:1] if value else ""
+            return letter if letter in ("L", "R") else ""
+
+        render_side = _side_letter(self.config.soma_side)
+        cell_type_side = (
+            _side_letter(self.config.page_soma_side)
+            if getattr(self.config, "page_soma_side", None) is not None
+            else render_side
+        )
+
         # Prepare template variables
         template_vars = {
             "width": layout_config.width,
             "height": layout_config.height,
             "plot_desc": self.config.plot_desc,
-            "neuron_desc": self.config.neuron_desc,
-            "region_desc": self.config.region_desc,
+            "neuron_type": self.config.neuron_type or "",
+            "roi": self.config.region_name or "",
             "hexagons": hexagons,
             "hex_points": layout_config.hex_points.split(),
             "min_x": layout_config.min_x,
@@ -260,6 +276,8 @@ class SVGRenderer(BaseRenderer):
             "enumerate": enumerate,
             "soma_side": self.config.soma_side,
             "min_max_data": self.config.min_max_data or {},
+            "render_side": render_side,
+            "cell_type_side": cell_type_side,
         }
 
         # Add color information if available

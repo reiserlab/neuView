@@ -142,12 +142,20 @@ class FileOutputManager:
 
         renderer = rendering_manager._get_renderer(format_enum)
 
-        # Generate file names
+        # Generate file names. Contralateral renders go to a distinct
+        # filename so combined-page eyemaps and side-page eyemaps (with the
+        # mismatched-hemisphere badge) don't collide on disk. The render is
+        # contralateral when the page's original soma side differs from the
+        # hemisphere being drawn.
+        page_soma = getattr(request, "page_soma_side", None)
+        is_contralateral = (
+            page_soma is not None and page_soma != request.soma_side
+        )
         synapse_filename = self._generate_filename(
-            region, request.neuron_type, side, "synapse_density"
+            region, request.neuron_type, side, "synapse_density", is_contralateral
         )
         cell_filename = self._generate_filename(
-            region, request.neuron_type, side, "cell_count"
+            region, request.neuron_type, side, "cell_count", is_contralateral
         )
 
         # Check if files already exist and return existing paths if so
@@ -202,7 +210,12 @@ class FileOutputManager:
             raise ValueError(f"Unsupported output format: {output_format}")
 
     def _generate_filename(
-        self, region: str, neuron_type: str, side: str, metric_type: str
+        self,
+        region: str,
+        neuron_type: str,
+        side: str,
+        metric_type: str,
+        is_contralateral: bool = False,
     ) -> str:
         """
         Generate a standardized filename for eyemap files.
@@ -212,11 +225,16 @@ class FileOutputManager:
             neuron_type: Neuron type identifier
             side: Side identifier
             metric_type: Type of metric ('synapse_density' or 'cell_count')
+            is_contralateral: When True, the rendered hemisphere is opposite
+                the soma side and the SVG carries a "con" marker. The
+                filename gets a "_con" suffix so contralateral and
+                ipsilateral renders don't share a path on disk.
 
         Returns:
             Generated filename (without extension)
         """
-        return f"{region}_{neuron_type}_{side}_{metric_type}"
+        suffix = "_con" if is_contralateral else ""
+        return f"{region}_{neuron_type}_{side}_{metric_type}{suffix}"
 
     def get_output_path(
         self, filename: str, use_eyemaps_dir: bool = True

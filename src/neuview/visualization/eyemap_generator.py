@@ -382,46 +382,18 @@ class EyemapGenerator:
                     request.thresholds,
                 )
 
-                # Set up visualization metadata
+                # Plain text labels — the side letters travel through the
+                # rendering pipeline as separate fields (rendered as colored
+                # badges next to the labels in the SVG template).
                 if request.metric_type == METRIC_SYNAPSE_DENSITY:
                     plot_desc = "Synapses (All Columns)"
-                    # Handle both string and SomaSide enum inputs
-                    if hasattr(request.soma_side, "value"):
-                        soma_display = (
-                            request.soma_side.value.upper()[:1]
-                            if request.soma_side
-                            else ""
-                        )
-                    else:
-                        soma_display = (
-                            str(request.soma_side).upper()[:1]
-                            if request.soma_side
-                            else ""
-                        )
-                    neuron_desc = f"{request.region_name} ({soma_display})"
-                    region_desc = f"{request.neuron_type} ({soma_display})"
                 else:  # cell_count
                     plot_desc = "Cell Count (All Columns)"
-                    # Handle both string and SomaSide enum inputs
-                    if hasattr(request.soma_side, "value"):
-                        soma_display = (
-                            request.soma_side.value.upper()[:1]
-                            if request.soma_side
-                            else ""
-                        )
-                    else:
-                        soma_display = (
-                            str(request.soma_side).upper()[:1]
-                            if request.soma_side
-                            else ""
-                        )
-                    neuron_desc = f"{request.region_name} ({soma_display})"
-                    region_desc = f"{request.neuron_type} ({soma_display})"
 
                 grid_metadata = {
                     "plot_desc": plot_desc,
-                    "neuron_desc": neuron_desc,
-                    "region_desc": region_desc,
+                    "roi": request.region_name,
+                    "neuron_type": request.neuron_type,
                 }
 
                 # Create processing configuration
@@ -654,11 +626,12 @@ class EyemapGenerator:
                     max_val=value_range["max_value"],
                     thresholds=request.thresholds or {},
                     plot_desc=grid_metadata["plot_desc"],
-                    neuron_desc=grid_metadata["neuron_desc"],
-                    region_desc=grid_metadata["region_desc"],
+                    roi=grid_metadata["roi"],
+                    neuron_type=grid_metadata["neuron_type"],
                     metric_type=request.metric_type,
                     soma_side=request.soma_side or SomaSide.RIGHT,
                     min_max_data=request.min_max_data,
+                    page_soma_side=getattr(request, "page_soma_side", None),
                 )
 
                 # Use rendering manager to generate visualization
@@ -697,13 +670,16 @@ class EyemapGenerator:
                 # Update rendering manager configuration with rendering parameters
                 updated_config = self.rendering_manager.config.copy(
                     plot_desc=rendering_request.plot_desc,
-                    neuron_desc=rendering_request.neuron_desc,
-                    region_desc=rendering_request.region_desc,
+                    region_name=rendering_request.roi,
+                    neuron_type=rendering_request.neuron_type,
                     metric_type=rendering_request.metric_type,
                     soma_side=soma_side_enum,
                     thresholds=rendering_request.thresholds,
                     save_to_files=rendering_request.save_to_file,
                     min_max_data=rendering_request.min_max_data,
+                    page_soma_side=getattr(
+                        rendering_request, "page_soma_side", None
+                    ),
                 )
 
                 # Create temporary manager with updated config
