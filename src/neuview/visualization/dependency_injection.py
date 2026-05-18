@@ -322,15 +322,13 @@ class VisualizationServiceContainer(IServiceContainer):
             f"Service '{service_name}' not found", service_type=service_name
         )
 
+
     def is_registered(self, service_type: Type[T]) -> bool:
-        """
-        Check if a service type is registered.
+        """Check if a service type is registered.
 
-        Args:
-            service_type: The type to check
-
-        Returns:
-            True if the service is registered
+        Required to satisfy the ``IServiceContainer`` ABC contract; even though
+        no code path calls this method directly, removing it breaks
+        instantiation of any concrete subclass.
         """
         return service_type in self._descriptors
 
@@ -339,22 +337,6 @@ class VisualizationServiceContainer(IServiceContainer):
         self._scoped_instances.clear()
         logger.debug("Cleared scoped service instances")
 
-    def get_registration_info(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Get information about all registered services.
-
-        Returns:
-            Dictionary containing registration information
-        """
-        info = {}
-        for service_type, descriptor in self._descriptors.items():
-            info[service_type.__name__] = {
-                "lifetime": descriptor.lifetime.value,
-                "dependencies": list(descriptor.dependencies.keys()),
-                "is_singleton_created": service_type in self._singletons,
-                "is_scoped_created": service_type in self._scoped_instances,
-            }
-        return info
 
     def _create_instance(self, descriptor: ServiceDescriptor) -> Any:
         """
@@ -518,35 +500,6 @@ class EyemapServiceContainer(VisualizationServiceContainer):
         )
         logger.debug("Registered EyemapGenerator service")
 
-    def create_eyemap_generator(self, **override_params) -> "EyemapGenerator":
-        """
-        Create a fully configured EyemapGenerator instance.
-
-        Args:
-            **override_params: Optional parameters to override default configuration
-
-        Returns:
-            Configured EyemapGenerator instance
-
-        Raises:
-            DependencyError: If generator creation fails
-        """
-        with ErrorContext("eyemap_generator_creation"):
-            # Import locally to avoid circular imports
-            from .eyemap_generator import EyemapGenerator
-
-            # Create configuration with overrides
-            if override_params:
-                updated_config = self.config.update(**override_params)
-                # Create a new container with updated config if needed
-                if any(
-                    key in ["hex_size", "spacing_factor", "output_dir", "eyemaps_dir"]
-                    for key in override_params
-                ):
-                    container = EyemapServiceContainer(updated_config)
-                    return container.resolve(EyemapGenerator)
-
-            return self.resolve(EyemapGenerator)
 
 
 # Global container instance for convenience
@@ -575,15 +528,6 @@ def get_default_container() -> EyemapServiceContainer:
     return _default_container
 
 
-def set_default_container(container: EyemapServiceContainer) -> None:
-    """
-    Set the default service container.
-
-    Args:
-        container: Container to set as default
-    """
-    global _default_container
-    _default_container = container
 
 
 def reset_default_container() -> None:

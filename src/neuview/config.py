@@ -103,29 +103,6 @@ class Config:
             html=html_config,
         )
 
-    def get_neuprint_token(self) -> str:
-        """
-        Get the NeuPrint token with proper fallback handling.
-
-        Returns the token from config or environment variable.
-        Raises ValueError if no token is found.
-        """
-        # First try config token
-        if self.neuprint.token:
-            return self.neuprint.token
-
-        # Fall back to environment variable
-        env_token = os.getenv("NEUPRINT_TOKEN")
-        if env_token:
-            return env_token
-
-        # No token found
-        raise ValueError(
-            "NeuPrint token not found. Set it in one of these ways:\n"
-            "1. Create a .env file with NEUPRINT_TOKEN=your_token\n"
-            "2. Set NEUPRINT_TOKEN environment variable\n"
-            "3. Add token to config.yaml"
-        )
 
     @classmethod
     def create_minimal_for_testing(cls) -> "Config":

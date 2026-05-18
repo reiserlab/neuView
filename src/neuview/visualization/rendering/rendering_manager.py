@@ -141,14 +141,6 @@ class RenderingManager:
 
         return self._renderers[output_format]
 
-    def get_supported_formats(self) -> List[OutputFormat]:
-        """
-        Get list of supported output formats.
-
-        Returns:
-            List of supported OutputFormat values
-        """
-        return list(self._renderers.keys())
 
     def update_config(self, **config_updates) -> None:
         """
@@ -170,34 +162,7 @@ class RenderingManager:
         for renderer in self._renderers.values():
             renderer.update_config(**config_updates)
 
-    def set_color_mapper(self, color_mapper) -> None:
-        """
-        Update color mapper for all renderers.
 
-        Args:
-            color_mapper: New color mapping utility
-        """
-        self.color_mapper = color_mapper
-
-        # Reinitialize renderers with new color mapper
-        self._initialize_renderers()
-
-    def get_renderer_info(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Get information about available renderers.
-
-        Returns:
-            Dictionary with renderer information
-        """
-        info = {}
-        for format_type, renderer in self._renderers.items():
-            info[format_type.value] = {
-                "class_name": renderer.__class__.__name__,
-                "file_extension": renderer.get_file_extension(),
-                "mime_type": renderer.get_mime_type(),
-                "supports_interactive": renderer.supports_interactive_features(),
-            }
-        return info
 
     def validate_configuration(self) -> List[str]:
         """

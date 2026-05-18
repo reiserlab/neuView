@@ -155,61 +155,8 @@ class PNGRenderer(BaseRenderer):
             logger.error(f"Failed to convert SVG to PNG: {e}")
             raise ValueError(f"SVG to PNG conversion failed: {e}")
 
-    def get_png_dimensions(self, content: str) -> tuple[int, int]:
-        """
-        Get the dimensions of PNG content.
 
-        Args:
-            content: PNG data URL content
 
-        Returns:
-            Tuple of (width, height) in pixels
-
-        Raises:
-            ValueError: If dimensions cannot be determined
-        """
-        try:
-            if not content.startswith("data:image/png;base64,"):
-                raise ValueError("Invalid PNG data URL format")
-
-            # Extract and decode PNG data
-            base64_data = content.split(",", 1)[1]
-            png_data = base64.b64decode(base64_data)
-
-            # Use PIL to get dimensions
-            with io.BytesIO(png_data) as buffer:
-                with Image.open(buffer) as img:
-                    return img.size
-
-        except Exception as e:
-            logger.error(f"Failed to get PNG dimensions: {e}")
-            raise ValueError(f"Cannot determine PNG dimensions: {e}")
-
-    def set_png_quality(self, quality: int) -> None:
-        """
-        Set PNG quality/compression level.
-
-        Args:
-            quality: Quality level (0-100, higher is better quality)
-        """
-        if not 0 <= quality <= 100:
-            raise ValueError("Quality must be between 0 and 100")
-
-        self.config = self.config.copy(png_quality=quality)
-
-    def set_png_scale(self, scale: float) -> None:
-        """
-        Set PNG scale factor.
-
-        Args:
-            scale: Scale factor (1.0 = original size, 2.0 = double size, etc.)
-        """
-        if scale <= 0:
-            raise ValueError("Scale must be positive")
-
-        self.config = self.config.copy(png_scale=scale)
-        # Update SVG renderer config as well
-        self.svg_renderer.config = self.svg_renderer.config.copy(png_scale=scale)
 
     def update_config(self, **config_updates) -> None:
         """
@@ -227,23 +174,3 @@ class PNGRenderer(BaseRenderer):
         if svg_config_updates:
             self.svg_renderer.update_config(**svg_config_updates)
 
-    def get_svg_content(
-        self,
-        hexagons: List[Dict[str, Any]],
-        layout_config: LayoutConfig,
-        legend_config: Optional[LegendConfig] = None,
-    ) -> str:
-        """
-        Get the intermediate SVG content used for PNG generation.
-
-        This can be useful for debugging purposes.
-
-        Args:
-            hexagons: List of hexagon data dictionaries
-            layout_config: Layout configuration for positioning
-            legend_config: Optional legend configuration
-
-        Returns:
-            SVG content as string
-        """
-        return self.svg_renderer.render(hexagons, layout_config, legend_config)

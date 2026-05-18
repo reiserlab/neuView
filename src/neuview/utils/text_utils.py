@@ -295,44 +295,4 @@ class TextUtils:
             .replace("_R", "")
         )
 
-    @staticmethod
-    def normalize_name_for_filename(name: str) -> str:
-        """
-        Normalize a name for use in filenames by replacing problematic characters.
 
-        Args:
-            name: Name to normalize
-
-        Returns:
-            Filename-safe name
-        """
-        if not name:
-            return ""
-        return (
-            name.replace("/", "_")
-            .replace(" ", "_")
-            .replace("\\", "_")
-            .replace(":", "_")
-        )
-
-    @staticmethod
-    def extract_region_from_roi(roi_name: str) -> str:
-        """
-        Extract region name from ROI name.
-
-        Args:
-            roi_name: Full ROI name
-
-        Returns:
-            Region name without side indicators
-        """
-        # Remove common side indicators
-        cleaned = TextUtils.clean_roi_name(roi_name)
-
-        # Handle layer patterns like ME_L_layer_1 -> ME
-        layer_pattern = r"^(ME|LO|LOP)_[LR]_layer_\d+$"
-        match = re.match(layer_pattern, roi_name)
-        if match:
-            return match.group(1)
-
-        return cleaned

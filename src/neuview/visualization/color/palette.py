@@ -192,31 +192,3 @@ class ColorPalette:
         except ValueError as e:
             raise ValueError(f"Invalid hex color '{hex_color}': {e}")
 
-    @staticmethod
-    def rgb_to_hex(r: int, g: int, b: int) -> str:
-        """
-        Convert RGB values to hex color string.
-
-        Args:
-            r: Red component (0-255)
-            g: Green component (0-255)
-            b: Blue component (0-255)
-
-        Returns:
-            Hex color string
-
-        Raises:
-            ValueError: If any RGB value is outside the range 0-255
-        """
-        # Validate RGB values
-        for value, name in [(r, "red"), (g, "green"), (b, "blue")]:
-            if not isinstance(value, int):
-                raise ValueError(
-                    f"{name} component must be an integer, got {type(value)}"
-                )
-            if not 0 <= value <= 255:
-                raise ValueError(
-                    f"{name} component must be between 0 and 255, got {value}"
-                )
-
-        return f"#{r:02x}{g:02x}{b:02x}"

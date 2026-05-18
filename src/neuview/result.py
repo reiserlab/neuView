@@ -77,20 +77,6 @@ class Result(Generic[T, E]):
         else:
             return self
 
-    def and_then(self, func: Callable[[T], "Result"]) -> "Result":
-        """
-        Chain operations that return Results.
-
-        If this is Ok, apply func to the value and return the result.
-        If this is Err, return this Err without applying func.
-        """
-        if self.is_ok():
-            try:
-                return func(self.value)
-            except Exception as e:
-                return Err(str(e))
-        else:
-            return self
 
 
 @dataclass
@@ -125,15 +111,3 @@ class Err(Result[T, E]):
         return isinstance(other, Err) and self.error == other.error
 
 
-async def try_async_operation(func: Callable[[], T]) -> Result[T, str]:
-    """
-    Execute an async function and wrap the result in a Result type.
-
-    If the function succeeds, return Ok with the result.
-    If the function raises an exception, return Err with the error message.
-    """
-    try:
-        result = await func()
-        return Ok(result)
-    except Exception as e:
-        return Err(str(e))

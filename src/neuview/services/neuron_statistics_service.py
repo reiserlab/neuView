@@ -253,46 +253,4 @@ class NeuronStatisticsService:
             )
             return Err(f"Failed to get comprehensive statistics: {str(e)}")
 
-    async def check_neuron_type_exists(self, neuron_type: str) -> Result[bool, str]:
-        """
-        Check if a neuron type exists in the database.
 
-        Args:
-            neuron_type: The neuron type name to check
-
-        Returns:
-            Result containing boolean indicating existence
-        """
-        return await self.has_data(neuron_type)
-
-    async def get_basic_info(self, neuron_type: str) -> Result[Dict[str, Any], str]:
-        """
-        Get basic information about a neuron type for quick checks.
-
-        Args:
-            neuron_type: The neuron type name
-
-        Returns:
-            Result containing basic info dictionary
-        """
-        try:
-            count_result = await self.get_neuron_count(neuron_type)
-            if count_result.is_err():
-                return Err(count_result.unwrap_err())
-
-            count = count_result.unwrap()
-            exists = count > 0
-
-            info = {"name": neuron_type, "exists": exists, "count": count}
-
-            # Add soma distribution if data exists
-            if exists:
-                soma_result = await self.get_soma_side_distribution(neuron_type)
-                if soma_result.is_ok():
-                    info["soma_sides"] = soma_result.unwrap()
-
-            return Ok(info)
-
-        except Exception as e:
-            logger.error(f"Failed to get basic info for {neuron_type}: {e}")
-            return Err(f"Failed to get basic info: {str(e)}")

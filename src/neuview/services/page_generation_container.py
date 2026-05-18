@@ -88,32 +88,6 @@ class PageGenerationContainer:
 
         self.register_factory(name, factory)
 
-    def register_service(
-        self,
-        name: str,
-        service_class: Type,
-        dependencies: List[str] = None,
-        singleton: bool = True,
-    ) -> None:
-        """
-        Register a service with automatic dependency injection.
-
-        Args:
-            name: Service name
-            service_class: Class to instantiate
-            dependencies: List of dependency names to inject
-            singleton: Whether to cache instances (default: True)
-        """
-        dependencies = dependencies or []
-
-        def factory():
-            args = [self.get(dep) for dep in dependencies]
-            return service_class(*args)
-
-        if singleton:
-            self._factories[name] = factory
-        else:
-            self.register_transient(name, service_class, dependencies)
 
     def get(self, name: str) -> Any:
         """
@@ -497,17 +471,6 @@ class PageGenerationContainer:
 
         logger.debug("PageGenerator-dependent services configured")
 
-    def get_all_services(self) -> Dict[str, Any]:
-        """
-        Get all currently resolved services.
-
-        Returns:
-            Dictionary of service name to instance mappings
-        """
-        all_services = {}
-        all_services.update(self._singletons)
-        all_services.update(self._services)
-        return all_services
 
     def create_service_summary(self) -> Dict[str, str]:
         """

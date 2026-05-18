@@ -424,41 +424,6 @@ class TemplateManager:
 
         return list(dependencies)
 
-    def analyze_template_dependencies(self) -> Dict[str, Any]:
-        """
-        Analyze template dependencies and return a comprehensive report.
-
-        Returns:
-            Dictionary containing dependency analysis
-        """
-        all_templates = self.list_templates()
-        dependency_info = {}
-
-        for template in all_templates:
-            deps = self.get_template_dependencies(template)
-            dependency_info[template] = {
-                "dependencies": deps,
-                "dependency_count": len(deps),
-                "dependents": list(self._reverse_dependency_graph.get(template, set())),
-                "is_root": len(self._reverse_dependency_graph.get(template, set()))
-                == 0,
-                "is_leaf": len(deps) == 0,
-            }
-
-        # Find circular dependencies
-        circular_deps = self._find_circular_dependencies()
-
-        return {
-            "templates": dependency_info,
-            "total_templates": len(all_templates),
-            "circular_dependencies": circular_deps,
-            "root_templates": [
-                t for t, info in dependency_info.items() if info["is_root"]
-            ],
-            "leaf_templates": [
-                t for t, info in dependency_info.items() if info["is_leaf"]
-            ],
-        }
 
     def _find_circular_dependencies(self) -> List[List[str]]:
         """Find circular dependencies in the template graph."""
@@ -537,45 +502,7 @@ class TemplateManager:
             # Clear everything (cache strategies don't support pattern clearing)
             self._cache_strategy.clear()
 
-    def get_performance_stats(self) -> Dict[str, Any]:
-        """
-        Get performance statistics for template operations.
 
-        Returns:
-            Dictionary containing performance metrics
-        """
-        return {
-            "cache_hits": self._cache_hits,
-            "cache_misses": self._cache_misses,
-            "cache_hit_rate": self._cache_hits
-            / max(1, self._cache_hits + self._cache_misses),
-            "average_load_time": sum(self._load_times.values())
-            / max(1, len(self._load_times)),
-            "average_render_time": sum(self._render_times.values())
-            / max(1, len(self._render_times)),
-            "templates_loaded": len(self._load_times),
-            "templates_rendered": len(self._render_times),
-            "templates_cached": len(self._template_cache),
-        }
-
-    def preload_templates(self, template_paths: Optional[List[str]] = None) -> None:
-        """
-        Preload templates into cache for better performance.
-
-        Args:
-            template_paths: Specific templates to preload (None for all)
-        """
-        if template_paths is None:
-            template_paths = self.list_templates()
-
-        logger.info(f"Preloading {len(template_paths)} templates")
-
-        for template_path in template_paths:
-            try:
-                self.load_template(template_path)
-                logger.debug(f"Preloaded template: {template_path}")
-            except Exception as e:
-                logger.error(f"Failed to preload template {template_path}: {e}")
 
     def add_custom_filter(self, name: str, filter_func: callable) -> None:
         """
@@ -607,20 +534,6 @@ class TemplateManager:
             if hasattr(strategy, "add_global"):
                 strategy.add_global(name, value)
 
-    def validate_all_templates(self) -> Dict[str, bool]:
-        """
-        Validate all available templates.
-
-        Returns:
-            Dictionary mapping template paths to validation results
-        """
-        templates = self.list_templates()
-        results = {}
-
-        for template in templates:
-            results[template] = self.validate_template(template)
-
-        return results
 
     def get_template_info(self, template_path: str) -> Dict[str, Any]:
         """
@@ -1012,36 +925,6 @@ class ResourceManager:
 
         return False
 
-    def copy_resources_to_directory(
-        self, dest_dir: Path, pattern: str = "*"
-    ) -> Dict[str, bool]:
-        """
-        Copy multiple resources to a destination directory.
-
-        Args:
-            dest_dir: Destination directory
-            pattern: Pattern to match resources
-
-        Returns:
-            Dictionary mapping resource paths to copy success status
-        """
-        resources = self.list_resources(pattern=pattern)
-        results = {}
-
-        dest_dir = Path(dest_dir)
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
-        for resource_path in resources:
-            try:
-                dest_path = dest_dir / Path(resource_path).name
-                results[resource_path] = self.copy_resource(
-                    resource_path, str(dest_path)
-                )
-            except Exception as e:
-                logger.error(f"Failed to copy resource {resource_path}: {e}")
-                results[resource_path] = False
-
-        return results
 
     def invalidate_resource(self, resource_path: str) -> None:
         """
@@ -1077,173 +960,9 @@ class ResourceManager:
             if hasattr(strategy, "clear_cache"):
                 strategy.clear_cache()
 
-    def get_performance_stats(self) -> Dict[str, Any]:
-        """
-        Get performance statistics for resource operations.
 
-        Returns:
-            Dictionary containing performance metrics
-        """
-        return {
-            "cache_hits": self._cache_hits,
-            "cache_misses": self._cache_misses,
-            "cache_hit_rate": self._cache_hits
-            / max(1, self._cache_hits + self._cache_misses),
-            "average_load_time": sum(self._load_times.values())
-            / max(1, len(self._load_times)),
-            "resources_loaded": len(self._load_times),
-            "resources_cached": len(self._resource_cache),
-            "metadata_cached": len(self._metadata_cache),
-        }
 
-    def preload_resources(self, resource_paths: Optional[List[str]] = None) -> None:
-        """
-        Preload resources into cache for better performance.
 
-        Args:
-            resource_paths: Specific resources to preload (None for common resources)
-        """
-        if resource_paths is None:
-            # Preload common resource types
-            common_patterns = ["*.css", "*.js", "*.png", "*.jpg", "*.svg"]
-            resource_paths = []
-            for pattern in common_patterns:
-                resource_paths.extend(self.list_resources(pattern=pattern))
-
-        logger.info(f"Preloading {len(resource_paths)} resources")
-
-        for resource_path in resource_paths:
-            try:
-                self.load_resource(resource_path)
-                logger.debug(f"Preloaded resource: {resource_path}")
-            except Exception as e:
-                logger.error(f"Failed to preload resource {resource_path}: {e}")
-
-    def optimize_resources(
-        self, output_dir: Path, patterns: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """
-        Optimize resources and save them to output directory.
-
-        Args:
-            output_dir: Directory to save optimized resources
-            patterns: Resource patterns to optimize (None for all)
-
-        Returns:
-            Dictionary containing optimization results
-        """
-        if patterns is None:
-            patterns = ["*.css", "*.js", "*.png", "*.jpg", "*.svg"]
-
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        results = {
-            "optimized": [],
-            "failed": [],
-            "total_original_size": 0,
-            "total_optimized_size": 0,
-            "savings_bytes": 0,
-            "savings_percent": 0,
-        }
-
-        for pattern in patterns:
-            resources = self.list_resources(pattern=pattern)
-
-            for resource_path in resources:
-                try:
-                    # Load original resource
-                    original_content = self.load_resource(resource_path)
-                    original_size = len(original_content)
-
-                    # Use unified strategy with optimization enabled for size comparison
-                    if isinstance(self._primary_strategy, UnifiedResourceStrategy):
-                        # If already using unified strategy, get optimized content directly
-                        optimized_content = original_content  # Already optimized if strategy has optimization enabled
-                    else:
-                        # Create temporary unified strategy with optimization for comparison
-                        temp_unified_strategy = UnifiedResourceStrategy(
-                            base_paths=[str(path) for path in self.base_paths],
-                            enable_optimization=True,
-                            enable_minification=True,
-                            enable_compression=False,  # Don't compress for size comparison
-                        )
-                        optimized_content = temp_unified_strategy.load_resource(
-                            resource_path
-                        )
-
-                    optimized_size = len(optimized_content)
-
-                    # Save optimized resource
-                    output_path = output_dir / resource_path
-                    output_path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(output_path, "wb") as f:
-                        f.write(optimized_content)
-
-                    # Update results
-                    results["optimized"].append(
-                        {
-                            "path": resource_path,
-                            "original_size": original_size,
-                            "optimized_size": optimized_size,
-                            "savings": original_size - optimized_size,
-                        }
-                    )
-                    results["total_original_size"] += original_size
-                    results["total_optimized_size"] += optimized_size
-
-                except Exception as e:
-                    logger.error(f"Failed to optimize resource {resource_path}: {e}")
-                    results["failed"].append(resource_path)
-
-        # Calculate overall savings
-        results["savings_bytes"] = (
-            results["total_original_size"] - results["total_optimized_size"]
-        )
-        if results["total_original_size"] > 0:
-            results["savings_percent"] = (
-                results["savings_bytes"] / results["total_original_size"]
-            ) * 100
-
-        return results
-
-    def get_resource_info(self, resource_path: str) -> Dict[str, Any]:
-        """
-        Get comprehensive information about a resource.
-
-        Args:
-            resource_path: Path to the resource file
-
-        Returns:
-            Dictionary containing resource information
-        """
-        info = {
-            "path": resource_path,
-            "exists": False,
-            "metadata": None,
-            "load_time": None,
-            "cached": False,
-        }
-
-        try:
-            # Check existence
-            info["exists"] = self.resource_exists(resource_path)
-
-            if info["exists"]:
-                # Get metadata
-                info["metadata"] = self.get_resource_metadata(resource_path)
-
-                # Get performance info
-                info["load_time"] = self._load_times.get(resource_path)
-
-                # Check if cached
-                cache_key = f"resource:{resource_path}"
-                info["cached"] = cache_key in self._resource_cache
-
-        except Exception as e:
-            info["error"] = str(e)
-
-        return info
 
 
 class DependencyManager:
@@ -1269,50 +988,7 @@ class DependencyManager:
         self._dependency_graph = defaultdict(set)
         self._reverse_dependency_graph = defaultdict(set)
 
-    def register_dependency(
-        self, dependent: str, dependency: str, dep_type: str = "template"
-    ) -> None:
-        """
-        Register a dependency relationship.
 
-        Args:
-            dependent: The item that depends on another
-            dependency: The item being depended upon
-            dep_type: Type of dependency ('template' or 'resource')
-        """
-        dep_key = f"{dep_type}:{dependency}"
-        self._dependency_graph[dependent].add(dep_key)
-        self._reverse_dependency_graph[dep_key].add(dependent)
-
-    def get_dependencies(self, item: str, recursive: bool = True) -> Set[str]:
-        """
-        Get all dependencies for an item.
-
-        Args:
-            item: Item to get dependencies for
-            recursive: Whether to get dependencies recursively
-
-        Returns:
-            Set of dependency keys
-        """
-        if not recursive:
-            return self._dependency_graph.get(item, set())
-
-        # Get recursive dependencies using DFS
-        visited = set()
-        dependencies = set()
-
-        def dfs(current_item):
-            if current_item in visited:
-                return
-            visited.add(current_item)
-
-            for dep in self._dependency_graph.get(current_item, []):
-                dependencies.add(dep)
-                dfs(dep)
-
-        dfs(item)
-        return dependencies
 
     def get_dependents(self, item: str, item_type: str = "template") -> Set[str]:
         """
@@ -1328,38 +1004,4 @@ class DependencyManager:
         dep_key = f"{item_type}:{item}"
         return self._reverse_dependency_graph.get(dep_key, set())
 
-    def invalidate_dependents(self, item: str, item_type: str = "template") -> None:
-        """
-        Invalidate all items that depend on the given item.
 
-        Args:
-            item: Item that was changed
-            item_type: Type of the item ('template' or 'resource')
-        """
-        dependents = self.get_dependents(item, item_type)
-
-        for dependent in dependents:
-            if dependent.startswith("template:"):
-                template_path = dependent[9:]  # Remove 'template:' prefix
-                self.template_manager.invalidate_template(template_path)
-            elif dependent.startswith("resource:"):
-                resource_path = dependent[9:]  # Remove 'resource:' prefix
-                self.resource_manager.invalidate_resource(resource_path)
-
-    def analyze_dependencies(self) -> Dict[str, Any]:
-        """
-        Analyze the complete dependency graph.
-
-        Returns:
-            Dictionary containing dependency analysis
-        """
-        return {
-            "dependency_graph": dict(self._dependency_graph),
-            "reverse_dependency_graph": dict(self._reverse_dependency_graph),
-            "total_dependencies": len(self._dependency_graph),
-            "orphaned_items": [
-                item
-                for item in self._dependency_graph
-                if not self._dependency_graph[item]
-            ],
-        }

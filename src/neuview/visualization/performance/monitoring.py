@@ -180,29 +180,6 @@ class PerformanceMonitor:
         """Get current memory usage in MB."""
         return self._process.memory_info().rss / 1024 / 1024
 
-    def get_operation_stats(
-        self, operation_name: Optional[str] = None
-    ) -> Union[Dict[str, Any], Dict[str, Dict[str, Any]]]:
-        """
-        Get statistics for operations.
-
-        Args:
-            operation_name: Specific operation name, or None for all operations
-
-        Returns:
-            Statistics dictionary for the operation, or all operations
-        """
-        with self._lock:
-            if operation_name:
-                if operation_name in self._operation_stats:
-                    return self._operation_stats[operation_name].to_dict()
-                else:
-                    return {}
-            else:
-                return {
-                    name: stats.to_dict()
-                    for name, stats in self._operation_stats.items()
-                }
 
     def get_recent_metrics(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent performance metrics."""
@@ -226,46 +203,6 @@ class PerformanceMonitor:
             )
             return [metric.to_dict() for metric in sorted_metrics[:limit]]
 
-    def get_performance_summary(self) -> Dict[str, Any]:
-        """Get comprehensive performance summary."""
-        with self._lock:
-            total_operations = len(self._metrics)
-            if total_operations == 0:
-                return {"total_operations": 0, "message": "No operations recorded"}
-
-            # Calculate overall statistics
-            total_duration = sum(m.duration for m in self._metrics)
-            avg_duration = total_duration / total_operations
-
-            memory_deltas = [m.memory_delta for m in self._metrics]
-            avg_memory_delta = sum(memory_deltas) / len(memory_deltas)
-
-            slow_operations = sum(
-                1 for m in self._metrics if m.duration > self.slow_operation_threshold
-            )
-            very_slow_operations = sum(
-                1
-                for m in self._metrics
-                if m.duration > self.very_slow_operation_threshold
-            )
-
-            return {
-                "total_operations": total_operations,
-                "total_duration_ms": total_duration * 1000,
-                "avg_duration_ms": avg_duration * 1000,
-                "avg_memory_delta_mb": avg_memory_delta,
-                "slow_operations": slow_operations,
-                "very_slow_operations": very_slow_operations,
-                "slow_operation_percentage": (slow_operations / total_operations) * 100,
-                "current_memory_mb": self.get_current_memory_mb(),
-                "unique_operations": len(self._operation_stats),
-                "most_frequent_operation": max(
-                    self._operation_stats.keys(),
-                    key=lambda k: self._operation_stats[k].call_count,
-                )
-                if self._operation_stats
-                else None,
-            }
 
     def clear_metrics(self) -> None:
         """Clear all recorded metrics."""
@@ -436,79 +373,7 @@ class BatchPerformanceAnalyzer:
         """Initialize with performance monitor."""
         self.monitor = monitor
 
-    def analyze_batch_performance(self, batch_operation_pattern: str) -> Dict[str, Any]:
-        """
-        Analyze performance patterns for batch operations.
 
-        Args:
-            batch_operation_pattern: Pattern to match batch operations (e.g., "batch_")
-
-        Returns:
-            Analysis results with recommendations
-        """
-        with self.monitor._lock:
-            # Find batch operations
-            batch_metrics = [
-                m for m in self.monitor._metrics if batch_operation_pattern in m.name
-            ]
-
-        if not batch_metrics:
-            return {"error": "No batch operations found"}
-
-        # Analyze patterns
-        durations = [m.duration for m in batch_metrics]
-        memory_deltas = [m.memory_delta for m in batch_metrics]
-
-        avg_duration = sum(durations) / len(durations)
-        avg_memory_delta = sum(memory_deltas) / len(memory_deltas)
-
-        # Identify outliers (operations > 2 std deviations from mean)
-        duration_std = (
-            sum((d - avg_duration) ** 2 for d in durations) / len(durations)
-        ) ** 0.5
-        duration_outliers = [
-            m
-            for m in batch_metrics
-            if abs(m.duration - avg_duration) > 2 * duration_std
-        ]
-
-        return {
-            "total_batch_operations": len(batch_metrics),
-            "avg_duration_ms": avg_duration * 1000,
-            "avg_memory_delta_mb": avg_memory_delta,
-            "duration_std_ms": duration_std * 1000,
-            "outlier_count": len(duration_outliers),
-            "outlier_percentage": (len(duration_outliers) / len(batch_metrics)) * 100,
-            "recommendations": self._generate_batch_recommendations(
-                avg_duration, avg_memory_delta, len(duration_outliers)
-            ),
-        }
-
-    def _generate_batch_recommendations(
-        self, avg_duration: float, avg_memory_delta: float, outlier_count: int
-    ) -> List[str]:
-        """Generate performance recommendations based on analysis."""
-        recommendations = []
-
-        if avg_duration > 2.0:
-            recommendations.append(
-                "Consider reducing batch size or optimizing batch processing logic"
-            )
-
-        if avg_memory_delta > 100:  # 100MB
-            recommendations.append(
-                "High memory usage detected - consider memory optimization strategies"
-            )
-
-        if outlier_count > 0:
-            recommendations.append(
-                "Performance inconsistency detected - investigate outlier operations"
-            )
-
-        if not recommendations:
-            recommendations.append("Batch performance appears optimal")
-
-        return recommendations
 
 
 # Global performance monitor instance

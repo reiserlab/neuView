@@ -105,32 +105,7 @@ class BrainRegionService:
             self._loaded = True
             return self.brain_regions
 
-    def get_brain_regions(self) -> Dict[str, str]:
-        """
-        Get the loaded brain regions dictionary.
 
-        Loads brain regions if not already loaded.
-
-        Returns:
-            Dictionary mapping abbreviations to full names
-        """
-        if not self._loaded:
-            self.load_brain_regions()
-        return self.brain_regions.copy()
-
-    def get_full_name(self, abbreviation: str) -> Optional[str]:
-        """
-        Get the full name for a brain region abbreviation.
-
-        Args:
-            abbreviation: The brain region abbreviation
-
-        Returns:
-            Full name if found, None otherwise
-        """
-        if not self._loaded:
-            self.load_brain_regions()
-        return self.brain_regions.get(abbreviation)
 
     def roi_abbr_filter(self, roi_name: str) -> str:
         """
@@ -185,36 +160,7 @@ class BrainRegionService:
             logger.debug(f"Brain region abbreviation not found: {roi_name}")
             return roi_name
 
-    def reload_brain_regions(self) -> Dict[str, str]:
-        """
-        Force reload of brain regions data from file.
 
-        This method clears the cache and reloads the data, useful for
-        testing or when the source file has been updated.
-
-        Returns:
-            Dictionary mapping abbreviations to full names
-        """
-        self._loaded = False
-        self.brain_regions.clear()
-        return self.load_brain_regions()
-
-    def add_brain_region(self, abbreviation: str, full_name: str) -> None:
-        """
-        Add or update a brain region mapping.
-
-        This method allows runtime addition of brain region mappings,
-        useful for testing or dynamic configuration.
-
-        Args:
-            abbreviation: The brain region abbreviation
-            full_name: The full name of the brain region
-        """
-        if not self._loaded:
-            self.load_brain_regions()
-
-        self.brain_regions[abbreviation] = full_name
-        logger.debug(f"Added brain region mapping: {abbreviation} -> {full_name}")
 
     def __len__(self) -> int:
         """Return the number of loaded brain regions."""

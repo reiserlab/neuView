@@ -79,6 +79,24 @@ class HTMLUtils:
 
         logger = logging.getLogger(__name__)
 
+        # Preserve <footer> verbatim — minify-html has no per-element opt-out
+        # and we want the footer's source whitespace intact so the rendered
+        # text stays human-diffable across builds.
+        FOOTER_PLACEHOLDER = "__NEUVIEW_PRESERVE_FOOTER_PLACEHOLDER__"
+        footer_match = re.search(
+            r"<footer\b[^>]*>.*?</footer>",
+            html_content,
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+        preserved_footer = None
+        if footer_match:
+            preserved_footer = footer_match.group(0)
+            html_content = (
+                html_content[: footer_match.start()]
+                + FOOTER_PLACEHOLDER
+                + html_content[footer_match.end() :]
+            )
+
         # LEGACY WORKAROUND: minify-js 0.6.0 has bugs with JavaScript control flow
         # This can be removed when upgrading to a newer version of minify-html
         # that doesn't use the problematic minify-js library
@@ -117,4 +135,8 @@ class HTMLUtils:
             minify_css=True,
             remove_processing_instructions=True,
         )
+
+        if preserved_footer is not None:
+            minified = minified.replace(FOOTER_PLACEHOLDER, preserved_footer, 1)
+
         return minified

@@ -439,31 +439,6 @@ class CacheService:
 
         return cleaned.strip()
 
-    def _get_roi_hierarchy_parent(self, roi_name: str, connector=None) -> str:
-        """Get the parent ROI of the given ROI from the hierarchy."""
-        try:
-            # Load ROI hierarchy from cache or fetch if needed
-            hierarchy_data = None
-            if self.cache_manager:
-                hierarchy_data = self.cache_manager.load_roi_hierarchy()
-
-            if not hierarchy_data and connector:
-                # Fetch from database using provided connector
-                hierarchy_data = connector._get_roi_hierarchy()
-
-            if not hierarchy_data:
-                return ""
-
-            # Clean the ROI name first (remove (R), (L), (M) suffixes)
-            cleaned_roi = self._clean_roi_name(roi_name)
-
-            # Search recursively for the ROI and its parent
-            parent = self._find_roi_parent_recursive(cleaned_roi, hierarchy_data)
-            return parent if parent else ""
-
-        except Exception as e:
-            logger.debug(f"Failed to get parent ROI for {roi_name}: {e}")
-            return ""
 
     def load_persistent_columns_cache(
         self, cache_key: str
@@ -514,46 +489,6 @@ class CacheService:
 
         return None
 
-    def save_persistent_columns_cache(
-        self, cache_key: str, all_columns: list, region_map: Dict[str, set]
-    ):
-        """
-        Save columns data to persistent cache.
-
-        Args:
-            cache_key: Unique key for the cache entry
-            all_columns: List of column data
-            region_map: Dictionary mapping regions to coordinate sets
-        """
-        try:
-            # Create cache directory
-            cache_dir = Path("output/.cache")
-            cache_dir.mkdir(parents=True, exist_ok=True)
-
-            # Use hash of cache key for filename to avoid filesystem issues
-            cache_filename = (
-                hashlib.md5(cache_key.encode()).hexdigest() + "_columns.json"
-            )
-            cache_file = cache_dir / cache_filename
-
-            # Convert sets to lists for JSON serialization
-            serializable_region_map = {}
-            for region, coords_set in region_map.items():
-                serializable_region_map[region] = list(coords_set)
-
-            data = {
-                "timestamp": time.time(),
-                "all_columns": all_columns,
-                "region_map": serializable_region_map,
-            }
-
-            with atomic_write(cache_file) as f:
-                json.dump(data, f)
-
-            logger.info(f"Saved {len(all_columns)} columns to persistent cache")
-
-        except Exception as e:
-            logger.warning(f"Failed to save persistent columns cache: {e}")
 
     def get_columns_from_neuron_cache(
         self, neuron_type: str

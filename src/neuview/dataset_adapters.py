@@ -450,19 +450,6 @@ class CNSAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
-    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
-        """Get connection counts from CNS dataset."""
-        up_total = (
-            neurons_df[self.dataset_info.upstream_column].sum()
-            if self.dataset_info.upstream_column in neurons_df.columns
-            else 0
-        )
-        down_total = (
-            neurons_df[self.dataset_info.downstream_column].sum()
-            if self.dataset_info.downstream_column in neurons_df.columns
-            else 0
-        )
-        return int(up_total), int(down_total)
 
 
 class HemibrainAdapter(DatasetAdapter):
@@ -530,19 +517,6 @@ class HemibrainAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
-    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
-        """Get connection counts from Hemibrain dataset."""
-        up_total = (
-            neurons_df[self.dataset_info.upstream_column].sum()
-            if self.dataset_info.upstream_column in neurons_df.columns
-            else 0
-        )
-        down_total = (
-            neurons_df[self.dataset_info.downstream_column].sum()
-            if self.dataset_info.downstream_column in neurons_df.columns
-            else 0
-        )
-        return int(up_total), int(down_total)
 
 
 class OpticLobeAdapter(DatasetAdapter):
@@ -623,19 +597,6 @@ class OpticLobeAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
-    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
-        """Get connection counts from Optic Lobe dataset."""
-        up_total = (
-            neurons_df[self.dataset_info.upstream_column].sum()
-            if self.dataset_info.upstream_column in neurons_df.columns
-            else 0
-        )
-        down_total = (
-            neurons_df[self.dataset_info.downstream_column].sum()
-            if self.dataset_info.downstream_column in neurons_df.columns
-            else 0
-        )
-        return int(up_total), int(down_total)
 
 
 class FafbAdapter(DatasetAdapter):
@@ -774,19 +735,6 @@ class FafbAdapter(DatasetAdapter):
         )
         return int(pre_total), int(post_total)
 
-    def get_connection_counts(self, neurons_df: pd.DataFrame) -> Tuple[int, int]:
-        """Get connection counts from FAFB dataset."""
-        up_total = (
-            neurons_df[self.dataset_info.upstream_column].sum()
-            if self.dataset_info.upstream_column in neurons_df.columns
-            else 0
-        )
-        down_total = (
-            neurons_df[self.dataset_info.downstream_column].sum()
-            if self.dataset_info.downstream_column in neurons_df.columns
-            else 0
-        )
-        return int(up_total), int(down_total)
 
 
 class DatasetAdapterFactory:

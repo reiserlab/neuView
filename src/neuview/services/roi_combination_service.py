@@ -216,28 +216,6 @@ class ROICombinationService:
             else:
                 roi["post_percentage"] = 0.0
 
-    def get_roi_side_mapping(self, roi_name: str) -> List[str]:
-        """
-        Get possible sided versions of an ROI name.
-
-        This is useful for neuroglancer integration where a combined ROI entry
-        might need to map back to specific sided ROIs.
-
-        Args:
-            roi_name: Base ROI name (e.g., "ME", "LO_layer_1")
-
-        Returns:
-            List of possible sided ROI names
-        """
-        # Generate possible side variants
-        side_variants = []
-
-        # Simple suffixes
-        side_variants.extend(
-            [f"{roi_name}_L", f"{roi_name}_R", f"{roi_name}(L)", f"{roi_name}(R)"]
-        )
-
-        return side_variants
 
     def is_sided_roi(self, roi_name: str) -> bool:
         """
@@ -259,28 +237,6 @@ class ROICombinationService:
 
         return False
 
-    def extract_side_from_roi(self, roi_name: str) -> Optional[str]:
-        """
-        Extract side information from ROI name.
-
-        Args:
-            roi_name: ROI name (e.g., "ME_L", "LO(R)")
-
-        Returns:
-            Side character ("L" or "R") or None if no side found
-        """
-        if not roi_name:
-            return None
-
-        # Try each pattern to extract side
-        for pattern in self.ROI_SIDE_PATTERNS:
-            match = re.match(pattern, roi_name)
-            if match:
-                groups = match.groups()
-                if len(groups) >= 2:
-                    return groups[1]  # Side is always the second group
-
-        return None
 
     def get_statistics(
         self, original_data: List[Dict[str, Any]], combined_data: List[Dict[str, Any]]
@@ -316,58 +272,3 @@ class ROICombinationService:
             "sided_rois_combined": original_counts["sided"] - combined_counts["sided"],
         }
 
-    def validate_roi_data(self, roi_summary: List[Dict[str, Any]]) -> List[str]:
-        """
-        Validate ROI summary data structure.
-
-        Args:
-            roi_summary: ROI summary data to validate
-
-        Returns:
-            List of validation warnings/errors (empty if valid)
-        """
-        issues = []
-
-        if not isinstance(roi_summary, list):
-            issues.append("ROI summary must be a list")
-            return issues
-
-        required_fields = {
-            "name",
-            "pre",
-            "post",
-            "total",
-            "pre_percentage",
-            "post_percentage",
-        }
-
-        for i, roi in enumerate(roi_summary):
-            if not isinstance(roi, dict):
-                issues.append(f"ROI entry {i} must be a dictionary")
-                continue
-
-            missing_fields = required_fields - set(roi.keys())
-            if missing_fields:
-                issues.append(f"ROI entry {i} missing fields: {missing_fields}")
-
-            # Validate numeric fields
-            for field in ["pre", "post", "total"]:
-                if field in roi:
-                    try:
-                        int(roi[field])
-                    except (ValueError, TypeError):
-                        issues.append(f"ROI entry {i} field '{field}' must be numeric")
-
-            # Validate percentage fields
-            for field in ["pre_percentage", "post_percentage"]:
-                if field in roi:
-                    try:
-                        pct = float(roi[field])
-                        if pct < 0 or pct > 100:
-                            issues.append(
-                                f"ROI entry {i} field '{field}' should be between 0-100"
-                            )
-                    except (ValueError, TypeError):
-                        issues.append(f"ROI entry {i} field '{field}' must be numeric")
-
-        return issues
