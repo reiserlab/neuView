@@ -1,6 +1,6 @@
 [project]
 name = "neuview"
-version = "2.7.17"
+version = "2.7.19"
 requires-python = ">= 3.11"
 authors = [
     { name = "Frank Loesche", email = "loeschef@janelia.hhmi.org" },
@@ -92,6 +92,14 @@ args = [
 depends-on = [
     "clean-output",
     "fill-all",
+    "pop-all",
+    "create-scatter",
+    "create-list",
+    "increment-version",
+]
+
+[tool.pixi.tasks.create-all-pages-no-fill]
+depends-on = [
     "pop-all",
     "create-scatter",
     "create-list",
