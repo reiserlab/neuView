@@ -2,8 +2,8 @@
 Neuroglancer JavaScript Generation Service for neuView.
 
 This service generates the neuroglancer-url-generator.js file dynamically,
-selecting the appropriate neuroglancer template based on the dataset configuration.
-This replaces the static JavaScript file with a template-based approach.
+using the neuroglancer template named in the configuration
+(``neuroglancer.template``).
 """
 
 import json
@@ -40,12 +40,7 @@ class NeuroglancerJSService:
             True if generation successful, False otherwise
         """
         try:
-            # Determine which neuroglancer template to use
-            if "fafb" in self.config.neuprint.dataset.lower():
-                template_name = "neuroglancer-fafb.js.jinja"
-            else:
-                template_name = "neuroglancer.js.jinja"
-
+            template_name = self.config.neuroglancer.template
             logger.debug(
                 f"Using Neuroglancer template: {template_name} for dataset: {self.config.neuprint.dataset}"
             )
@@ -129,10 +124,7 @@ class NeuroglancerJSService:
         Returns:
             Template name string
         """
-        if "fafb" in self.config.neuprint.dataset.lower():
-            return "neuroglancer-fafb.js.jinja"
-        else:
-            return "neuroglancer.js.jinja"
+        return self.config.neuroglancer.template
 
     def validate_templates(self) -> Dict[str, bool]:
         """
@@ -143,14 +135,14 @@ class NeuroglancerJSService:
         """
         results = {}
 
-        # Check neuroglancer templates
-        for template_name in ["neuroglancer.js.jinja", "neuroglancer-fafb.js.jinja"]:
-            try:
-                self.env.get_template(template_name)
-                results[template_name] = True
-            except Exception as e:
-                logger.warning(f"Template {template_name} not available: {e}")
-                results[template_name] = False
+        # Check the configured neuroglancer template
+        template_name = self.config.neuroglancer.template
+        try:
+            self.env.get_template(template_name)
+            results[template_name] = True
+        except Exception as e:
+            logger.warning(f"Template {template_name} not available: {e}")
+            results[template_name] = False
 
         # Check JavaScript template
         try:

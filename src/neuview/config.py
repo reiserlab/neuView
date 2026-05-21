@@ -43,6 +43,7 @@ class NeuroglancerConfig:
     """Neuroglancer configuration."""
 
     base_url: str = "https://clio-ng.janelia.org/"
+    template: str = "neuroglancer.js.jinja"
 
 
 @dataclass

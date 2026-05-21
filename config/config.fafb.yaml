@@ -8,6 +8,7 @@ output:
 
 neuroglancer:
   base_url: "https://clio-ng.janelia.org/"
+  template: "neuroglancer-fafb.js.jinja"
 
 # Auto-discovery settings for neuron types
 discovery:
