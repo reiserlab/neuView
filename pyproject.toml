@@ -1,6 +1,6 @@
 [project]
 name = "neuview"
-version = "2.7.20"
+version = "2.7.21"
 requires-python = ">= 3.11"
 authors = [
     { name = "Frank Loesche", email = "loeschef@janelia.hhmi.org" },
