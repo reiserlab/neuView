@@ -50,8 +50,11 @@ Provides citation information for scientific references linked to neuron synonym
 
 ### Format
 ```csv
-Citation Key, DOI or URL, "Paper Title"
+Citation Key, DOI or URL, "Authors (YEAR):Paper Title"
 ```
+
+The authors are listed with their full names, if possible. A good source for Authors list and the paper title seems to be https://openalex.org/.
+
 
 ### Examples
 ```csv
