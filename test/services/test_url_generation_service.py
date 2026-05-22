@@ -14,13 +14,14 @@ from neuview.services.url_generation_service import URLGenerationService
 class MockConfig:
     """Mock configuration object for testing."""
 
-    def __init__(self, dataset="hemibrain:v1.2.1"):
+    def __init__(self, dataset="hemibrain:v1.2.1", template="neuroglancer.js.jinja"):
         self.neuprint = Mock()
         self.neuprint.dataset = dataset
         self.neuprint.server = "neuprint.janelia.org"
 
         self.neuroglancer = Mock()
         self.neuroglancer.base_url = "https://clio-ng.janelia.org/"
+        self.neuroglancer.template = template
 
 
 class TestURLGenerationService:
@@ -41,9 +42,11 @@ class TestURLGenerationService:
         self.neuron_selection_service = Mock()
         self.database_query_service = Mock()
 
-    def create_service(self, dataset="hemibrain:v1.2.1"):
+    def create_service(
+        self, dataset="hemibrain:v1.2.1", template="neuroglancer.js.jinja"
+    ):
         """Create URLGenerationService with specified dataset."""
-        config = MockConfig(dataset)
+        config = MockConfig(dataset, template)
         return URLGenerationService(
             config=config,
             jinja_env=self.jinja_env,
@@ -51,9 +54,9 @@ class TestURLGenerationService:
             database_query_service=self.database_query_service,
         )
 
-    def test_uses_standard_template_for_non_fafb_dataset(self):
-        """Test that standard template is used for non-FAFB datasets."""
-        service = self.create_service("hemibrain:v1.2.1")
+    def test_uses_configured_standard_template(self):
+        """Standard template is used when configured."""
+        service = self.create_service(template="neuroglancer.js.jinja")
 
         # Mock neuron data
         neuron_data = {"neurons": None}
@@ -76,9 +79,11 @@ class TestURLGenerationService:
         # Verify template variables indicate standard template was used
         assert template_vars["website_title"] == "TestType"
 
-    def test_uses_fafb_template_for_fafb_dataset(self):
-        """Test that FAFB-specific template is used for FAFB datasets."""
-        service = self.create_service("flywire-fafb:v783b")
+    def test_uses_configured_fafb_template(self):
+        """FAFB template is used when configured."""
+        service = self.create_service(
+            dataset="flywire-fafb:v783b", template="neuroglancer-fafb.js.jinja"
+        )
 
         # Mock neuron data
         neuron_data = {"neurons": None}
@@ -101,66 +106,12 @@ class TestURLGenerationService:
         # Verify template variables
         assert template_vars["website_title"] == "TestType"
 
-    def test_fafb_detection_case_insensitive(self):
-        """Test that FAFB detection is case insensitive."""
-        # Test various case combinations
-        fafb_datasets = [
-            "flywire-fafb:v783b",
-            "FLYWIRE-FAFB:V783B",
-            "FlywIre-FaFb:v783b",
-            "some-FAFB-dataset:v1",
-            "fafb:v1",
-        ]
-
-        for dataset in fafb_datasets:
-            service = self.create_service(dataset)
-
-            # Mock dependencies
-            neuron_data = {"neurons": None}
-            self.neuron_selection_service.select_bodyids_by_soma_side.return_value = []
-            self.database_query_service.get_connected_bodyids.return_value = {
-                "upstream": {},
-                "downstream": {},
-            }
-
-            # Should use FAFB template (test that it doesn't fail)
-            url, template_vars = service.generate_neuroglancer_url(
-                "TestType", neuron_data
-            )
-            expected_base = service.config.neuroglancer.base_url.rstrip("/")
-            assert url.startswith(f"{expected_base}/")
-
-    def test_non_fafb_datasets_use_standard_template(self):
-        """Test that non-FAFB datasets use the standard template."""
-        non_fafb_datasets = [
-            "hemibrain:v1.2.1",
-            "cns:v1.0",
-            "optic-lobe:v1.0",
-            "some-other-dataset:v1",
-        ]
-
-        for dataset in non_fafb_datasets:
-            service = self.create_service(dataset)
-
-            # Mock dependencies
-            neuron_data = {"neurons": None}
-            self.neuron_selection_service.select_bodyids_by_soma_side.return_value = []
-            self.database_query_service.get_connected_bodyids.return_value = {
-                "upstream": {},
-                "downstream": {},
-            }
-
-            # Should use standard template
-            url, template_vars = service.generate_neuroglancer_url(
-                "TestType", neuron_data
-            )
-            expected_base = service.config.neuroglancer.base_url.rstrip("/")
-            assert url.startswith(f"{expected_base}/")
-
     @patch("neuview.services.url_generation_service.logger")
     def test_logs_template_selection(self, mock_logger):
         """Test that template selection is logged."""
-        service = self.create_service("flywire-fafb:v783b")
+        service = self.create_service(
+            dataset="flywire-fafb:v783b", template="neuroglancer-fafb.js.jinja"
+        )
 
         # Mock dependencies
         neuron_data = {"neurons": None}
@@ -195,7 +146,9 @@ class TestURLGenerationService:
 
     def test_template_variables_passed_correctly(self):
         """Test that all required template variables are passed to the template."""
-        service = self.create_service("flywire-fafb:v783b")
+        service = self.create_service(
+            dataset="flywire-fafb:v783b", template="neuroglancer-fafb.js.jinja"
+        )
 
         # Create mock neuron DataFrame
         import pandas as pd
