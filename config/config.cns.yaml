@@ -1,13 +1,14 @@
 # neuView Configuration
 neuprint:
   server: "neuprint.janelia.org"
-  dataset: "male-cns:v0.9"
+  dataset: "male-cns:v1.0"
 
 output:
   directory: "output"
 
 neuroglancer:
   base_url: "https://neuroglancer-demo.appspot.com/"
+  template: "neuroglancer-cns.js.jinja"
 
 # Auto-discovery settings for neuron types
 discovery:

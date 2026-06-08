@@ -21,6 +21,7 @@ class MockConfig:
         self,
         dataset="hemibrain:v1.2.1",
         neuroglancer_base_url="https://clio-ng.janelia.org/",
+        template="neuroglancer.js.jinja",
     ):
         self.neuprint = Mock()
         self.neuprint.dataset = dataset
@@ -28,6 +29,7 @@ class MockConfig:
 
         self.neuroglancer = Mock()
         self.neuroglancer.base_url = neuroglancer_base_url
+        self.neuroglancer.template = template
 
 
 class TestNeuroglancerJSService:
@@ -69,9 +71,10 @@ function generateNeuroglancerUrl() {
         self,
         dataset="hemibrain:v1.2.1",
         neuroglancer_base_url="https://clio-ng.janelia.org/",
+        template="neuroglancer.js.jinja",
     ):
         """Create NeuroglancerJSService with specified configuration."""
-        config = MockConfig(dataset, neuroglancer_base_url)
+        config = MockConfig(dataset, neuroglancer_base_url, template)
         return NeuroglancerJSService(config=config, jinja_env=self.jinja_env)
 
     def test_generates_js_with_correct_base_url(self):
@@ -165,9 +168,9 @@ function generateNeuroglancerUrl() {
                 "Trailing slash should be stripped from base URL"
             )
 
-    def test_uses_standard_template_for_non_fafb_dataset(self):
-        """Test that standard neuroglancer template is used for non-FAFB datasets."""
-        service = self.create_service("hemibrain:v1.2.1")
+    def test_uses_configured_standard_template(self):
+        """Configured `neuroglancer.js.jinja` template is rendered."""
+        service = self.create_service(template="neuroglancer.js.jinja")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir)
@@ -184,9 +187,12 @@ function generateNeuroglancerUrl() {
                 "Standard template should be used"
             )
 
-    def test_uses_fafb_template_for_fafb_dataset(self):
-        """Test that FAFB-specific template is used for FAFB datasets."""
-        service = self.create_service("flywire-fafb:v783b")
+    def test_uses_configured_fafb_template(self):
+        """Configured `neuroglancer-fafb.js.jinja` template is rendered."""
+        service = self.create_service(
+            dataset="flywire-fafb:v783b",
+            template="neuroglancer-fafb.js.jinja",
+        )
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir)
@@ -244,7 +250,10 @@ function generateNeuroglancerUrl() {
     @patch("neuview.services.neuroglancer_js_service.logger")
     def test_logs_template_selection(self, mock_logger):
         """Test that template selection is logged."""
-        service = self.create_service("flywire-fafb:v783b")
+        service = self.create_service(
+            dataset="flywire-fafb:v783b",
+            template="neuroglancer-fafb.js.jinja",
+        )
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir)
@@ -256,33 +265,39 @@ function generateNeuroglancerUrl() {
             )
 
     def test_get_neuroglancer_template_name(self):
-        """Test the get_neuroglancer_template_name method."""
-        # Test standard template selection
-        service = self.create_service("hemibrain:v1.2.1")
+        """get_neuroglancer_template_name returns the configured template."""
+        service = self.create_service(template="neuroglancer.js.jinja")
         assert service.get_neuroglancer_template_name() == "neuroglancer.js.jinja"
 
-        # Test FAFB template selection
-        service_fafb = self.create_service("flywire-fafb:v783b")
+        service_fafb = self.create_service(template="neuroglancer-fafb.js.jinja")
         assert (
             service_fafb.get_neuroglancer_template_name()
             == "neuroglancer-fafb.js.jinja"
         )
 
     def test_validate_templates(self):
-        """Test template validation functionality."""
-        service = self.create_service()
+        """validate_templates reports the configured neuroglancer template + JS template."""
+        service = self.create_service(template="neuroglancer.js.jinja")
         results = service.validate_templates()
 
-        # Verify all expected templates are validated
+        # The configured template and the JS generator template must both be present and available.
         expected_templates = [
             "neuroglancer.js.jinja",
-            "neuroglancer-fafb.js.jinja",
             "neuroglancer-url-generator.js.jinja",
         ]
-
         for template in expected_templates:
             assert template in results, f"Template {template} should be validated"
             assert results[template] is True, f"Template {template} should be available"
+
+        # A different configured template is the one that gets reported.
+        service_fafb = self.create_service(template="neuroglancer-fafb.js.jinja")
+        results_fafb = service_fafb.validate_templates()
+        assert "neuroglancer-fafb.js.jinja" in results_fafb
+        assert results_fafb["neuroglancer-fafb.js.jinja"] is True
+        assert "neuroglancer.js.jinja" not in results_fafb, (
+            "Only the configured neuroglancer template should appear, "
+            "not every known template"
+        )
 
     def test_get_template_info(self):
         """Test the get_template_info method."""

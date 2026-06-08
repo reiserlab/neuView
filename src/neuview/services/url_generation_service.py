@@ -61,12 +61,7 @@ class URLGenerationService:
         conn_bids = {"upstream": {}, "downstream": {}}
 
         try:
-            # Load appropriate neuroglancer template based on dataset
-            if "fafb" in self.config.neuprint.dataset.lower():
-                template_name = "neuroglancer-fafb.js.jinja"
-            else:
-                template_name = "neuroglancer.js.jinja"
-
+            template_name = self.config.neuroglancer.template
             logger.debug(
                 f"Using Neuroglancer template: {template_name} for dataset: {self.config.neuprint.dataset}"
             )

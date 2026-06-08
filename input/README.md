@@ -50,8 +50,11 @@ Provides citation information for scientific references linked to neuron synonym
 
 ### Format
 ```csv
-Citation Key, DOI or URL, "Paper Title"
+Citation Key, DOI or URL, "Authors (YEAR):Paper Title"
 ```
+
+The authors are listed with their full names, if possible. A good source for Authors list and the paper title seems to be https://openalex.org/.
+
 
 ### Examples
 ```csv
@@ -76,6 +79,12 @@ Kimura 2008, 10.1016/j.bbrc.2008.05.003,"Shuhei Kimura, Shun Sawatsubashi, Saya 
 - DOI entries starting with "10." are automatically prefixed with "https://doi.org/"
 - Full URLs are used as-is
 - Invalid or missing DOIs fall back to "#" placeholder
+
+### One way to acquire data
+- search for key + "Drosophila" on https://scholar.google.com find DOI
+- copy key + DOI to citations.csv
+- search for DOI on https://openalex.org
+- copy list of authors. Add "and" before last author. Add year and title to citations.csv
 
 ## youtube.csv
 
