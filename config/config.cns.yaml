@@ -1,6 +1,6 @@
 # neuView Configuration
 neuprint:
-  server: "neuprint-cns.janelia.org"
+  server: "neuprint.janelia.org"
   dataset: "male-cns:v1.0"
 
 output:

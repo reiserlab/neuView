@@ -80,6 +80,12 @@ Kimura 2008, 10.1016/j.bbrc.2008.05.003,"Shuhei Kimura, Shun Sawatsubashi, Saya 
 - Full URLs are used as-is
 - Invalid or missing DOIs fall back to "#" placeholder
 
+### One way to acquire data
+- search for key + "Drosophila" on https://scholar.google.com find DOI
+- copy key + DOI to citations.csv
+- search for DOI on https://openalex.org
+- copy list of authors. Add "and" before last author. Add year and title to citations.csv
+
 ## youtube.csv
 
 ### Purpose
