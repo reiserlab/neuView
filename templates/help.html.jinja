@@ -2,7 +2,10 @@
 
 {% block title %}{{ config.html.title_prefix }} – Cell Type Explorer – Help{% endblock %}
 
-{% block header %}{% include "sections/header.html.jinja" %}{% endblock %}
+{% block header %}
+{% include "sections/hamburger_menu.html.jinja" %}
+{% include "sections/header.html.jinja" %}
+{% endblock %}
 
 {% block content %}
 <div class="container">

@@ -65,7 +65,11 @@ JavaScript:
   </button>
   <nav class="hamburger-dropdown" id="hamburgerDropdown">
 
-    {# -- Page navigation (this page's sections + soma side switcher) -- #}
+    {# -- Page navigation (this page's sections + soma side switcher).
+         Only rendered on neuron pages, which provide `neuron_type` and the
+         soma-side / section-link context. Other pages (index/help/types)
+         get only the "Site" section below. -- #}
+    {% if neuron_type is defined %}
     <div class="hamburger-section hamburger-section-page">
     {% if soma_side_links and soma_side_links|length > 0 %}
     <div class="hamburger-title">
@@ -97,6 +101,7 @@ JavaScript:
     <a href="#{{ section_id }}" class="hamburger-link">{{ section_title }}</a>
     {% endfor %}
     </div>
+    {% endif %}
 
     {# -- Site-wide nav (only visible on small screens; the desktop header-bar covers this elsewhere) -- #}
     <div class="hamburger-section hamburger-section-site">

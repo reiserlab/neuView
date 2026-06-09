@@ -402,26 +402,30 @@ class NeuronSearch {
 
       // Matched aliases preview: show synonym/flywire entries that contain the
       // query so users see *why* a type was matched even when the type name doesn't.
+      // Skip aliases that match the type name itself (case-insensitive) — they'd
+      // render as "aka: <same name>", which is noise.
       if (query && neuronEntry && neuronEntry.types) {
         const matchedAliases = [];
-        const seen = new Set();
+        const seen = new Set([type.toLowerCase()]);
         if (Array.isArray(neuronEntry.types.synonyms)) {
           for (const synonym of neuronEntry.types.synonyms) {
             const colonIndex = synonym.indexOf(':');
             const namePart = colonIndex !== -1 ? synonym.substring(colonIndex + 1).trim() : synonym;
+            const key = namePart.toLowerCase();
             if (
-              namePart && !seen.has(namePart) &&
-              (synonym.toLowerCase().includes(query) || namePart.toLowerCase().includes(query))
+              namePart && !seen.has(key) &&
+              (synonym.toLowerCase().includes(query) || key.includes(query))
             ) {
-              seen.add(namePart);
+              seen.add(key);
               matchedAliases.push(namePart);
             }
           }
         }
         if (Array.isArray(neuronEntry.types.flywire)) {
           for (const flywireType of neuronEntry.types.flywire) {
-            if (flywireType && !seen.has(flywireType) && flywireType.toLowerCase().includes(query)) {
-              seen.add(flywireType);
+            const key = flywireType && flywireType.toLowerCase();
+            if (flywireType && !seen.has(key) && key.includes(query)) {
+              seen.add(key);
               matchedAliases.push(flywireType);
             }
           }
