@@ -34,6 +34,7 @@
 
         {% block footer %}{% endblock %}
 
+        <script src="{{ '../' if is_neuron_page else '' }}static/js/responsive-nav.js" defer></script>
         {% block extra_scripts %}{% endblock %}
     </body>
 </html>
