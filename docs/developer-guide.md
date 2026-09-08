@@ -514,11 +514,11 @@ All caches are organized under the output directory to maintain consistency. Sta
 
 #### Cache Lifecycle Management
 
-**Cache Lifecycle Management**: Implement cache validation and refresh mechanisms with time-based expiration. See `ROIDataService._is_cache_valid()` and `_fetch_and_parse_roi_data()` for reference implementation patterns.
+**Cache Lifecycle Management**: Implement cache validation and refresh mechanisms with time-based expiration. See `ROIDataService._fetch_json_from_gcs()` for the reference implementation (1 hour age check on the cache file, then refetch).
 
 #### Error-Resilient Caching
 
-**Error-Resilient Caching**: Implement graceful fallback to stale cache on network failures. Reference implementation in `ROIDataService._fetch_and_parse_roi_data()` demonstrates try-catch patterns with fallback logic.
+**Error-Resilient Caching**: Implement graceful fallback to stale cache on network failures. The same `ROIDataService._fetch_json_from_gcs()` falls back to a stale cache file when the request fails, and serializes concurrent fetches with a file lock.
 
 #### Container Integration Pattern
 
@@ -1748,20 +1748,25 @@ const VNC_NAMES = {{ vnc_names|tojson }};
 The service is automatically registered in the dependency injection container:
 
 ```python
-def roi_data_service_factory(container: ServiceContainer) -> ROIDataService:
-    """Factory for ROI data service with container integration."""
-    config = container.get("config")
-    output_dir = Path(config.output.directory) if config.output.directory else None
-    return ROIDataService(output_dir=output_dir)
+# PageGenerationContainer._register_service_factories()
+def roi_data_service_factory():
+    from .roi_data_service import ROIDataService
+
+    return ROIDataService(
+        output_dir=self.get("output_dir"),
+        template_path=Path(self.get("template_dir"))
+        / self.get("config").neuroglancer.template,
+    )
 ```
 
-ROI data is automatically added as template globals during environment configuration:
+ROI data is added as template globals when the Jinja environment is configured
+(`PageGenerationContainer.configure_template_environment()` and
+`PageGeneratorServiceFactory._create_template_environment()`):
 
 ```python
-# ROI data automatically available in all templates
-roi_data = self.roi_data_service.get_all_roi_data()
-for key, value in roi_data.items():
-    self.env.globals[key] = value
+roi_data_service = self.get("roi_data_service")
+roi_data = roi_data_service.get_all_roi_data()
+env.globals.update(roi_data)
 ```
 
 #### ROI ID Collision Handling
