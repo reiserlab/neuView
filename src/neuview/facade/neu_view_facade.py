@@ -8,7 +8,7 @@ configuration management behind a clean, easy-to-use API.
 
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
 from ..config import Config
 from ..builders.page_generator_builder import PageGeneratorBuilder
@@ -67,7 +67,6 @@ class NeuViewFacade:
             output_dir = config.output.directory
 
         return cls(config=config, output_dir=output_dir)
-
 
     def with_queue_service(self, queue_service) -> "NeuViewFacade":
         """
@@ -227,8 +226,6 @@ class NeuViewFacade:
                 "metadata": {},
             }
 
-
-
     def validate_configuration(self) -> Dict[str, Any]:
         """
         Validate the current configuration.
@@ -275,7 +272,6 @@ class NeuViewFacade:
             errors.append(f"Configuration validation error: {e}")
 
         return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
-
 
     def cleanup(self) -> None:
         """Clean up resources and reset the facade."""

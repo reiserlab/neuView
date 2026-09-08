@@ -118,7 +118,6 @@ class AnalysisResults:
     layer_analysis: Optional[Dict[str, Any]] = None
     column_analysis: Optional[Dict[str, Any]] = None
 
-
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for template context."""
         # Always provide expected keys to prevent template errors
@@ -160,7 +159,6 @@ class PageGenerationContext:
     neuroglancer_vars: Optional[Dict[str, Any]] = None
     type_region: Optional[str] = None
     additional_context: Dict[str, Any] = field(default_factory=dict)
-
 
 
 @dataclass

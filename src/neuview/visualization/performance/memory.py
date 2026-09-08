@@ -473,5 +473,3 @@ def memory_limit_context(limit_mb: int):
                 f"Memory limit exceeded: {final_memory:.1f}MB > {limit_mb}MB"
             )
             optimizer.force_garbage_collection()
-
-

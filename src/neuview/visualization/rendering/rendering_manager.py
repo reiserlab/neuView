@@ -141,7 +141,6 @@ class RenderingManager:
 
         return self._renderers[output_format]
 
-
     def update_config(self, **config_updates) -> None:
         """
         Update rendering configuration for all renderers.
@@ -161,8 +160,6 @@ class RenderingManager:
         # Update all renderers
         for renderer in self._renderers.values():
             renderer.update_config(**config_updates)
-
-
 
     def validate_configuration(self) -> List[str]:
         """

@@ -28,8 +28,6 @@ PR #156's axis-range and out-of-range-filter changes.
 from __future__ import annotations
 
 import logging
-import os
-import sys
 from copy import deepcopy
 from dataclasses import dataclass, field
 from types import SimpleNamespace
@@ -535,9 +533,7 @@ class TestNormalCaseRegression:
             ctx = svc._prepare(svc.scatter_config, points, region="ME", side="L")
         assert ctx is not None
         assert sorted(p["name"] for p in ctx["points"]) == ["kept_a", "kept_b"]
-        assert _warnings_about_range(caplog), (
-            "expected an out-of-range warning to fire"
-        )
+        assert _warnings_about_range(caplog), "expected an out-of-range warning to fire"
 
     def test_ctx_has_render_metadata_for_kept_points(self):
         """Each kept point gets sx / sy / color / r / tooltip metadata for the

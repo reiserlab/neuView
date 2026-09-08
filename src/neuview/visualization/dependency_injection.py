@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from .color import ColorMapper
     from .coordinate_system import EyemapCoordinateSystem
     from .rendering import RenderingManager
-    from .eyemap_generator import EyemapGenerator
 
 # Configuration and exceptions are safe to import at module level
 from .config_manager import ConfigurationManager, EyemapConfiguration
@@ -322,7 +321,6 @@ class VisualizationServiceContainer(IServiceContainer):
             f"Service '{service_name}' not found", service_type=service_name
         )
 
-
     def is_registered(self, service_type: Type[T]) -> bool:
         """Check if a service type is registered.
 
@@ -336,7 +334,6 @@ class VisualizationServiceContainer(IServiceContainer):
         """Clear all scoped instances."""
         self._scoped_instances.clear()
         logger.debug("Cleared scoped service instances")
-
 
     def _create_instance(self, descriptor: ServiceDescriptor) -> Any:
         """
@@ -501,7 +498,6 @@ class EyemapServiceContainer(VisualizationServiceContainer):
         logger.debug("Registered EyemapGenerator service")
 
 
-
 # Global container instance for convenience
 _default_container: Optional[EyemapServiceContainer] = None
 
@@ -526,8 +522,6 @@ def get_default_container() -> EyemapServiceContainer:
                 f"Failed to create default service container: {str(e)}"
             ) from e
     return _default_container
-
-
 
 
 def reset_default_container() -> None:

@@ -112,9 +112,9 @@ class RenderingRequest:
     min_val: float
     max_val: float
     thresholds: Dict
-    plot_desc: str         # e.g. "Synapses (All Columns)"
-    roi: str               # ROI label, e.g. "ME" / "LO" / "LOP"
-    neuron_type: str       # Cell type label, e.g. "CT1" / "Tm3"
+    plot_desc: str  # e.g. "Synapses (All Columns)"
+    roi: str  # ROI label, e.g. "ME" / "LO" / "LOP"
+    neuron_type: str  # Cell type label, e.g. "CT1" / "Tm3"
     metric_type: str
     soma_side: SomaSide
     output_format: str = "svg"

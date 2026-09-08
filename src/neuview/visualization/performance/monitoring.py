@@ -13,7 +13,7 @@ from collections import defaultdict, deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
@@ -180,7 +180,6 @@ class PerformanceMonitor:
         """Get current memory usage in MB."""
         return self._process.memory_info().rss / 1024 / 1024
 
-
     def get_recent_metrics(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent performance metrics."""
         with self._lock:
@@ -202,7 +201,6 @@ class PerformanceMonitor:
                 self._metrics, key=lambda m: abs(m.memory_delta), reverse=True
             )
             return [metric.to_dict() for metric in sorted_metrics[:limit]]
-
 
     def clear_metrics(self) -> None:
         """Clear all recorded metrics."""
@@ -372,8 +370,6 @@ class BatchPerformanceAnalyzer:
     def __init__(self, monitor: PerformanceMonitor):
         """Initialize with performance monitor."""
         self.monitor = monitor
-
-
 
 
 # Global performance monitor instance

@@ -6,7 +6,7 @@ Offers a clean service interface for neuron type analysis and statistics.
 """
 
 import logging
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
 from dataclasses import dataclass
 
 from ..models import NeuronTypeName, NeuronTypeStatistics
@@ -252,5 +252,3 @@ class NeuronStatisticsService:
                 f"Failed to get comprehensive statistics for {neuron_type}: {e}"
             )
             return Err(f"Failed to get comprehensive statistics: {str(e)}")
-
-

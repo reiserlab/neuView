@@ -107,7 +107,6 @@ class PageGeneratorBuilder:
         self._use_container = use_container
         return self
 
-
     def build(self):
         """
         Build and return configured PageGenerator instance.
@@ -128,7 +127,6 @@ class PageGeneratorBuilder:
             return self._build_with_container()
         else:
             return self._build_with_factory()
-
 
     def build_with_minimal_container(self):
         """
@@ -339,4 +337,3 @@ class PageGeneratorBuilder:
             Configured builder ready to build
         """
         return cls().with_config(config).with_output_directory(output_dir)
-

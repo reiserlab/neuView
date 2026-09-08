@@ -569,7 +569,6 @@ class DatabaseQueryService:
             logger.error(f"Error getting partner bodyIds for {neuron_type}: {e}")
             return {"downstream": {}, "upstream": {}}
 
-
     def _process_partner_results(self, result_df: pd.DataFrame) -> Dict:
         """
         Process partner query results to get top partner for each type and soma side.

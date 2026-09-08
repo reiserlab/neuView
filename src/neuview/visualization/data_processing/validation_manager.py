@@ -17,7 +17,6 @@ from .data_structures import (
     SomaSide,
     ColumnStatus,
     ThresholdData,
-    MinMaxData,
 )
 
 logger = logging.getLogger(__name__)
@@ -370,8 +369,6 @@ class ValidationManager:
             return False
 
         return True
-
-
 
     def validate_data_consistency(
         self,

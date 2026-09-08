@@ -12,7 +12,6 @@ from pathlib import Path
 import logging
 
 import cairosvg
-from PIL import Image
 
 from .base_renderer import BaseRenderer
 from .svg_renderer import SVGRenderer
@@ -155,9 +154,6 @@ class PNGRenderer(BaseRenderer):
             logger.error(f"Failed to convert SVG to PNG: {e}")
             raise ValueError(f"SVG to PNG conversion failed: {e}")
 
-
-
-
     def update_config(self, **config_updates) -> None:
         """
         Update rendering configuration and reset cached components.
@@ -173,4 +169,3 @@ class PNGRenderer(BaseRenderer):
         }
         if svg_config_updates:
             self.svg_renderer.update_config(**svg_config_updates)
-

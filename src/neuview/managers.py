@@ -424,7 +424,6 @@ class TemplateManager:
 
         return list(dependencies)
 
-
     def _find_circular_dependencies(self) -> List[List[str]]:
         """Find circular dependencies in the template graph."""
         visited = set()
@@ -502,8 +501,6 @@ class TemplateManager:
             # Clear everything (cache strategies don't support pattern clearing)
             self._cache_strategy.clear()
 
-
-
     def add_custom_filter(self, name: str, filter_func: callable) -> None:
         """
         Add a custom filter to template strategies that support it.
@@ -533,7 +530,6 @@ class TemplateManager:
         for strategy in self._fallback_strategies:
             if hasattr(strategy, "add_global"):
                 strategy.add_global(name, value)
-
 
     def get_template_info(self, template_path: str) -> Dict[str, Any]:
         """
@@ -925,7 +921,6 @@ class ResourceManager:
 
         return False
 
-
     def invalidate_resource(self, resource_path: str) -> None:
         """
         Invalidate cache for a specific resource.
@@ -961,10 +956,6 @@ class ResourceManager:
                 strategy.clear_cache()
 
 
-
-
-
-
 class DependencyManager:
     """
     Manager for handling dependencies between templates and resources.
@@ -988,8 +979,6 @@ class DependencyManager:
         self._dependency_graph = defaultdict(set)
         self._reverse_dependency_graph = defaultdict(set)
 
-
-
     def get_dependents(self, item: str, item_type: str = "template") -> Set[str]:
         """
         Get all items that depend on the given item.
@@ -1003,5 +992,3 @@ class DependencyManager:
         """
         dep_key = f"{item_type}:{item}"
         return self._reverse_dependency_graph.get(dep_key, set())
-
-

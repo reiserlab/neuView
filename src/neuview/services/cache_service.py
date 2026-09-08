@@ -14,7 +14,6 @@ from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
-from ..utils import atomic_write
 
 from ..commands import GeneratePageCommand
 from ..models import (
@@ -439,7 +438,6 @@ class CacheService:
 
         return cleaned.strip()
 
-
     def load_persistent_columns_cache(
         self, cache_key: str
     ) -> Optional[Tuple[list, Dict[str, set]]]:
@@ -488,7 +486,6 @@ class CacheService:
             logger.warning(f"Failed to load persistent columns cache: {e}")
 
         return None
-
 
     def get_columns_from_neuron_cache(
         self, neuron_type: str

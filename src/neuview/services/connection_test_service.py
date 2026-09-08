@@ -41,4 +41,3 @@ class ConnectionTestService:
 
         except Exception as e:
             return Err(f"Connection test failed: {str(e)}")
-

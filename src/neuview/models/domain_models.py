@@ -166,7 +166,6 @@ class Neuron:
         )
 
 
-
 @dataclass
 class NeuronCollection:
     """Entity representing a collection of neurons of the same type."""
@@ -214,7 +213,6 @@ class NeuronCollection:
     def body_ids(self) -> List[BodyId]:
         """List of all body IDs."""
         return [neuron.body_id for neuron in self.neurons]
-
 
     def get_synapse_statistics(self) -> Dict[str, float]:
         """Calculate synapse statistics for the collection."""

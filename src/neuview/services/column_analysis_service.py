@@ -148,9 +148,7 @@ class ColumnAnalysisService:
             # analysis) and the R slot displays the R-hemisphere SVG (from
             # the L-soma analysis). No separate combined-mode files are
             # produced.
-            soma_side_lower = (
-                soma_side.lower() if isinstance(soma_side, str) else ""
-            )
+            soma_side_lower = soma_side.lower() if isinstance(soma_side, str) else ""
             if soma_side_lower == "combined":
                 if "somaSide" in neurons_df.columns:
                     l_neurons = neurons_df[neurons_df["somaSide"] == "L"]

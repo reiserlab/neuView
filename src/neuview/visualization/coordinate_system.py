@@ -387,7 +387,6 @@ class EyemapCoordinateSystem:
         self.geometry = HexagonGeometry(hex_size)
         self.layout = HexagonGridLayout(hex_size, margin)
 
-
     def convert_column_coordinates(
         self, columns: List[Dict], mirror_side: Optional[str] = None
     ) -> List[Dict]:

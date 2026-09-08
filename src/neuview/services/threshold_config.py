@@ -278,7 +278,6 @@ class ThresholdConfig:
         """
         return self._profiles.get(name)
 
-
     def get_threshold_value(
         self, profile_name: str, context: Optional[str] = None
     ) -> float:
@@ -409,8 +408,6 @@ class ThresholdConfig:
         )
         return True
 
-
-
     def import_config(self, config: Dict[str, Any]) -> bool:
         """
         Import threshold configuration.
@@ -464,8 +461,6 @@ class ThresholdConfig:
         except Exception as e:
             logger.error(f"Failed to import threshold configuration: {e}")
             return False
-
-
 
 
 # Global threshold configuration instance

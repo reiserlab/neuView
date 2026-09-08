@@ -8,14 +8,11 @@ by sides, regions, and coordinates, as well as data validation and merging.
 
 import logging
 from typing import List, Dict, Set, Tuple, Optional, Any
-from collections import defaultdict
 from .data_structures import (
     ColumnData,
     ColumnCoordinate,
     ColumnStatus,
-    MetricType,
     SomaSide,
-    RegionColumnsMap,
     ColumnDataMap,
 )
 from .validation_manager import ValidationManager
@@ -104,11 +101,6 @@ class ColumnDataManager:
         )
         return data_maps
 
-
-
-
-
-
     def determine_column_status(
         self,
         coordinate: ColumnCoordinate,
@@ -143,11 +135,6 @@ class ColumnDataManager:
             return ColumnStatus.NOT_IN_REGION
         else:
             return ColumnStatus.EXCLUDED
-
-
-
-
-
 
     def validate_data_consistency(self, columns: List[ColumnData]) -> Dict[str, Any]:
         """

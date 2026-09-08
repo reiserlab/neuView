@@ -7,7 +7,7 @@ filtering functionality for converting ROI abbreviations to HTML abbr tags.
 
 import re
 import logging
-from typing import Dict, Optional
+from typing import Dict
 
 from ..utils import get_input_dir
 
@@ -105,8 +105,6 @@ class BrainRegionService:
             self._loaded = True
             return self.brain_regions
 
-
-
     def roi_abbr_filter(self, roi_name: str) -> str:
         """
         Convert ROI abbreviation to HTML abbr tag with full name in title.
@@ -159,8 +157,6 @@ class BrainRegionService:
             # Return the original abbreviation if not found
             logger.debug(f"Brain region abbreviation not found: {roi_name}")
             return roi_name
-
-
 
     def __len__(self) -> int:
         """Return the number of loaded brain regions."""

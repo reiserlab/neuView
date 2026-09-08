@@ -169,7 +169,6 @@ class ThresholdCalculator:
             global_max_cells=global_max_cells,
         )
 
-
     def _extract_metric_values(
         self,
         column_data: List[ColumnData],
@@ -419,7 +418,6 @@ class ThresholdCalculator:
             ValidationResult containing validation status
         """
         return self.validation_manager.validate_threshold_data(thresholds)
-
 
     def _score_threshold_distribution(
         self, values_array: np.ndarray, thresholds: List[float]

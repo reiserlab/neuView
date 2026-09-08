@@ -78,7 +78,6 @@ class Result(Generic[T, E]):
             return self
 
 
-
 @dataclass
 class Ok(Result[T, E]):
     """Success variant of Result."""
@@ -109,5 +108,3 @@ class Err(Result[T, E]):
 
     def __eq__(self, other) -> bool:
         return isinstance(other, Err) and self.error == other.error
-
-

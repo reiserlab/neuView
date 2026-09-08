@@ -440,7 +440,6 @@ class NeuPrintConnector:
             else:
                 self._soma_sides_cache.clear()
 
-
     def get_database_metadata(self) -> Dict[str, Any]:
         """
         Get database metadata including lastDatabaseEdit.
@@ -544,7 +543,6 @@ class NeuPrintConnector:
                     "dataset": self.config.neuprint.dataset,
                     "uuid": "Unknown",
                 }
-
 
     def get_cache_stats(self) -> Dict[str, Any]:
         """
@@ -1458,7 +1456,6 @@ class NeuPrintConnector:
         except Exception as e:
             raise RuntimeError(f"Failed to fetch available neuron types: {e}")
 
-
     def get_soma_sides_for_type(self, neuron_type: str) -> List[str]:
         """
         Get soma sides for a specific neuron type with caching to avoid repeated queries.
@@ -1817,4 +1814,3 @@ class NeuPrintConnector:
         except Exception as e:
             logger.warning(f"Failed to fetch ROI hierarchy: {e}")
             return {}
-

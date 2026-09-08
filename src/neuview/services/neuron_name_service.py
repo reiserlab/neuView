@@ -20,7 +20,6 @@ class NeuronNameService:
         """Convert neuron name to filename format (same logic as PageGenerator._generate_filename)."""
         return neuron_name.replace("/", "_").replace(" ", "_")
 
-
     def filename_to_neuron_name(self, filename: str, connector=None) -> str:
         """Convert filename back to original neuron name using database lookup."""
         # Since filename conversion is not reliably reversible ('/' and ' ' become '_'),

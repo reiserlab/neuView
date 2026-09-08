@@ -251,6 +251,3 @@ class PartnerAnalysisService:
                 result.append(item)
 
         return result
-
-
-

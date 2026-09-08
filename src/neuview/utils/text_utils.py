@@ -294,5 +294,3 @@ class TextUtils:
             .replace("_L", "")
             .replace("_R", "")
         )
-
-

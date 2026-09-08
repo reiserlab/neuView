@@ -8,7 +8,7 @@ preserving the original data for individual side pages.
 
 import logging
 import re
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -216,7 +216,6 @@ class ROICombinationService:
             else:
                 roi["post_percentage"] = 0.0
 
-
     def is_sided_roi(self, roi_name: str) -> bool:
         """
         Check if an ROI name contains side information.
@@ -236,7 +235,6 @@ class ROICombinationService:
                 return True
 
         return False
-
 
     def get_statistics(
         self, original_data: List[Dict[str, Any]], combined_data: List[Dict[str, Any]]
@@ -271,4 +269,3 @@ class ROICombinationService:
             "reduction": original_counts["total"] - combined_counts["total"],
             "sided_rois_combined": original_counts["sided"] - combined_counts["sided"],
         }
-

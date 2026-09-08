@@ -301,7 +301,6 @@ class PageGenerator:
             partner_data, direction, connected_bids
         )
 
-
     def _generate_neuron_search_js(self):
         """Generate neuron-search.js with embedded neuron types data."""
         # Delegate to neuron search service
@@ -331,9 +330,6 @@ class PageGenerator:
             neuron_type, neuron_data, soma_side, connector
         )
 
-
-
-
     def _generate_neuprint_url(
         self, neuron_type: str, neuron_data: Dict[str, Any]
     ) -> str:
@@ -351,7 +347,6 @@ class PageGenerator:
         return self.url_generation_service.generate_neuprint_url(
             neuron_type, neuron_data
         )
-
 
     def generate_page_unified(self, request: PageGenerationRequest):
         """
@@ -469,7 +464,6 @@ class PageGenerator:
         """
         return self.cache_service.get_columns_from_neuron_cache(neuron_type)
 
-
     def _load_persistent_columns_cache(self, cache_key):
         """Load persistent cache for all columns dataset query."""
         return self.cache_service.load_persistent_columns_cache(cache_key)
@@ -521,7 +515,6 @@ class PageGenerator:
             hex_size,
             spacing_factor,
         )
-
 
     def _compute_thresholds(self, df: pd.DataFrame, n_bins: int = 5):
         """
@@ -609,7 +602,6 @@ class PageGenerator:
 
         return result.region_grids
 
-
     def clean_dynamic_files_for_neuron(
         self, neuron_type: str, soma_side: str = None
     ) -> bool:
@@ -644,7 +636,6 @@ class PageGenerator:
         """
         return FileService.generate_filename(neuron_type, soma_side)
 
-
     def _find_youtube_video(self, neuron_type: str) -> Optional[str]:
         """
         Find YouTube video ID for a neuron type by matching against descriptions.
@@ -660,7 +651,6 @@ class PageGenerator:
     def _get_primary_rois(self, connector):
         """Get primary ROIs based on dataset type and available data."""
         return self.roi_analysis_service.get_primary_rois(connector)
-
 
     def _get_region_for_type(self, neuron_type: str, connector) -> str:
         """Find the type's assigned "region" - used for setting the NG view."""
