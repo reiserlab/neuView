@@ -187,8 +187,6 @@ class CitationService:
             self.load_citations()
         return self.citations.get(citation_key)
 
-
-
     def format_doi_url(self, doi: str) -> str:
         """
         Convert a DOI string to a full URL.

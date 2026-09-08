@@ -473,7 +473,6 @@ class CNSAdapter(DatasetAdapter):
         return int(pre_total), int(post_total)
 
 
-
 class HemibrainAdapter(DatasetAdapter):
     """Adapter for Hemibrain dataset."""
 
@@ -538,7 +537,6 @@ class HemibrainAdapter(DatasetAdapter):
             else 0
         )
         return int(pre_total), int(post_total)
-
 
 
 class OpticLobeAdapter(DatasetAdapter):
@@ -618,7 +616,6 @@ class OpticLobeAdapter(DatasetAdapter):
             else 0
         )
         return int(pre_total), int(post_total)
-
 
 
 class FafbAdapter(DatasetAdapter):
@@ -756,7 +753,6 @@ class FafbAdapter(DatasetAdapter):
             else 0
         )
         return int(pre_total), int(post_total)
-
 
 
 class WaspAdapter(DatasetAdapter):

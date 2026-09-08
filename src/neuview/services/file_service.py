@@ -5,8 +5,6 @@ This module provides utilities for generating consistent filenames and managing
 file paths for the page generation system.
 """
 
-from pathlib import Path
-
 
 class FileService:
     """
@@ -84,7 +82,3 @@ class FileService:
         sanitized = sanitized.strip("_")
 
         return sanitized
-
-
-
-

@@ -8,7 +8,7 @@ on various criteria like soma side, synapse percentiles, and availability.
 
 import logging
 import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Optional, List
 import pandas as pd
 from .file_service import FileService
 
@@ -502,5 +502,3 @@ class NeuronSelectionService:
                 logger.warning(f"Could not select neuron: {e}")
 
         return selected_bodyids
-
-

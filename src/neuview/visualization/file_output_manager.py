@@ -7,9 +7,8 @@ determining output paths.
 """
 
 import logging
-import os
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 from .rendering import OutputFormat
 
@@ -148,9 +147,7 @@ class FileOutputManager:
         # contralateral when the page's original soma side differs from the
         # hemisphere being drawn.
         page_soma = getattr(request, "page_soma_side", None)
-        is_contralateral = (
-            page_soma is not None and page_soma != request.soma_side
-        )
+        is_contralateral = page_soma is not None and page_soma != request.soma_side
         synapse_filename = self._generate_filename(
             region, request.neuron_type, side, "synapse_density", is_contralateral
         )
@@ -257,15 +254,10 @@ class FileOutputManager:
             return None
 
 
-
-
-
-
 class FileOutputManagerFactory:
     """
     Factory class for creating FileOutputManager instances.
     """
-
 
     @staticmethod
     def create_from_config(config) -> FileOutputManager:
@@ -281,4 +273,3 @@ class FileOutputManagerFactory:
         return FileOutputManager(
             output_dir=config.output_dir, eyemaps_dir=config.eyemaps_dir
         )
-

@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List
 
 from ..utils import atomic_write
 
@@ -214,5 +214,3 @@ class NeuronSearchService:
             Path object for the output file
         """
         return self.output_dir / "static" / "js" / "neuron-search.js"
-
-

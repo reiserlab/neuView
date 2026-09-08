@@ -172,9 +172,3 @@ class URLGenerationService:
             # Return a fallback URL if URL generation fails
             logger.warning(f"Failed to generate NeuPrint URL for {neuron_type}: {e}")
             return f"https://{self.config.neuprint.server}/?dataset={self.config.neuprint.dataset}"
-
-
-
-
-
-

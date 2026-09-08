@@ -149,5 +149,3 @@ class QueueProcessor:
 
         except Exception as e:
             return Err(f"Failed to process generate command: {str(e)}")
-
-

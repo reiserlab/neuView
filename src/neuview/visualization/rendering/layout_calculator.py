@@ -297,6 +297,3 @@ class LayoutCalculator:
         control_y = svg_height - total_control_height / 2 - self.margin
 
         return control_x, control_y
-
-
-

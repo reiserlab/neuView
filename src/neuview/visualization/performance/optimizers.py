@@ -9,7 +9,7 @@ hexagon collection processing with caching and performance enhancements.
 import hashlib
 import logging
 from abc import ABC
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from .cache import get_cache_manager
 from .memory import MemoryOptimizer, StreamingHexagonProcessor
@@ -68,7 +68,6 @@ class CoordinateOptimizer(BaseOptimizer):
         )
 
     @performance_timer("coordinate_conversion")
-
     def _generate_coordinate_cache_key(
         self, columns: List[Dict], soma_side: Optional[str]
     ) -> str:
@@ -198,7 +197,6 @@ class ColorOptimizer(BaseOptimizer):
 
         return color
 
-
     def _generate_color_cache_key(
         self, value: float, min_value: float, max_value: float
     ) -> str:
@@ -234,7 +232,6 @@ class MetadataOptimizer(BaseOptimizer):
         )
 
     @performance_timer("metadata_generation")
-
     def _generate_metadata_cache_key(self, request) -> str:
         """Generate cache key for metadata based on request parameters."""
         key_components = [
@@ -290,7 +287,6 @@ class HexagonCollectionOptimizer(BaseOptimizer):
         )
 
     @performance_timer("hexagon_collection_creation")
-
     def _create_hexagons_streaming(
         self, processing_result, coord_to_pixel, request, value_range, color_optimizer
     ):

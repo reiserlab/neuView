@@ -372,8 +372,6 @@ class ThresholdService:
         """
         return self.calculate_thresholds(values, n_bins, method="linear")
 
-
-
     def validate_thresholds(self, thresholds: List[float]) -> bool:
         """
         Validate that thresholds are properly ordered and contain valid values.
@@ -400,8 +398,6 @@ class ThresholdService:
 
         except (TypeError, ValueError):
             return False
-
-
 
     def get_roi_filtering_threshold(
         self, profile_name: str = "roi_filtering_default"

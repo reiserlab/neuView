@@ -8,9 +8,9 @@ and transformation operations for different types of column data.
 
 import logging
 import math
-from typing import List, Dict, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 import numpy as np
-from .data_structures import ColumnData, MetricType, MinMaxData
+from .data_structures import ColumnData, MetricType
 from .validation_manager import ValidationManager
 
 logger = logging.getLogger(__name__)
@@ -114,12 +114,6 @@ class MetricCalculator:
         # Clamp to target range
         return max(target_min, min(target_max, scaled))
 
-
-
-
-
-
-
     def _calculate_skewness(self, values: np.ndarray) -> float:
         """Calculate skewness of a distribution."""
         if len(values) < 3:
@@ -196,5 +190,3 @@ class MetricCalculator:
             return "uniform"
         else:
             return "distributed"
-
-

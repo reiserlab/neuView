@@ -191,4 +191,3 @@ class ColorPalette:
             return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
         except ValueError as e:
             raise ValueError(f"Invalid hex color '{hex_color}': {e}")
-

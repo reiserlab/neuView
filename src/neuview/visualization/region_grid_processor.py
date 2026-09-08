@@ -276,8 +276,6 @@ class RegionGridProcessor:
             return "right"  # No mirroring for left soma side
 
 
-
-
 class RegionGridProcessorFactory:
     """
     Factory class for creating RegionGridProcessor instances.
@@ -295,4 +293,3 @@ class RegionGridProcessorFactory:
             New RegionGridProcessor instance
         """
         return RegionGridProcessor(data_processor)
-

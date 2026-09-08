@@ -7,7 +7,7 @@ and PNG output formats using Cairo for enhanced visualization capabilities.
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from .color import ColorMapper, ColorPalette
 from .config_manager import EyemapConfiguration
@@ -31,7 +31,7 @@ from .data_transfer_objects import (
     SingleRegionGridRequest,
     create_rendering_request,
 )
-from .dependency_injection import EyemapServiceContainer, get_default_container
+from .dependency_injection import EyemapServiceContainer
 from .exceptions import (
     DataProcessingError,
     ErrorContext,
@@ -153,8 +153,6 @@ class EyemapGenerator:
             except Exception as e:
                 logger.error(f"Failed to resolve services from container: {e}")
                 raise
-
-
 
     @performance_timer("generate_comprehensive_region_hexagonal_grids")
     @performance_timer("comprehensive_grid_generation")
@@ -677,9 +675,7 @@ class EyemapGenerator:
                     thresholds=rendering_request.thresholds,
                     save_to_files=rendering_request.save_to_file,
                     min_max_data=rendering_request.min_max_data,
-                    page_soma_side=getattr(
-                        rendering_request, "page_soma_side", None
-                    ),
+                    page_soma_side=getattr(rendering_request, "page_soma_side", None),
                 )
 
                 # Create temporary manager with updated config
@@ -743,7 +739,6 @@ class EyemapGenerator:
                     f"Single region grid generation failed: {str(e)}",
                     operation="single_region_grid_generation",
                 ) from e
-
 
     def _determine_value_range(self, thresholds: Optional[Dict]) -> Dict[str, float]:
         """
@@ -1029,9 +1024,6 @@ class EyemapGenerator:
             processed_hexagons.append(processed_hex)
 
         return processed_hexagons
-
-
-
 
     def _determine_mirror_side_with_context(
         self, soma_side: SomaSide, current_side: str = None

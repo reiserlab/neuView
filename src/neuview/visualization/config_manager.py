@@ -224,9 +224,6 @@ class EyemapConfiguration:
             "margin": self.margin,
         }
 
-
-
-
     def __str__(self) -> str:
         """String representation of configuration."""
         return (
@@ -318,7 +315,3 @@ class ConfigurationManager:
         }
 
         return EyemapConfiguration(**config_params)
-
-
-
-

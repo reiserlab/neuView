@@ -7,7 +7,7 @@ eyemap generation pipeline.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union, Type
+from typing import Any, Dict, List, Optional, Type
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -231,14 +231,6 @@ def validate_type(value: Any, expected_type: Type, field_name: str) -> None:
             value=value,
             expected_type=expected_type,
         )
-
-
-
-
-
-
-
-
 
 
 def safe_operation(operation_name: str, operation_func, *args, **kwargs):

@@ -114,7 +114,6 @@ class RegionConfigRegistry:
             # Return default config for unknown regions
             return cls._default_config
 
-
     @classmethod
     def get_display_layer_name(cls, region: str, layer_num: int) -> str:
         """
@@ -141,6 +140,3 @@ class RegionConfigRegistry:
             Dictionary with control dimension parameters
         """
         return cls.get_config(region).calculate_control_dimensions()
-
-
-

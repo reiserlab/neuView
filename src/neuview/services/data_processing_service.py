@@ -388,7 +388,6 @@ class DataProcessingService:
         except Exception as e:
             logger.warning(f"Failed to save cache to {cache_path}: {e}")
 
-
     def _minmax_normalize(self, data: List[Dict]) -> List[Dict]:
         """Apply min-max normalization to numerical fields."""
         # Implementation would go here based on specific requirements
@@ -398,4 +397,3 @@ class DataProcessingService:
         """Apply z-score normalization to numerical fields."""
         # Implementation would go here based on specific requirements
         return data
-

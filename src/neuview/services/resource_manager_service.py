@@ -9,7 +9,7 @@ directories, and handling other file system operations.
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from ..utils import get_project_root, get_static_dir, get_templates_dir
 from .neuroglancer_js_service import NeuroglancerJSService
@@ -441,7 +441,6 @@ class ResourceManagerService:
             logger.debug(f"Error checking JS file existence, will copy: {e}")
             return True
 
-
     def clean_dynamic_files(
         self, neuron_type: str = None, soma_side: str = None
     ) -> bool:
@@ -504,8 +503,6 @@ class ResourceManagerService:
             logger.error(f"Failed to clean dynamic files: {e}")
             return False
 
-
-
     def ensure_directory_exists(self, directory_path: Path) -> bool:
         """
         Ensure a directory exists, creating it if necessary.
@@ -522,7 +519,6 @@ class ResourceManagerService:
         except Exception as e:
             logger.error(f"Failed to create directory {directory_path}: {e}")
             return False
-
 
     def list_directory_contents(
         self, directory_path: Path, pattern: str = "*", recursive: bool = False
@@ -550,7 +546,3 @@ class ResourceManagerService:
         except Exception as e:
             logger.error(f"Failed to list directory contents for {directory_path}: {e}")
             return []
-
-
-
-

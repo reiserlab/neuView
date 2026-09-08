@@ -212,8 +212,6 @@ class JinjaTemplateService:
         template = self.get_template(template_name)
         return template.render(**context)
 
-
-
     def list_templates(self) -> list[str]:
         """
         Get a list of all available templates.
@@ -231,8 +229,6 @@ class JinjaTemplateService:
 
         return self.env.list_templates()
 
-
-
     def get_environment(self) -> Optional[Environment]:
         """
         Get the Jinja2 environment instance.
@@ -241,8 +237,6 @@ class JinjaTemplateService:
             Environment instance if initialized, None otherwise
         """
         return self.env
-
-
 
     def add_global(self, name: str, value: Any) -> None:
         """
@@ -262,4 +256,3 @@ class JinjaTemplateService:
 
         self.env.globals[name] = value
         logger.debug(f"Added global variable: {name}")
-

@@ -318,7 +318,6 @@ class NeuronTypeCacheManager:
             logger.warning(f"Failed to load cache for {neuron_type}: {e}")
             return None
 
-
     def list_cached_neuron_types(self) -> List[str]:
         """Get list of neuron types that have valid cache files (lazy - no file loading).
 
@@ -363,7 +362,6 @@ class NeuronTypeCacheManager:
             logger.warning(f"Failed to list cached neuron types: {e}")
 
         return sorted(cached_types)
-
 
     def get_cached_data_lazy(self) -> "LazyCacheDataDict":
         """Get a lazy-loading dictionary for cached neuron type data.
