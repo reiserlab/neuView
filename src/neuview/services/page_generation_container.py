@@ -88,7 +88,6 @@ class PageGenerationContainer:
 
         self.register_factory(name, factory)
 
-
     def get(self, name: str) -> Any:
         """
         Resolve and return a service instance.
@@ -235,7 +234,11 @@ class PageGenerationContainer:
         def roi_data_service_factory():
             from .roi_data_service import ROIDataService
 
-            return ROIDataService(output_dir=self.get("output_dir"))
+            return ROIDataService(
+                output_dir=self.get("output_dir"),
+                template_path=Path(self.get("template_dir"))
+                / self.get("config").neuroglancer.template,
+            )
 
         self.register_factory("brain_region_service", brain_region_service_factory)
         self.register_factory("citation_service", citation_service_factory)
@@ -470,7 +473,6 @@ class PageGenerationContainer:
         self.register_factory("orchestrator", orchestrator_factory)
 
         logger.debug("PageGenerator-dependent services configured")
-
 
     def create_service_summary(self) -> Dict[str, str]:
         """

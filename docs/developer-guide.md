@@ -510,7 +510,7 @@ All caches are organized under the output directory to maintain consistency. Sta
 
 #### Cache Key Strategy
 
-**Cache Key Strategy**: Use descriptive, collision-resistant cache keys incorporating dataset, type, and version information. Examples: "fullbrain_roi_v5.json", "vnc_neuropil_roi_v0.json". Implementation in `ROIDataService._get_cache_filename()`.
+**Cache Key Strategy**: Use descriptive, collision-resistant cache keys incorporating dataset, type, and version information. The ROI cache derives its file names from the last path component of the GCS mesh source, e.g. "fullbrain-roi-v5.json", "malecns-vnc-neuropil-roi-v0.json". Implementation in `roi_data_service.cache_filename_for()`.
 
 #### Cache Lifecycle Management
 
@@ -1665,33 +1665,44 @@ The system uses a `ROIDataService` that:
 class ROIDataService:
     """Service for fetching and caching ROI data from Google Cloud Storage."""
 
-    def __init__(self, output_dir: Optional[Path] = None):
-        self.output_dir = output_dir or Path("output")
-        self.cache_dir = self.output_dir / ".cache" / "roi_data"
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, output_dir=None, timeout=30, template_path=None):
+        self.cache_dir = Path(output_dir) / ".cache" / "roi_data"
+        # Mesh sources of the "brain-neuropils" and "vnc-neuropils" layers,
+        # read from the configured neuroglancer state template.
+        sources = roi_sources_from_template(template_path)
+        self.fullbrain_roi_source = sources.get("brain-neuropils")
+        self.vnc_roi_source = sources.get("vnc-neuropils")
 
     def get_fullbrain_roi_data(self) -> Tuple[List[int], List[str]]:
         """Fetch fullbrain ROI segment IDs and names."""
-        url = "gs://flyem-male-cns/rois/fullbrain-roi-v5/segment_properties/info"
-        data = self._fetch_and_parse_roi_data(url, "fullbrain_roi_v5.json")
-        return data.get("ids", []), data.get("names", [])
+        return self._load_roi_data(self.fullbrain_roi_source, "fullbrain")
 
     def get_vnc_roi_data(self) -> Tuple[List[int], List[str]]:
         """Fetch VNC ROI segment IDs and names."""
-        url = "gs://flyem-male-cns/rois/malecns-vnc-neuropil-roi-v0/segment_properties/info"
-        data = self._fetch_and_parse_roi_data(url, "vnc_neuropil_roi_v0.json")
-        return data.get("ids", []), data.get("names", [])
+        return self._load_roi_data(self.vnc_roi_source, "VNC")
 ```
 
 #### Data Sources and Format
 
+The endpoints are **not hardcoded**. `roi_sources_from_template()` renders the
+template named by `config.neuroglancer.template` with placeholder values,
+parses it as JSON, and takes `source.url` of the segmentation layers named
+`brain-neuropils` (or the legacy `neuropils`) and `vnc-neuropils`. The
+`precomputed://gs://bucket/path` mesh source becomes
+`https://storage.googleapis.com/bucket/path/segment_properties/info`. This keeps
+the ROI name list identical to the meshes the layer can render. A template
+without these layers (for example the FAFB template) yields empty ROI lists and
+triggers no network request.
+
+For `neuroglancer-cns.js.jinja` this currently resolves to:
+
 **Fullbrain ROIs**:
-- **Endpoint**: `gs://flyem-male-cns/rois/fullbrain-roi-v5/segment_properties/info`
+- **Layer**: `brain-neuropils`, source `precomputed://gs://flyem-male-cns/rois/fullbrain-roi-v5`
 - **Count**: 82 ROIs
 - **Template Variables**: `roi_ids`, `all_rois`
 
 **VNC ROIs**:
-- **Endpoint**: `gs://flyem-male-cns/rois/malecns-vnc-neuropil-roi-v0/segment_properties/info`
+- **Layer**: `vnc-neuropils`, source `precomputed://gs://flyem-male-cns/rois/malecns-vnc-neuropil-roi-v0`
 - **Count**: 24 ROIs
 - **Template Variables**: `vnc_ids`, `vnc_names`
 
@@ -1728,9 +1739,9 @@ const VNC_NAMES = {{ vnc_names|tojson }};
 - **Cache Location**: `output/.cache/roi_data/` (follows project cache patterns)
 - **Cache Duration**: 1 hour (configurable)
 - **Fallback Behavior**: Uses stale cache if network requests fail
-- **Cache Files**:
-  - `fullbrain_roi_v5.json`
-  - `vnc_neuropil_roi_v0.json`
+- **Cache Files**: named after the last path component of the mesh source, currently
+  - `fullbrain-roi-v5.json`
+  - `malecns-vnc-neuropil-roi-v0.json`
 
 #### Container Integration
 
