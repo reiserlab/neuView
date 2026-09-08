@@ -208,7 +208,10 @@ class PageGeneratorServiceFactory:
         # Add ROI data as global variables available to all templates
         from .roi_data_service import ROIDataService
 
-        roi_data_service = ROIDataService(output_dir=Path(self.output_dir))
+        roi_data_service = ROIDataService(
+            output_dir=Path(self.output_dir),
+            template_path=get_templates_dir() / self.config.neuroglancer.template,
+        )
         roi_data = roi_data_service.get_all_roi_data()
         env.globals.update(roi_data)
         logger.debug(f"Added ROI data to template environment: {list(roi_data.keys())}")
