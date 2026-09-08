@@ -53,8 +53,10 @@ class ROIDataService:
 
         # GCS endpoints for ROI data
         # Must match the mesh source of the "brain-neuropils" layer in the
-        # neuroglancer template, otherwise ROI names map to segment IDs that
-        # the layer cannot render.
+        # neuroglancer template. Segment IDs are identical across ROI versions,
+        # but an older list can contain ROIs that have no mesh in the layer
+        # (v4 had 8 such ROIs: AMMC, GA, ROB, RUB on both sides), so their
+        # checkboxes would select nothing visible.
         self.fullbrain_roi_url = "https://storage.googleapis.com/flyem-male-cns/rois/fullbrain-roi-v5/segment_properties/info"
         self.vnc_roi_url = "https://storage.googleapis.com/flyem-male-cns/rois/malecns-vnc-neuropil-roi-v0/segment_properties/info"
 
