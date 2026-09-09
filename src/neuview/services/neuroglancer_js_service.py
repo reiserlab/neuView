@@ -83,6 +83,7 @@ class NeuroglancerJSService:
                 "neuroglancer_json": neuroglancer_json,
                 "dataset_name": self.config.neuprint.dataset,
                 "neuroglancer_base_url": self.config.neuroglancer.base_url.rstrip("/"),
+                "neuroglancer_download_formats": self._download_formats(),
             }
 
             # Add ROI data from environment globals if they exist
@@ -116,6 +117,23 @@ class NeuroglancerJSService:
 
             logger.debug(f"Traceback: {traceback.format_exc()}")
             return False
+
+    def _download_formats(self) -> list:
+        """Return the configured download formats as JSON-serialisable dicts.
+
+        Tolerates configs without the attribute (older configs, mocks) so the
+        generated JavaScript always has a list constant to work with.
+        """
+        formats = getattr(self.config.neuroglancer, "download_formats", None)
+        if not isinstance(formats, (list, tuple)):
+            return []
+        result = []
+        for fmt in formats:
+            if hasattr(fmt, "to_dict"):
+                result.append(fmt.to_dict())
+            elif isinstance(fmt, dict):
+                result.append(dict(fmt))
+        return result
 
     def get_neuroglancer_template_name(self) -> str:
         """

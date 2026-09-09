@@ -38,12 +38,82 @@ class DiscoveryConfig:
     randomize: bool = True
 
 
+# Supported kinds of per-neuron download formats and the file extension the
+# browser writes for each. ``swc`` is stored verbatim; ``ngmesh`` (Neuroglancer
+# legacy single-resolution mesh, addressed by its ``<body_id>:0`` manifest) is
+# converted to Wavefront OBJ in the browser.
+DOWNLOAD_FORMAT_KINDS = {"swc": "swc", "ngmesh": "obj"}
+
+
+@dataclass
+class DownloadFormat:
+    """One per-neuron file format offered in the "Download" dialog.
+
+    ``url_template`` must contain the ``{body_id}`` placeholder. The host has to
+    send CORS headers; for Google Cloud Storage that means the JSON API endpoint
+    (``https://www.googleapis.com/storage/v1/b/<bucket>/o/<object>?alt=media``),
+    not the plain ``storage.googleapis.com`` path. For ``kind: ngmesh`` the
+    template addresses the mesh manifest (``...{body_id}:0``); fragment URLs are
+    derived from it by replacing ``{body_id}:0`` with the fragment name.
+    """
+
+    key: str
+    label: str
+    url_template: str
+    kind: str = "swc"
+
+    def __post_init__(self):
+        if not self.key or not str(self.key).strip():
+            raise ValueError("download format needs a non-empty 'key'")
+        self.key = str(self.key).strip()
+        self.label = str(self.label or self.key).strip()
+        self.url_template = str(self.url_template or "").strip()
+        if "{body_id}" not in self.url_template:
+            raise ValueError(
+                f"download format '{self.key}': url_template must contain {{body_id}}"
+            )
+        if self.kind not in DOWNLOAD_FORMAT_KINDS:
+            raise ValueError(
+                f"download format '{self.key}': unknown kind '{self.kind}' "
+                f"(expected one of {sorted(DOWNLOAD_FORMAT_KINDS)})"
+            )
+
+    @property
+    def extension(self) -> str:
+        return DOWNLOAD_FORMAT_KINDS[self.kind]
+
+    def to_dict(self) -> dict:
+        return {
+            "key": self.key,
+            "label": self.label,
+            "url_template": self.url_template,
+            "kind": self.kind,
+            "extension": self.extension,
+        }
+
+
 @dataclass
 class NeuroglancerConfig:
     """Neuroglancer configuration."""
 
     base_url: str = "https://clio-ng.janelia.org/"
     template: str = "neuroglancer.js.jinja"
+    # Per-neuron file formats offered by the "Download" link next to the
+    # Neuroglancer view (see ``DownloadFormat``). Empty hides the link.
+    download_formats: list = field(default_factory=list)
+
+    def __post_init__(self):
+        formats = []
+        seen = set()
+        for entry in self.download_formats or []:
+            fmt = (
+                entry if isinstance(entry, DownloadFormat) else DownloadFormat(**entry)
+            )
+            if fmt.key in seen:
+                raise ValueError(f"duplicate download format key '{fmt.key}'")
+            seen.add(fmt.key)
+            formats.append(fmt)
+        self.download_formats = formats
 
 
 @dataclass

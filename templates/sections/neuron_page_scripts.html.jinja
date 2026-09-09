@@ -7,6 +7,12 @@
 {# -- Iframe communication bridge for cross-origin parent-child communication -- #}
 <script src="{{ '../' if is_neuron_page else '' }}static/js/iframe-bridge.js"></script>
 
+{# -- Skeleton / mesh download (zip built client-side with fflate), only when configured -- #}
+{% if config.neuroglancer.download_formats and features.neuron_visible('neuroglancer') %}
+<script src="{{ '../' if is_neuron_page else '' }}static/js/fflate.min.js" defer></script>
+<script src="{{ '../' if is_neuron_page else '' }}static/js/swc-download.js" defer></script>
+{% endif %}
+
 <script>
 $(document).ready(function() {
     {# Pass neuroglancer data to JavaScript #}

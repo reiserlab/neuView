@@ -444,6 +444,13 @@
               <li><strong>Select:</strong> Click on neurons to highlight and inspect</li>
               <li><strong>Layers:</strong> Toggle reference layers on/off (as available).
               For example, the video below shows how you can use the "synapses" layer to view the synapses of the visible neurons.</li>
+              {% if config is defined and config.neuroglancer.download_formats %}
+              <li><strong>Download neurons:</strong> The <span aria-hidden="true">&#x2913;</span> link in the
+              section header opens a dialog that downloads one file per displayed neuron as a single zip file, in the
+              chosen format ({{ config.neuroglancer.download_formats | map(attribute='label') | join(', ') }}).
+              Changes made inside the viewer are not visible to the page; to download exactly the neurons selected in
+              Neuroglancer, open the viewer in a new window, copy its URL and paste it into the URL field of the dialog.</li>
+              {% endif %}
             </ul>
 
             <img src="static/images/add_synapses_to_NG50.gif" width="80%" alt="How to toggle reference layers in neuroglancer view." style="display: block; margin-left: auto; margin-right: auto;">

@@ -10,6 +10,23 @@ output:
 neuroglancer:
   base_url: "https://clio-ng.janelia.org/"
   template: "neuroglancer-cns.js.jinja"
+  # Optional: per-neuron file formats offered by a "Download" link next to the
+  # Neuroglancer view. Each entry needs a unique key, a label shown in the
+  # dialog, a url_template with a {body_id} placeholder, and a kind:
+  #   swc     the file is stored as-is (.swc)
+  #   ngmesh  Neuroglancer legacy mesh; url_template addresses the manifest
+  #           "<body_id>:0", the browser converts the fragments to OBJ
+  # The host must allow cross-origin requests (CORS). For Google Cloud Storage
+  # use the JSON API form shown here, not the storage.googleapis.com path.
+  # download_formats:
+  #   - key: swc
+  #     label: "SWC skeleton"
+  #     kind: swc
+  #     url_template: "https://www.googleapis.com/storage/v1/b/<bucket>/o/<path>%2F{body_id}.swc?alt=media"
+  #   - key: obj
+  #     label: "OBJ mesh"
+  #     kind: ngmesh
+  #     url_template: "https://www.googleapis.com/storage/v1/b/<bucket>/o/<mesh-path>%2F{body_id}:0?alt=media"
 
 html:
   title_prefix: "Neuron Type Report"

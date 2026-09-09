@@ -9,6 +9,23 @@ output:
 neuroglancer:
   base_url: "https://neuroglancer-demo.appspot.com/"
   template: "neuroglancer-cns.js.jinja"
+  # Per-neuron downloads offered next to the Neuroglancer view. URLs go through
+  # the GCS JSON API so the browser gets CORS headers (the plain
+  # storage.googleapis.com URLs have none). SWC coordinates are 8 nm voxels,
+  # mesh vertices are nanometers.
+  download_formats:
+    - key: swc
+      label: "SWC skeleton (coarse, ~16 KB per neuron)"
+      kind: swc
+      url_template: "https://www.googleapis.com/storage/v1/b/flyem-male-cns/o/v1.0%2Fsegmentation%2Fskeletons-malecns%2Fskeletons-swc%2F{body_id}.swc?alt=media"
+    - key: swc-highres
+      label: "SWC skeleton (high resolution, ~300 KB per neuron)"
+      kind: swc
+      url_template: "https://www.googleapis.com/storage/v1/b/flyem-male-cns/o/v1.0%2Fsegmentation%2Fskeletons-malecns%2Fskeletons-highres-swc%2F{body_id}.swc?alt=media"
+    - key: obj
+      label: "OBJ mesh (converted from the Neuroglancer mesh, ~3 MB per neuron)"
+      kind: ngmesh
+      url_template: "https://www.googleapis.com/storage/v1/b/flyem-male-cns/o/v1.0%2Fsegmentation%2Fsingle-res-meshes%2F{body_id}:0?alt=media"
 
 # Auto-discovery settings for neuron types
 discovery:
