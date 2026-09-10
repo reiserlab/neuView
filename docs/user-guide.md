@@ -464,6 +464,15 @@ neuprint:
   dataset: hemibrain:v1.2.1  # or cns:v1.0, optic-lobe:v1.0
 ```
 
+**Neuron downloads (male CNS only):**
+`config/config.cns.yaml` configures three download formats for the "Download
+neurons" dialog: coarse SWC skeleton, high-resolution SWC skeleton, and OBJ
+mesh, all served from the public `flyem-male-cns` bucket. The hemibrain,
+optic-lobe, FAFB and wasp configs define no formats, so their pages show no
+download link. See [Neuroglancer Integration](#neuroglancer-integration) for
+the user-facing behavior and [Configuration Reference](#configuration-reference)
+for the config format.
+
 ### Dataset Detection
 
 The system automatically detects dataset type and adjusts:
@@ -533,6 +542,28 @@ The system automatically detects dataset type and adjusts:
 - Self-reference detection → Prevents duplicates
 - Multiple selection → Build complex views
 - URL updates automatically
+
+**Downloading skeletons and meshes:**
+
+When the dataset config lists `neuroglancer.download_formats`, the Neuron
+Visualization header shows a download link next to the "open in new window"
+link. It opens a dialog with one radio button per configured format (for the
+male CNS: coarse SWC skeleton, high resolution SWC skeleton, OBJ mesh). The
+"Download" button fetches one file per neuron the page currently sends to the
+viewer (the type's neurons plus ticked partners) and saves them as a single
+zip file. Neurons without a file are listed in `missing_body_ids.txt` inside
+the zip. Selections above 50 neurons ask for confirmation first. Progress and
+errors are shown in the dialog.
+
+Format notes: SWC coordinates are in 8 nm voxels, OBJ vertices are in
+nanometers. OBJ files are converted in the browser from Neuroglancer's legacy
+mesh format and are large (about 3 MB per neuron before compression).
+
+The page cannot see selection changes made inside the embedded viewer (the
+viewer runs on a different origin). To download exactly what is selected in
+Neuroglancer, open the viewer in a new window, copy its URL, and paste it into
+the URL field of the dialog. The page parses the state in the URL and
+downloads the visible segments of the neuron layer.
 
 **Tips:**
 - Start with just the main neuron
@@ -708,6 +739,21 @@ output:
   directory: "output"
   clean_before_build: false
 
+neuroglancer:
+  base_url: "https://neuroglancer-demo.appspot.com/"
+  template: "neuroglancer-cns.js.jinja"
+  # Optional: per-neuron downloads offered in the "Download neurons" dialog.
+  # Leave out (or empty) to hide the download link.
+  download_formats:
+    - key: swc
+      label: "SWC skeleton (coarse)"
+      kind: swc
+      url_template: "https://www.googleapis.com/storage/v1/b/<bucket>/o/<path>%2F{body_id}.swc?alt=media"
+    - key: obj
+      label: "OBJ mesh"
+      kind: ngmesh
+      url_template: "https://www.googleapis.com/storage/v1/b/<bucket>/o/<mesh-path>%2F{body_id}:0?alt=media"
+
 performance:
   max_workers: 4
   cache_enabled: true
@@ -737,6 +783,18 @@ subsets:
 - **Fathom Analytics**: Add your Fathom site ID to enable privacy-focused analytics
 - The analytics script is automatically included on all generated pages when configured
 - No additional setup required - just uncomment and set your site ID
+
+**Neuron Downloads** (`neuroglancer.download_formats`):
+- Each entry needs a unique `key`, a `label` shown as a radio button, a
+  `url_template` containing `{body_id}`, and a `kind`
+- `kind: swc` stores the fetched file as `<body_id>.swc`
+- `kind: ngmesh` expects the template to address the Neuroglancer legacy mesh
+  manifest (`<body_id>:0`); the browser fetches the fragments and converts them
+  to `<body_id>.obj`
+- The file host must send CORS headers. For Google Cloud Storage use the JSON
+  API form shown above; the plain `storage.googleapis.com` URL does not send them
+- The first entry is preselected in the dialog; an empty or missing list hides
+  the download link entirely
 
 ### Command Reference
 
@@ -851,3 +909,11 @@ A: Same data, different formats. JSON for web servers/APIs, JS for local file ac
 
 **Q: Why do some neurons have L/R pages and others don't?**
 A: Automatically determined by soma distribution. Bilateral neurons get separate pages.
+
+**Q: How do I download the skeletons or meshes of the neurons I see?**
+A: Click the download icon next to the "open in new window" icon above the
+Neuroglancer view, pick a format, and press "Download". You get one zip file
+with one file per neuron. The page only knows the neurons it sent to the
+viewer; if you changed the selection inside Neuroglancer, copy the viewer URL
+and paste it into the dialog's URL field first. The link is only present when
+the dataset config defines `neuroglancer.download_formats`.

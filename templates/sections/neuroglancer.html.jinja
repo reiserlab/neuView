@@ -5,6 +5,9 @@
     <h2>
       Neuron Visualization
       <a href="#" target="_blank" class="external-link neuroglancer-link" title="Open Neuroglancer in new window">&#x29c9;</a>
+      {% if config is defined and config.neuroglancer.download_formats %}
+      <a href="#" id="swc-download-link" class="external-link swc-download-link" title="Download skeletons or meshes of the displayed neurons">&#x2913;</a>
+      {% endif %}
       {% if youtube_url and (features is not defined or features.nav_visible('youtube')) %}
       <a href="{{ youtube_url }}" target="_blank" class="external-link youtube-link" title="View YouTube video">
         <svg role="img" width="32" height="32" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#CC0000"/>
@@ -57,6 +60,42 @@
         <span class="pm-button-round pm-btn-success">?</span>
     </div>
   </div>
+
+  {% if config is defined and config.neuroglancer.download_formats %}
+  <dialog id="swc-download-dialog" class="swc-download-dialog" aria-labelledby="swc-download-title">
+    <div class="swc-download-dialog-header">
+      <h3 id="swc-download-title">Download neurons</h3>
+      <button type="button" id="swc-download-close" class="swc-download-close" aria-label="Close">&times;</button>
+    </div>
+    <p>
+      Downloads one file per neuron that this page sends to the viewer (the neurons of this type plus any
+      partners ticked in the tables below), packed into a single zip file. Neurons without a file are listed in
+      <code>missing_body_ids.txt</code> inside the zip.
+    </p>
+    <fieldset class="swc-download-formats">
+      <legend>Format</legend>
+      {% for fmt in config.neuroglancer.download_formats %}
+      <label class="swc-download-format">
+        <input type="radio" name="swc-download-format" value="{{ fmt.key }}"{% if loop.first %} checked{% endif %}>
+        <span>{{ fmt.label }}</span>
+      </label>
+      {% endfor %}
+    </fieldset>
+    <p>
+      <img src="../static/images/neuroglancer-copy-url.png" id="swc-download-hint-image"
+           alt="screenshot of the 'copy URL' button in Neuroglancer" width="342" height="123" />
+      Changes made inside Neuroglancer are invisible to the Cell Type Explorer. To download exactly the neurons selected
+      in Neuroglancer, copy the URL from Neuroglancer and paste it here:
+    </p>
+    <label for="swc-url-input" class="swc-download-label">Neuroglancer URL (optional)</label>
+    <input type="text" id="swc-url-input" placeholder="Leave empty to use the neurons shown by this page" spellcheck="false" autocomplete="off">
+    <p id="swc-download-status" class="swc-download-status" role="status" aria-live="polite"></p>
+    <div class="swc-download-actions">
+      <button type="button" id="swc-download-cancel" class="pm-btn-light">Close</button>
+      <button type="button" id="swc-download-button" class="pm-btn-primary">Download</button>
+    </div>
+  </dialog>
+  {% endif %}
 
   {{ iframe_embed("about:blank", title="Neuroglancer Visualization", extra_class="neuroglancer-iframe") }}
 

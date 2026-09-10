@@ -5,12 +5,14 @@ This module tests the NeuroglancerJSService class, particularly the integration
 with the neuroglancer base URL configuration parameter.
 """
 
+import json
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 from jinja2 import Environment, DictLoader
 
+from neuview.config import DownloadFormat
 from neuview.services.neuroglancer_js_service import NeuroglancerJSService
 
 
@@ -22,12 +24,14 @@ class MockConfig:
         dataset="hemibrain:v1.2.1",
         neuroglancer_base_url="https://clio-ng.janelia.org/",
         template="neuroglancer.js.jinja",
+        download_formats=None,
     ):
         self.neuprint = Mock()
         self.neuprint.dataset = dataset
         self.neuprint.server = "neuprint.janelia.org"
 
         self.neuroglancer = Mock()
+        self.neuroglancer.download_formats = list(download_formats or [])
         self.neuroglancer.base_url = neuroglancer_base_url
         self.neuroglancer.template = template
 
@@ -47,6 +51,7 @@ class TestNeuroglancerJSService:
         self.js_template = """
 // Neuroglancer URL Generator JavaScript
 const NEUROGLANCER_BASE_URL = "{{ neuroglancer_base_url }}";
+const NEUROGLANCER_DOWNLOAD_FORMATS = {{ neuroglancer_download_formats | tojson }};
 const DATASET_NAME = "{{ dataset_name }}";
 
 // Embedded neuroglancer template JSON
@@ -72,10 +77,68 @@ function generateNeuroglancerUrl() {
         dataset="hemibrain:v1.2.1",
         neuroglancer_base_url="https://clio-ng.janelia.org/",
         template="neuroglancer.js.jinja",
+        download_formats=None,
     ):
         """Create NeuroglancerJSService with specified configuration."""
-        config = MockConfig(dataset, neuroglancer_base_url, template)
+        config = MockConfig(dataset, neuroglancer_base_url, template, download_formats)
         return NeuroglancerJSService(config=config, jinja_env=self.jinja_env)
+
+    def _render_js(self, service):
+        """Generate the JS file into a temp dir and return its content."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir)
+            assert service.generate_neuroglancer_js(output_dir)
+            return (
+                output_dir / "static" / "js" / "neuroglancer-url-generator.js"
+            ).read_text()
+
+    def test_download_formats_are_embedded(self):
+        """Configured download formats land in the JS as a JSON list."""
+        fmt = DownloadFormat(
+            key="swc",
+            label="SWC skeleton",
+            url_template="https://example.org/skeletons/{body_id}.swc",
+        )
+        content = self._render_js(self.create_service(download_formats=[fmt]))
+        line = next(
+            ln for ln in content.splitlines() if "NEUROGLANCER_DOWNLOAD_FORMATS" in ln
+        )
+        payload = json.loads(line.split("=", 1)[1].rstrip(";").strip())
+        assert payload == [
+            {
+                "key": "swc",
+                "label": "SWC skeleton",
+                "url_template": "https://example.org/skeletons/{body_id}.swc",
+                "kind": "swc",
+                "extension": "swc",
+            }
+        ]
+
+    def test_download_formats_default_to_empty_list(self):
+        """Without configuration the JS constant is an empty list."""
+        content = self._render_js(self.create_service())
+        assert "const NEUROGLANCER_DOWNLOAD_FORMATS = [];" in content
+
+    def test_download_formats_accept_plain_dicts(self):
+        """Dict entries (e.g. from ad-hoc configs) are passed through."""
+        fmt = {
+            "key": "obj",
+            "label": "OBJ",
+            "url_template": "x/{body_id}:0",
+            "kind": "ngmesh",
+        }
+        content = self._render_js(self.create_service(download_formats=[fmt]))
+        assert '"kind": "ngmesh"' in content
+
+    def test_download_formats_tolerate_missing_attribute(self):
+        """Configs without the attribute (e.g. plain mocks) still render."""
+        config = MockConfig()
+        config.neuroglancer = Mock(spec=["base_url", "template"])
+        config.neuroglancer.base_url = "https://clio-ng.janelia.org/"
+        config.neuroglancer.template = "neuroglancer.js.jinja"
+        service = NeuroglancerJSService(config=config, jinja_env=self.jinja_env)
+        content = self._render_js(service)
+        assert "const NEUROGLANCER_DOWNLOAD_FORMATS = [];" in content
 
     def test_generates_js_with_correct_base_url(self):
         """Test that JavaScript is generated with the correct neuroglancer base URL."""

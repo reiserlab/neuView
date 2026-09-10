@@ -11,6 +11,7 @@ A modern Python CLI tool that generates beautiful HTML pages for neuron types us
 - **🎨 Beautiful Reports**: Clean, accessible HTML pages with interactive features
 - **🔍 Advanced Search**: Real-time filtering by cell count, neurotransmitter, brain regions
 - **📊 Rich Analytics**: Hemisphere balance, connectivity stats, ROI summaries
+- **⬇️ Neuron Downloads**: One-click zip of SWC skeletons or OBJ meshes for the neurons shown in the 3D view (per-dataset, see `config/README.md`)
 
 ## 🚀 Quick Start
 
@@ -135,6 +136,12 @@ We welcome contributions! Please see our comprehensive documentation:
 ## 📄 License
 
 This project is licensed under the GPLv3 License - see the LICENSE file for details.
+
+The generated website bundles third-party browser libraries from `static/js/`,
+each under the MIT license with its notice kept in the file header: jQuery,
+DataTables (with its export buttons and FileSaver), and fflate (zip creation
+for the neuron download dialog). The written content of the generated site is
+licensed under CC BY 4.0, see `static/LICENSE`.
 
 ## 🆘 Support
 

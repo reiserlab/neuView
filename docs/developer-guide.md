@@ -89,6 +89,16 @@ The project relies on several key Python packages defined in `pyproject.toml`. T
 **Code Quality (dev environment):**
 - `ruff>=0.12.11,<0.13` - Fast Python linter and formatter
 
+**Vendored browser libraries (`static/js/`, copied into the generated site):**
+- `jquery-3.7.1.min.js` - jQuery (MIT)
+- `jquery.dataTables.min.js`, `dataTables.buttons.min.js`, `buttons.html5.min.js` - DataTables and its export buttons (MIT)
+- `fflate.min.js` - fflate 0.8.2 (MIT), builds the zip archive for the neuron download dialog client-side
+
+These files are checked in rather than installed through a package manager so
+that the generated site works from `file://` without a build step. To update
+one, download the new UMD build, keep the one-line license header at the top
+of the file, and mention the version bump in the commit message.
+
 **Workflow Tools:**
 - `parallel>=20200322,<20250623` - GNU Parallel for batch processing
 - `python-lsp-server>=1.13.1,<2` - Python language server
@@ -401,6 +411,14 @@ Templates are organized hierarchically with inheritance and includes.
 - `sections/header.html.jinja` - Page header with search
 - `sections/footer.html.jinja` - Page footer
 - `sections/connectivity_table.html.jinja` - Connectivity tables
+- `sections/neuroglancer.html.jinja` - Embedded Neuroglancer viewer, theme toggle, and the "Download neurons" dialog (rendered only when `config.neuroglancer.download_formats` is non-empty)
+- `sections/neuron_page_scripts.html.jinja` - Per-page script includes and the `neuroglancerData` bootstrap
+
+**Browser JavaScript:**
+- `templates/static/js/neuroglancer-url-generator.js.jinja` - Rendered once per build into `static/js/neuroglancer-url-generator.js` with the Neuroglancer state template, ROI tables, and the `NEUROGLANCER_DOWNLOAD_FORMATS` list embedded
+- `static/js/swc-download.js` - Neuron download dialog logic (body ID collection, fetching, OBJ conversion, zip)
+- `static/js/neuron-page.js`, `static/js/responsive-nav.js`, `static/js/iframe-bridge.js` - Page behavior, navigation, and the bridge used when a neuView page itself is embedded in an iframe
+- `static/js/fflate.min.js`, `static/js/jquery*.js`, `static/js/*dataTables*.js` - Vendored libraries (see Key Dependencies)
 
 ### Template Context
 
@@ -774,6 +792,7 @@ Environment variable support for sensitive configuration:
 **Configuration Validation** (`src/neuview/config/config.py`):
 - Automatic validation with clear error messages using dataclass `__post_init__()` methods
 - Example: `NeuPrintConfig.__post_init__()` validates required server and dataset fields
+- Example: `DownloadFormat.__post_init__()` (in `src/neuview/config.py`) requires the `{body_id}` placeholder in `url_template` and a known `kind`; `NeuroglancerConfig.__post_init__()` turns the YAML dicts into `DownloadFormat` objects and rejects duplicate keys
 - Validation occurs at configuration loading time with descriptive error messages
 
 ## API Reference
@@ -1590,6 +1609,59 @@ Automatic template selection based on dataset:
 - `get_neuroglancer_template()` method selects dataset-appropriate templates
 - FAFB datasets use specialized `neuroglancer-fafb.js.jinja` template
 - Other datasets use standard `neuroglancer.js.jinja` template
+
+### Neuron Downloads (Skeletons and Meshes)
+
+The "Download neurons" link next to the embedded Neuroglancer view lets users
+save one file per displayed neuron as a single zip archive (issue #175). The
+feature is entirely client-side and only appears when the dataset config lists
+at least one entry in `neuroglancer.download_formats`.
+
+**Data flow:**
+
+1. `config/config.<dataset>.yaml` lists formats; `NeuroglancerConfig` (`src/neuview/config.py`) parses them into validated `DownloadFormat` objects (`key`, `label`, `url_template`, `kind`, derived `extension`).
+2. `NeuroglancerJSService._download_formats()` serialises the list and the JS template embeds it as `const NEUROGLANCER_DOWNLOAD_FORMATS = [...]` in the generated `static/js/neuroglancer-url-generator.js`.
+3. `templates/sections/neuroglancer.html.jinja` renders the header icon and a native `<dialog>` with one radio button per format. `templates/sections/neuron_page_scripts.html.jinja` includes `fflate.min.js` and `swc-download.js` under the same condition.
+4. `static/js/swc-download.js` collects body IDs, fetches the files with a small concurrency pool, converts meshes, zips everything with fflate, and triggers the download through a Blob URL.
+
+**Body ID sources.** The embedded viewer is a cross-origin iframe, so the page
+cannot read its current URL or DOM. `initializeNeuroglancerLinks()` therefore
+exposes the page's own state as `window.neuviewNeuroglancerPageData`; its
+`visibleNeurons` array is the default source (type neurons plus ticked
+partners). As a fallback for selections changed inside the viewer, the dialog
+accepts a pasted Neuroglancer URL: the `#!` fragment is decoded, parsed as
+JSON, and the segments of the neuron layer are taken. The layer is found with
+`findMainSegmentationLayer()` (shared with URL generation, matches `cns-seg` and
+`flywire-fafb:v783b`), falling back to the first segmentation layer with
+segments. Hidden segments (leading `!`) and ROI layers are skipped.
+
+**Formats.** `kind: swc` stores the response verbatim. `kind: ngmesh` treats
+the URL as the Neuroglancer legacy mesh manifest (`<body_id>:0`, a JSON list of
+fragment names), derives fragment URLs by replacing `{body_id}:0` in the
+template, parses each fragment (uint32 vertex count, float32 x/y/z per vertex
+in nanometers, uint32 triangle indices), and writes a Wavefront OBJ with
+1-based, offset-corrected face indices. Adding a new kind means extending
+`DOWNLOAD_FORMAT_KINDS` in `config.py` (kind to file extension) and adding a
+branch in `fetchNeuron()` in `swc-download.js`.
+
+**CORS.** Browsers only allow `fetch()` across origins when the host sends
+`Access-Control-Allow-Origin`. The plain `storage.googleapis.com/<bucket>/...`
+URLs of the FlyEM buckets do not, but the GCS JSON API endpoint
+(`https://www.googleapis.com/storage/v1/b/<bucket>/o/<url-encoded object>?alt=media`)
+does, including for the `null` origin of `file://` pages. Configure that form.
+Neuroglancer itself is unaffected because it reads through the JSON API too.
+
+**Safeguards.** Selections above 50 neurons ask for confirmation. Missing files
+(HTTP 404) are skipped and listed in `missing_body_ids.txt` inside the zip.
+Mesh zips use a lower compression level because the OBJ text is large (about
+6 MB per neuron before compression). The whole archive is assembled in memory.
+
+**Tests.** `test/test_config_download_formats.py` (config parsing and
+validation), `test/services/test_neuroglancer_js_service.py` (embedding in the
+generated JS), and `test/test_download_dialog_gating.py` (the link, dialog and
+scripts render only with formats configured). The OBJ converter has no
+automated test; it was verified against an independent Python parse of a real
+mesh fragment.
 
 ### Dataset Detection Patterns
 

@@ -97,6 +97,9 @@ Each neuron type in the index table links to a comprehensive analysis page conta
 - **Direct links** to explore neuron reconstructions in 3D space
 - **Zoom, rotate, and navigate** through the brain volume
 - **View neuron reconstructions** in their anatomical context
+{% if config.neuroglancer.download_formats %}
+- **Download neurons** as one zip file with one file per displayed neuron. Available formats: {{ config.neuroglancer.download_formats | map(attribute='label') | join(', ') }}. Paste a Neuroglancer URL into the dialog to download exactly the neurons selected in the viewer
+{% endif %}
 
 ### Layer Analysis
 - **Detailed breakdown** of neuron presence across brain regions: Lamina (LA), Medulla (ME), Lobula (LO), Lobula Plate (LOP), Accessory Medulla (AME), and Central Brain (CB)
@@ -180,6 +183,9 @@ Neurotransmitter assignments are computational predictions based on:
 - **Printable pages** - Browser print function works with all pages
 - **Bookmarkable URLs** - Save direct links to specific neuron types
 - **Shareable content** - URLs can be shared with colleagues
+{% if config.neuroglancer.download_formats %}
+- **Neuron files** - The download icon above the 3D view saves skeletons or meshes of the displayed neurons ({{ config.neuroglancer.download_formats | map(attribute='label') | join(', ') }}) as a zip archive
+{% endif %}
 
 ## Dataset Information
 
