@@ -364,7 +364,7 @@
               Combined upstream and downstream connections, with breakdowns and log ratios where applicable.
               Here, connections are the number of anatomical synapses between neurons. Technically, this number comes from the number of connected
               <em>synapse</em>s, which are combined to form <em>SynapseSet</em>s and assigned to <em>Neuron</em>s within the neuprint database.
-              A single pre-synaptic site (T-bar) can form multiple anatomical synaptic contacts with different post-synaptic partners. Each such 
+              A single pre-synaptic site (T-bar) can form multiple anatomical synaptic contacts with different post-synaptic partners. Each such
               contact counts as one downstream connection, so a neuron's number of downstream connections can exceed its number of pre-synaptic sites.<br/>
               For combined pages the breakdown shows the total number of connections assigned to each hemisphere and their ratio.
               Whereas for unilateral pages the breakdown shows the number of upstream and downstream connections across all neurons of the type assigned to that side.
@@ -444,13 +444,6 @@
               <li><strong>Select:</strong> Click on neurons to highlight and inspect</li>
               <li><strong>Layers:</strong> Toggle reference layers on/off (as available).
               For example, the video below shows how you can use the "synapses" layer to view the synapses of the visible neurons.</li>
-              {% if config is defined and config.neuroglancer.download_formats %}
-              <li><strong>Download neurons:</strong> The <span aria-hidden="true">&#x2913;</span> link in the
-              section header opens a dialog that downloads one file per displayed neuron as a single zip file, in the
-              chosen format ({{ config.neuroglancer.download_formats | map(attribute='label') | join(', ') }}).
-              Changes made inside the viewer are not visible to the page; to download exactly the neurons selected in
-              Neuroglancer, open the viewer in a new window, copy its URL and paste it into the URL field of the dialog.</li>
-              {% endif %}
             </ul>
 
             <img src="static/images/add_synapses_to_NG50.gif" width="80%" alt="How to toggle reference layers in neuroglancer view." style="display: block; margin-left: auto; margin-right: auto;">
@@ -484,9 +477,66 @@
             <br>
             <h4>External neuPrint Link</h4>
             <p>
-              Direct link to view the same neurons in the full neuPrint interface for advanced analysis is provided on
-              the page.
+              A direct link to view the same neurons in the full neuPrint interface for advanced analysis is provided
+              on the page.
             </p>
+            {% if config is defined and config.neuroglancer.download_formats %}
+
+            <div id="downloading-neurons">
+            <h4>Downloading Neurons</h4></div>
+            <p>
+              The <span aria-hidden="true">&#x2913;</span> icon in the header of the Neuron Visualization section opens
+              the "Download neurons" dialog. Pick a format and press "Download" to receive a single zip file that
+              contains one file per neuron. Neurons for which no file can be found are listed in the file
+              <code>missing_body_ids.txt</code> inside the zip.
+            </p>
+            <img src="static/images/download-neurons-dialog.png" width="60%" alt="The 'Download neurons' dialog with the format selection and the optional Neuroglancer URL field." style="display: block; margin-left: auto; margin-right: auto;">
+            <p>Formats available for this dataset: {{ config.neuroglancer.download_formats | map(attribute='label') | join(', ') }}.</p>
+            <dl>
+              <dt>SWC skeleton, coarse</dt>
+              <dd>
+                A downsampled skeleton with a few hundred nodes per neuron and files of some tens of kilobytes.
+                It is well suited for whole-population analyses, overview plots, and quick loading in tools such as
+                navis, the natverse, or VVD Viewer.
+              </dd>
+              <dt>SWC skeleton, high resolution</dt>
+              <dd>
+                The same neurons skeletonized at full detail, with roughly twenty times as many nodes and files of
+                a few hundred kilobytes each. Use it when branch-level morphology, path lengths, or Strahler orders
+                matter.
+              </dd>
+              <dt>OBJ mesh</dt>
+              <dd>
+                The surface mesh that Neuroglancer renders, saved as OBJ files (vertices and triangular faces).
+                Meshes are large, several megabytes per neuron before compression. The zip is assembled in your
+                browser's memory, so large selections might slow down your computer. Prefer a small selection for
+                this format. OBJ files open in Blender, MeshLab, ParaView, VVD Viewer, and most 3D libraries.
+              </dd>
+            </dl>
+            <p>
+              <strong>Which neurons are downloaded?</strong> That depends on whether you fill in the "Neuroglancer URL"
+              field of the dialog:
+            </p>
+            <ul>
+              <li>
+                <strong>Field left empty:</strong> the download contains the neurons selected by the Cell Type Explorer.
+                That is, the neurons of the current cell type plus every partner you ticked in the Connectivity tables
+                (see <a href="#adding-connected-neurons">Adding Partners</a>). Anything you changed inside the
+                Neuroglancer view itself, such as adding a neuron through its search box or hiding one by clicking on
+                it, is not included. This is a technical limitation: the Cell Type Explorer cannot look inside the
+                Neuroglancer viewer.
+              </li>
+              <li>
+                <strong>Neuroglancer URL pasted:</strong> the download covers exactly the neurons that are visible in the
+                pasted view, including changes made inside Neuroglancer. Neuroglancer stores its complete state in the
+                page address, so first make your selection, then copy the URL: either open the view in a new window with
+                the <span aria-hidden="true">&#x29c9;</span> icon and copy the address bar, or use Neuroglancer's own
+                "copy URL" button shown below. Paste it into the dialog and press "Download". Neurons that are hidden in
+                the view are skipped, and only the neuron layer is used; ROI and shell meshes are never downloaded.
+              </li>
+            </ul>
+            <img src="static/images/neuroglancer-copy-url.png" width="342" height="123" alt="The 'copy URL' button in Neuroglancer." style="display: block; margin-left: auto; margin-right: auto;">
+            {% endif %}
           </div>
 
           {# ROI Innervation #}

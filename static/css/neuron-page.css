@@ -3262,7 +3262,8 @@ table.dataTable#roi-table tbody > tr > td:first-child {
     margin: 0;
     font-size: 1.4rem;
 }
-.swc-download-close {
+/* Scoped under .plume to outrank the framework's generic button rule */
+.plume .swc-download-close {
     flex: 0 0 auto;
     min-width: unset;
     min-height: unset;
