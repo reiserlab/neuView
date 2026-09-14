@@ -322,3 +322,42 @@ class TestWaspAdapter:
             cns.soma_side_cypher_presence("m")
             == "(m.rootSide IS NOT NULL OR m.somaSide IS NOT NULL)"
         )
+
+
+class TestCNSAdapterSomaSide:
+    """Unit tests for CNS soma side extraction (rootSide first, somaSide second)."""
+
+    @pytest.mark.unit
+    def test_root_side_unknown_string_maps_to_u(self):
+        """neuPrint stores the literal 'unknown' in rootSide; it must become 'U'."""
+        df = pd.DataFrame(
+            {
+                "bodyId": [1, 2, 3, 4],
+                "instance": ["ORN_VM4_R", "ORN_VM4_unknown", "X_L", "Y"],
+                "rootSide": ["R", "unknown", None, None],
+                "somaSide": [None, None, "L", None],
+            }
+        )
+        result = CNSAdapter().extract_soma_side(df)
+        assert result["somaSide"].tolist() == ["R", "U", "L", "U"]
+
+    @pytest.mark.unit
+    def test_root_side_only_column(self):
+        """With rootSide but no somaSide column, nulls and 'unknown' become 'U'."""
+        df = pd.DataFrame({"bodyId": [1, 2, 3], "rootSide": ["L", "Unknown", None]})
+        result = CNSAdapter().extract_soma_side(df)
+        assert result["somaSide"].tolist() == ["L", "U", "U"]
+
+    @pytest.mark.unit
+    def test_soma_side_only_column(self):
+        """Without rootSide, somaSide is used and 'unknown'/null become 'U'."""
+        df = pd.DataFrame({"bodyId": [1, 2, 3], "somaSide": ["R", "unknown", None]})
+        result = CNSAdapter().extract_soma_side(df)
+        assert result["somaSide"].tolist() == ["R", "U", "U"]
+
+    @pytest.mark.unit
+    def test_no_side_columns(self):
+        """Neither column present: every neuron is 'U'."""
+        df = pd.DataFrame({"bodyId": [1, 2]})
+        result = CNSAdapter().extract_soma_side(df)
+        assert result["somaSide"].tolist() == ["U", "U"]

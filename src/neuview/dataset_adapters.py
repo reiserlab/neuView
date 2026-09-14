@@ -429,6 +429,10 @@ class CNSAdapter(DatasetAdapter):
         roi_strategy = CNSRoiQueryStrategy()
         super().__init__(dataset_info, roi_strategy)
 
+    # neuPrint stores the literal string "unknown" in rootSide (e.g. for
+    # ORN_VM4_unknown instances in male-cns:v1.0). Map it to the internal "U".
+    _UNKNOWN_SIDE_VALUES = {"unknown": "U", "Unknown": "U", "UNKNOWN": "U", "": "U"}
+
     def extract_soma_side(self, neurons_df: pd.DataFrame) -> pd.DataFrame:
         """CNS prioritizes rootSide over somaSide."""
         neurons_df = neurons_df.copy()
@@ -444,15 +448,18 @@ class CNSAdapter(DatasetAdapter):
             else:
                 # Only rootSide available
                 neurons_df["somaSide"] = neurons_df["rootSide"].fillna("U")
-            return neurons_df
         elif "somaSide" in neurons_df.columns:
             # Fall back to original somaSide if rootSide not available
             neurons_df["somaSide"] = neurons_df["somaSide"].fillna("U")
-            return neurons_df
         else:
             # If neither column exists, create it as unknown
             neurons_df["somaSide"] = "U"  # Unknown
             return neurons_df
+
+        neurons_df["somaSide"] = neurons_df["somaSide"].replace(
+            self._UNKNOWN_SIDE_VALUES
+        )
+        return neurons_df
 
     def normalize_columns(self, neurons_df: pd.DataFrame) -> pd.DataFrame:
         """CNS columns are already in standard format."""
