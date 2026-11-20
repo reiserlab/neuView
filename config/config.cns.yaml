@@ -45,6 +45,8 @@ html:
   github_repo: "https://github.com/reiserlab/celltype-explorer-drosophila-male-cns"
   youtube_channel: "https://www.youtube.com/@ReiserLab"
   fathom_id: "LNLMYXNK"
+  lab_name: "Reiser Lab"
+  lab_url: "https://reiserlab.org/"
 
 subsets:
   subset-medium:
