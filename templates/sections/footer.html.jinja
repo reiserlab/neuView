@@ -1,6 +1,6 @@
 <footer>
     <div class="container">
-        <p>Generated on {{ generation_time.strftime('%Y-%m-%d %H:%M') }} • Dataset: {{ config.neuprint.dataset }} • Server: {{ config.neuprint.server }} • Generated via neuView {{ git_version }}</p>
+        <p>Generated on {{ generation_time.strftime('%Y-%m-%d %H:%M') }} • Dataset: {{ config.neuprint.dataset }} • Server: {{ config.neuprint.server }} • Generated via neuView {{ git_version }}{% if config.html.lab_url %} • <a href="{{ config.html.lab_url }}">{{ config.html.lab_name or config.html.lab_url }}</a>{% endif %}</p>
     </div>
     {# Feedback opens a GitHub issue, so it is gated by the github nav feature. #}
     {% if config.html.github_repo and (features is not defined or features.nav_visible('github')) %}

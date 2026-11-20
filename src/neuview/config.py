@@ -124,6 +124,9 @@ class HtmlConfig:
     github_repo: Optional[str] = None
     youtube_channel: Optional[str] = None
     fathom_id: Optional[str] = None
+    # Optional link to the lab's website, shown in the footer of every page.
+    lab_name: Optional[str] = None
+    lab_url: Optional[str] = None
 
 
 @dataclass

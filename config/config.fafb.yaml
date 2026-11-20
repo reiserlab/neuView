@@ -26,6 +26,8 @@ discovery:
 html:
   title_prefix: "Female Adult Fly Brain"
   fathom_id: "GDMDXQVG"
+  lab_name: "Reiser Lab"
+  lab_url: "https://reiserlab.org/"
 
 # Neuron type subsets for this dataset
 subsets:

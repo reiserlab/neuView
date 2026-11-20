@@ -734,6 +734,8 @@ html:
   github_repo: "https://github.com/your-org/your-repo"
   youtube_channel: "https://youtube.com/@yourchannel"
   fathom_id: "YOUR_FATHOM_ID"  # Optional analytics
+  lab_name: "Your Lab"  # Optional footer link to the lab website
+  lab_url: "https://your-lab.example.org/"
 
 output:
   directory: "output"
